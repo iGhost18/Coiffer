@@ -1,0 +1,57 @@
+.SignOutOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.SignOutModal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 22px;
+  width: 300px;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.SignOutTitle {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.SignOutText {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: #777;
+  line-height: 1.4;
+}
+
+.SignOutActions {
+  display: flex;
+  gap: 10px;
+}
+
+.SignOutCancelBtn,
+.SignOutConfirmBtn {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.SignOutCancelBtn {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.SignOutConfirmBtn {
+  background: #e63946;
+  color: #fff;
+}

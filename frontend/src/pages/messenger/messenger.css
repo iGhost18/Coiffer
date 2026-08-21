@@ -1,0 +1,150 @@
+.messenger{
+    height: 100vh;
+    width: 100%;
+    display: flex;
+}
+
+.chatMenu{
+    flex: 4;
+}
+
+.chatMenuTop hr{
+ margin-top: 20px;
+}
+
+.chatMenuTop{
+    display:flex;
+    flex-direction:column;
+}
+
+.chatMenuWrapper{
+    display:flex;
+    flex-direction:column;
+    height:100%;
+    padding:10px;
+}
+
+.btnback{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.messengerBackBtn{
+    width:36px;
+    height:36px;
+    border:none;
+    border-radius:50%;
+    background:#f5f5f5;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+}
+
+.messengerBackBtn:hover{
+    background:#ececec;
+}
+
+
+
+
+.chatBox{
+    flex: 6;
+}
+
+.chatBoxWrapper{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+}
+
+.chatBoxTop{
+    height: 100%;
+    overflow-y: scroll;
+    padding-right: 10px;
+}
+
+.chatBoxBottom {
+  margin-top: 5px;
+  padding: 4px;
+}
+
+.messageInputWrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  background: #f7f7f8;
+  border: 1px solid #e6e6e6;
+  border-radius: 26px;
+  padding: 8px 8px 8px 20px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.messageInputWrapper:focus-within {
+  border-color: rgb(199, 54, 54);
+  box-shadow: 0 0 0 3px rgba(199, 54, 54, 0.12);
+}
+
+.chatMessageInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  max-height: 140px;
+  padding: 8px 0;
+  color: #1a1a1a;
+}
+
+.chatMessageInput::placeholder {
+  color: #a0a0a0;
+}
+
+.chatSubmitButton {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgb(199, 54, 54);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, opacity 0.15s, background 0.15s;
+}
+
+.chatSubmitButton:hover:not(:disabled) {
+  background: rgb(175, 46, 46);
+  transform: scale(1.06);
+}
+
+.chatSubmitButton:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.chatSubmitButton:disabled {
+  background: #d8d8d8;
+  cursor: default;
+}
+
+.chatMenuWrapper, .chatBoxWrapper{
+    padding: 10px;
+    height: 100%;
+}
+
+.noConversationText{
+    position: absolute;
+    top: 10%;
+    font-size: 50px;
+    color: rgb(224, 220, 220);
+    cursor: default;
+}

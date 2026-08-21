@@ -1,0 +1,75 @@
+
+.InviteLanding {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  text-align: center;
+  color: #fff;
+  background-color: #0d0d0d;
+}
+
+.InviteLanding h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.InviteLanding form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 80%;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2rem;
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.InviteLanding input {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s ease, background 0.2s ease;
+}
+
+.InviteLanding input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.InviteLanding input:focus {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.InviteLanding .primary-btn {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #fff;
+  color: #0d0d0d;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.InviteLanding .primary-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.InviteLanding p.error {
+  margin-top: 1rem;
+  color: #ff6b6b;
+  font-size: 0.9rem;
+}

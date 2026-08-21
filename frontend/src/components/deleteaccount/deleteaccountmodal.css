@@ -1,0 +1,78 @@
+.DeleteAccOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.DeleteAccModal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 22px;
+  width: 320px;
+  max-width: 90vw;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.DeleteAccTitle {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.DeleteAccText {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #777;
+  line-height: 1.4;
+}
+
+.DeleteAccLabel {
+  display: block;
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.DeleteAccInput {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 18px;
+  box-sizing: border-box;
+}
+
+.DeleteAccActions {
+  display: flex;
+  gap: 10px;
+}
+
+.DeleteAccCancelBtn,
+.DeleteAccConfirmBtn {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.DeleteAccCancelBtn {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.DeleteAccConfirmBtn {
+  background: #e63946;
+  color: #fff;
+}
+
+.DeleteAccConfirmBtn:disabled {
+  background: #f3b7bd;
+  cursor: default;
+}

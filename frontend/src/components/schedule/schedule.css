@@ -1,0 +1,337 @@
+/* ---- Tokens ----------------------------------------------------------- */
+/* Palette: warm neutral base, with two accent lanes —
+   amber/copper for haircut appointments (barber-chair warmth),
+   teal/ink for store orders (receipt / inventory feel). */
+
+.schedule-page {
+  --schedule-bg: #fff;
+  --schedule-ink: #25201b;
+  --schedule-muted: #837a6e;
+  --schedule-line: #e7ddcd;
+  --schedule-card: #ffffff;
+
+  --schedule-appt: #b5602b;
+  --schedule-appt-bg: #fbeadd;
+  --schedule-order: #2c6e68;
+  --schedule-order-bg: #e3f0ee;
+
+  --schedule-confirmed: #2c7a4b;
+  --schedule-pending: #b5860b;
+  --schedule-processing: #2c6e68;
+  --schedule-delivered: #2c7a4b;
+  --schedule-cancelled: #b13b3b;
+
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+  background: var(--schedule-bg);
+  color: var(--schedule-ink);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ---- Header ---- */
+
+.schedule-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.schedule-title {
+  font-family: "Source Serif Pro", Georgia, serif;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+}
+
+.schedule-subtitle {
+  font-size: 14px;
+  color: var(--schedule-muted);
+  margin: 0;
+}
+
+.schedule-filters {
+  display: flex;
+  gap: 6px;
+  background: var(--schedule-line);
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.schedule-filter-btn {
+  border: none;
+  background: transparent;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--schedule-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.schedule-filter-btn:hover {
+  color: var(--schedule-ink);
+}
+
+.schedule-filter-btn.active {
+  background: var(--schedule-ink);
+  color: var(--schedule-bg);
+}
+
+.schedule-filter-btn:focus-visible {
+  outline: 2px solid var(--schedule-ink);
+  outline-offset: 2px;
+}
+
+/* ---- Day groups ---- */
+
+.schedule-day-group {
+  margin-bottom: 28px;
+}
+
+.schedule-day-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--schedule-muted);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--schedule-line);
+}
+
+.schedule-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---- Cards ---- */
+
+.schedule-card {
+  display: grid;
+  grid-template-columns: 64px 4px 1fr;
+  align-items: stretch;
+  background: var(--schedule-card);
+  border: 1px solid var(--schedule-line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.schedule-card-time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--schedule-muted);
+  padding: 12px 4px;
+  text-align: center;
+}
+
+.schedule-card-stripe {
+  background: var(--schedule-line);
+}
+
+.schedule-card--appointment .schedule-card-stripe {
+  background: var(--schedule-appt);
+}
+
+.schedule-card--order .schedule-card-stripe {
+  background: var(--schedule-order);
+}
+
+.schedule-card-body {
+  padding: 12px 16px;
+}
+
+.schedule-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.schedule-type-badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+
+.schedule-type-badge--appointment {
+  color: var(--schedule-appt);
+  background: var(--schedule-appt-bg);
+}
+
+.schedule-type-badge--order {
+  color: var(--schedule-order);
+  background: var(--schedule-order-bg);
+}
+
+.schedule-status {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.schedule-status--confirmed,
+.schedule-status--delivered {
+  color: var(--schedule-confirmed);
+}
+
+.schedule-status--pending {
+  color: var(--schedule-pending);
+}
+
+.schedule-status--processing {
+  color: var(--schedule-processing);
+}
+
+.schedule-status--cancelled {
+  color: var(--schedule-cancelled);
+}
+
+.schedule-card-main-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 2px;
+  color: var(--schedule-ink);
+}
+
+.schedule-card-subtitle {
+  font-size: 13px;
+  color: var(--schedule-muted);
+  margin: 0;
+}
+
+.schedule-card-customer {
+  font-size: 12px;
+  color: var(--schedule-muted);
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px dashed var(--schedule-line);
+}
+
+/* ---- Empty / loading state ---- */
+
+.schedule-empty {
+  text-align: center;
+  padding: 64px 20px;
+  color: var(--schedule-muted);
+}
+
+.schedule-empty p {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--schedule-ink);
+  margin: 0 0 4px;
+}
+
+.schedule-empty span {
+  font-size: 13px;
+}
+
+.schedule-card-services {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px dashed var(--schedule-line);
+}
+
+.schedule-card-services li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--schedule-ink);
+}
+
+.schedule-card-location {
+  font-size: 12px;
+  color: var(--schedule-muted);
+  margin: 6px 0 0;
+}
+
+.schedule-card-contact {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--schedule-muted);
+  background: var(--schedule-bg);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-top: 6px;
+}
+
+.schedule-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--schedule-line);
+  font-weight: 600;
+  color: var(--schedule-ink);
+}
+.scheduleBackbtn{
+    width:35px;
+    height:35px;
+    border:none;
+    border-radius:50%;
+    background:#f5f5f5;
+    cursor:pointer;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    transition:.25s;
+}
+
+.scheduleBackbtn:hover{
+    background:#ececec;
+}
+
+.btnAndText{
+    display: flex;
+    align-items: center;
+}
+
+.btnAndText h2{
+    margin-left: 10px;
+}
+/* ---- Responsive ---- */
+
+@media (max-width: 480px) {
+  .schedule-page {
+    padding: 20px 14px 48px;
+  }
+
+  .schedule-header {
+    flex-direction: column;
+  }
+
+  .schedule-card {
+    grid-template-columns: 52px 3px 1fr;
+  }
+
+  .schedule-card-time {
+    font-size: 11px;
+  }
+}
+
+/* ---- Reduced motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .schedule-filter-btn {
+    transition: none;
+  }
+}

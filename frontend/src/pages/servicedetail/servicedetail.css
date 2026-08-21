@@ -1,0 +1,128 @@
+.ServiceBody{
+  display: flex;
+  align-items: flex-start;
+  padding: 20px;
+  gap: 20px;
+}
+
+.CutCardContainer{
+  flex: 1;
+  min-width: 0;
+}
+
+.CutCard{
+    width: 95%;
+    height: auto;
+    background-color: #ffff;
+    margin: 20px;
+    padding: 5px;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.CutDetails{
+    display: flex;
+    align-items: center;
+    min-height: 180px;  
+}
+
+.CutDetails img{
+    width: 150px;
+    height: auto;
+    margin: 15px;
+    border-radius: 6px;
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.4);
+}
+
+.CutCardText{
+    margin-left: 10px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.CutCardHeader{
+    font-size: 20px;
+    margin-left: 20px;
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+.CutCardWriteUp{
+    font-size: 12px;
+    font-weight: 500;
+    padding: 10px;
+    flex: 1; 
+}
+
+.CutCardPandD{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+}
+
+.Price{
+    color: red;
+}
+
+.PriceIcon{
+    color: red;
+    font-size: 25px;
+    margin-bottom: -5px;
+}
+
+.CutCardButton{
+    padding: 5px 18px;
+    border-radius:50px ;
+    font-weight: 500;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    margin-left: auto;
+    margin-bottom: 5px;
+    margin-right: 5px;
+    margin-top: auto;
+    display: block;
+}
+
+
+.CutCardButton:hover{
+    background-color: #666;
+    color:  #be0505;
+    transform: scale(0.9);
+    opacity: 1;
+}
+
+.addServiceBtn{
+    float: right;
+    background:#111;
+    color:#fff;
+    text-decoration:none;
+    padding:8px 16px;
+    border-radius:8px;
+    margin-bottom:20px;
+    transition:.3s;
+}
+
+.addServiceBtn:hover{
+    background:#444;
+}
+
+.SRVDTbtn{
+    width:45px;
+    height:45px;
+    border:none;
+    border-radius:50%;
+    background:#f5f5f5;
+    cursor:pointer;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    transition:.25s;
+}
+
+.SRVDTbtn:hover{
+    background:#ececec;
+}

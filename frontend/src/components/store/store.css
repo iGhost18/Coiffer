@@ -1,0 +1,196 @@
+.store {
+  width: 100%;
+  min-height: 100vh;
+  border-radius: 12px;
+  background-color: rgba(128, 128, 128, 0.133);
+  margin: 0 auto;
+  padding: 0 0 40px;
+}
+
+.StoreHeader {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+}
+
+.storeHeaderLeft {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.Header {
+  grid-column: 2;
+  justify-self: center;
+  font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
+    "Lucida Sans", Arial, sans-serif;
+  font-size: 32px;
+  margin: 0;
+  text-align: center;
+}
+
+.CartLink {
+  grid-column: 3;
+  justify-self: end;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+
+.CartPill {
+  background: #1c1815;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.StoreGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 18px;
+  padding: 0 24px;
+  justify-content: center;
+}
+
+.StoreCard {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.StoreCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.StoreImage {
+  height: 300px;
+  background: rgba(128, 128, 128, 0.08);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40px;
+  overflow: hidden;
+}
+
+.StoreImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.StoreImagePlaceholder {
+  font-size: 30px;
+  opacity: 0.5;
+}
+
+.ProductName {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.ProductDesc {
+  font-size: 13px;
+  color: #6b6258;
+  margin: 0 0 14px;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.StoreCardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.PriceTag {
+  position: relative;
+  background: rgb(215, 0, 0);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 12px 5px 16px;
+  border-radius: 3px 8px 8px 3px;
+}
+
+.PriceTag::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+.BuyBtn {
+  border: none;
+  background: #1c1815;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  min-width: 64px;
+  transition: background 0.15s ease;
+}
+
+.BuyBtn:hover {
+  opacity: 0.85;
+}
+
+.BuyBtn.added {
+  background: #2c7a4b;
+}
+
+.storeBackbtn{
+    width:35px;
+    height:35px;
+    border:none;
+    border-radius:50%;
+    background:#f5f5f5;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.25s;
+
+}
+
+.storeBackbtn:hover{
+    background:#ececec;
+}
+
+
+
+
+@media (max-width: 480px) {
+  .store {
+    width: 100%;
+  }
+
+  .StoreGrid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0 14px;
+  }
+
+  .StoreHeader {
+    grid-template-columns: auto 1fr auto; /* let outer columns shrink to content */
+  }
+}

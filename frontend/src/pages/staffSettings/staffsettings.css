@@ -1,0 +1,385 @@
+
+.ss-page {
+  width: 100%;
+  margin: 20px auto;
+  background: #fff;
+  border-radius: 20px;
+  padding: 30px 40px 60px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.ss-loading {
+  text-align: center;
+  margin-top: 80px;
+  font-family: 'DM Sans', sans-serif;
+  color: #666;
+}
+
+.ss-title {
+  font-size: 22px;
+  margin-bottom: 30px;
+}
+
+.ss-error {
+  background: #fee2e2;
+  color: #be0505;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.STFSETBackbtn{
+    width:45px;
+    height:45px;
+    border:none;
+    border-radius:50%;
+    background:#f5f5f5;
+    cursor:pointer;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    transition:.25s;
+}
+
+.STFSETBackbtn:hover{
+    background:#ececec;
+}
+
+/* ===== SECTIONS ===== */
+.ss-section {
+  margin-bottom: 36px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ss-section:last-of-type {
+  border-bottom: none;
+}
+
+.ss-section-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #999;
+  margin-bottom: 16px;
+}
+
+.ss-hint {
+  font-size: 13px;
+  color: #aaa;
+  margin: 4px 0 12px;
+}
+
+/* ===== FIELDS ===== */
+.ss-field {
+  margin-bottom: 18px;
+}
+
+.ss-field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.ss-field input,
+.ss-field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: #111;
+  transition: border-color 0.2s ease;
+}
+
+.ss-field input:focus,
+.ss-field textarea:focus {
+  outline: none;
+  border-color: #111;
+}
+
+.ss-field textarea {
+  resize: vertical;
+}
+
+.ss-field-row {
+  display: flex;
+  gap: 16px;
+}
+
+.ss-field-row .ss-field {
+  flex: 1;
+}
+
+/* ===== PHOTOS ===== */
+.ss-cover-wrap {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  height: 160px;
+}
+
+.ss-cover-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ss-cover-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+}
+
+.ss-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ss-avatar-preview {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.ss-upload-btn {
+  display: inline-block;
+  background: black;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.ss-upload-btn:hover {
+  opacity: 0.85;
+}
+
+
+.ss-profile-pic-preview{
+  width: 332px;
+  height: 332px;
+  border-radius: 50%;
+}
+
+/* ===== CHIPS (roles / working days) ===== */
+.ss-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ss-chip {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1.5px solid #ccc;
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.2s ease;
+}
+
+.ss-chip:hover {
+  background-color: #f0f0f0;
+}
+
+.ss-chip--on {
+  background-color: #111;
+  color: white;
+  border-color: #111;
+}
+
+.ss-location-toggle {
+  margin-top: 12px;
+}
+
+.ss-toggle-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #333);
+  background: transparent;
+  cursor: pointer;
+}
+
+.ss-toggle-btn--on {
+  background: var(--live, #22c55e);
+  border-color: var(--live, #22c55e);
+  color: #fff;
+}
+
+/* ===== SCHEDULE ===== */
+.ss-day-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.ss-day-row:last-child {
+  border-bottom: none;
+}
+
+.ss-day-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 130px;
+}
+
+.ss-day-chip {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid #ccc;
+  background: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.2s ease;
+}
+
+.ss-day-chip:hover {
+  background-color: #f0f0f0;
+}
+
+.ss-day-chip--on {
+  background-color: #111;
+  color: white;
+  border-color: #111;
+}
+
+.ss-day-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.ss-day-times {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ss-day-times input[type="time"],
+.ss-day-times select,
+.ss-max-bookings {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.ss-max-bookings {
+  width: 80px;
+}
+
+.ss-day-off {
+  font-size: 13px;
+  color: #bbb;
+}
+
+/* ===== FOOTER ===== */
+.ss-footer {
+  display: flex;
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.ss-btn-save {
+  flex: 1;
+  padding: 14px;
+  background: black;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.ss-btn-save:hover {
+  opacity: 0.85;
+}
+
+.ss-btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ss-btn-cancel {
+  padding: 14px 24px;
+  background: #f1f1f1;
+  color: #333;
+  border: 1.5px solid #ccc;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ss-btn-cancel:hover {
+  background: #e5e5e5;
+}
+
+
+.ss-cover-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ss-cover-grid .ss-cover-wrap {
+  height: 110px;
+  margin-bottom: 0;
+}
+
+.ss-worktype-grid {
+  display: flex;
+  gap: 12px;
+}
+
+.ss-worktype-card {
+  flex: 1;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1.5px solid #ccc;
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ss-worktype-card:hover {
+  background-color: #f0f0f0;
+}
+
+.ss-worktype-card--on {
+  background-color: #111;
+  color: white;
+  border-color: #111;
+}
+.header-btn:hover{
+    background:#ececec;
+}

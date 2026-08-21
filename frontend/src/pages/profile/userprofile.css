@@ -1,0 +1,417 @@
+.UserProfile{
+  width: 100%;
+  padding: 20px;
+  position: relative; /* anchors the back button */
+}
+
+.ProfileBackBtn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+}
+
+.header-btn{
+    width:35px;
+    height:35px;
+    border:none;
+    border-radius:50%;
+    background:#f5f5f5;
+    display: grid;
+    place-items: center;
+    cursor:pointer;
+    transition:.25s;
+}
+
+.header-btn:hover{
+    background:#ececec;
+}
+
+.UserProfileTophead{
+  display: block;
+}
+
+
+
+.UserProfileLeftCenter{
+  margin-top: 50px;
+  margin-bottom: 50px;
+  border:3px solid #ccc;
+  border-radius: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.UserProfileLeftCenter h5{
+  padding-left: 30px;
+}
+
+.Text{
+  font-size:large;
+  font-weight: bold;
+  margin-left: 50px;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+
+.UserProfileLeftCenter h5{
+  margin: 50px;
+}
+
+
+.UserProfileTopImg{
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #f0f0f0;
+  flex-shrink: 0;
+  display: block;
+  margin: 0 auto;
+}
+
+.Username{
+  font-size: 18px;
+  margin: 20px;
+  text-align: center;
+}
+
+.UserStats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex: 1;
+}
+
+.Bio {
+  font-size: 12px;
+  color: #555;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.HeaderButtons {
+  margin: 20px 0;
+  display: flex;
+  place-content: center;
+}
+
+.MessageBtn {
+  background: black;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.LikeBtn {
+  background: #be0505;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.liked {
+  background: #f1f1f1;
+  color: #333;
+  border: 1.5px solid #ccc;
+}
+
+.LikeBtn:hover {
+  opacity: 0.85;
+}
+
+.liked:hover {
+  background: #fee2e2;
+  border-color: #be0505;
+  color: #be0505;
+}
+
+.StatItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.StatLabel {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.StatNum {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.2;
+}
+
+.HeaderBottom{
+  display: flex;
+  justify-content: space-between;
+}
+
+.UserCity{
+  display: flex;
+  align-items: center;
+  
+  font-size: 12px;
+  color: rgb(81, 81, 81);
+  padding: 3px 10px;
+}
+
+.UserCity p{
+  padding-left: 4px;
+}
+
+.JoinDate{
+  font-size: 12px;
+  color: rgb(81, 81, 81);
+  padding: 3px 10px;
+}
+
+.line{
+  margin: 20px;
+}
+
+
+
+/* Right panel */
+.SetAccountTitle {
+  font-size: 14px;
+  font-weight: 700;
+  padding: 16px 0 10px;
+}
+
+.UserImg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.ProfileImgCircle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #eee;
+}
+
+.ProfileImgPreview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ProfileUsername {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+}
+
+.ChangeImg {
+  background: none;
+  border: 1px solid #ccc;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.FieldGrids {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 380px;
+  padding-right: 4px;
+}
+
+.FieldGrids::-webkit-scrollbar { width: 3px; }
+.FieldGrids::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+
+.Field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.Field label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.Field input,
+.Field select {
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  outline: none;
+  background: #fafafa;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* More section */
+.MoreSection {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.MoreItem {
+  font-size: 12px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  color: #333;
+  transition: background 0.15s;
+}
+
+.MoreItem:hover { background: #f5f5f5; }
+.MoreItem.danger { color: #c0392b; }
+.MoreItem.danger:hover { background: #fff0f0; }
+
+/* Save button */
+.SaveBtn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Swiper */
+.SlideImg {
+  width: 100%;
+  height: 40vh;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.NoFeatured {
+  font-size: 11px;
+  color: #aaa;
+  text-align: center;
+  line-height: 1.6;
+  padding: 12px;
+}
+
+/* Add to your existing userprofile.css — doesn't touch any current rules */
+
+.NotePanel {
+  margin: 4px 0 8px;
+  padding: 8px 10px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.NoteTextarea {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.NoteHint {
+  font-size: 11px;
+  color: #999;
+  margin: 6px 0 0;
+}
+
+.HistoryPanel {
+  margin: 4px 0 8px;
+  padding: 8px 10px;
+  background: #fafafa;
+  border-radius: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.HistoryEmpty {
+  font-size: 12px;
+  color: #999;
+  margin: 4px 0;
+}
+
+.HistoryItem {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.HistoryItem:last-child {
+  border-bottom: none;
+}
+
+.HistoryItemTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.HistoryItemServices {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.HistoryItemStatus {
+  font-size: 10px;
+  text-transform: capitalize;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.HistoryItemStatus--pending {
+  background: #fff4d6;
+  color: #8a6d00;
+}
+
+.HistoryItemStatus--confirmed {
+  background: #dcf5e3;
+  color: #1a7a3c;
+}
+
+.HistoryItemStatus--completed {
+  background: #e0e7ff;
+  color: #3a3fa0;
+}
+
+.HistoryItemStatus--cancelled {
+  background: #fbe1e1;
+  color: #a12d2d;
+}
+
+.HistoryItemMeta {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.MoreItemSuccess {
+  color: #1a7a3c;
+  font-size: 11px;
+  font-weight: 600;
+}

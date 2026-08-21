@@ -1,0 +1,44 @@
+.Feed {
+  flex: 5.5;
+}
+
+ 
+.StickyTab{
+  position: sticky;
+  top: 13%;
+  z-index: 10;
+  background: white;
+}
+
+.FeedTabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 10px;
+  background: white;
+}
+ 
+.FeedTab {
+  flex: 1;
+  text-align: center;
+  padding: 14px 0;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #555;
+  transition: color 0.2s ease;
+  border-bottom: 3px solid transparent;
+}
+ 
+.FeedTab:hover {
+  background-color: #f5f5f5;
+  color: #000;
+}
+ 
+.FeedTab.active {
+  color: #be0505;
+  border-bottom: 3px solid #be0505;
+}
+ 
+.FeedPosts {
+  padding-top: 5px;
+}

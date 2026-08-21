@@ -1,0 +1,330 @@
+.Share{
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px auto;
+    background: #fff;
+    width: 75%;
+}
+
+.ShareWrapper{
+    padding: 14px 16px;
+    width: 100%;
+}
+
+.ShareHeader{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.ShareHeaderTitle{
+    font-size: 15px;
+    font-weight: 600;
+    color: #1c1c1f;
+}
+
+.ShareHeaderButton{
+    border: none;
+    background: #000000;
+    color: #fff;
+    padding: 6px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ShareHeaderButton:hover{
+    opacity: 0.9;
+}
+
+.ShareHeaderButton:disabled{
+    opacity: 0.5;
+    cursor: default;
+}
+
+.ShareTop{
+    display: flex;
+    align-items: center;
+}
+
+.ShareProfileImg{
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.ShareInput{
+    border: none;
+    width: 100%;
+    font-size: 14px;
+}
+
+.ShareInput:focus{
+    outline: none;
+}
+
+.Share hr{
+    margin: 14px 0;
+    border: none;
+    border-top: 1px solid #ececf1;
+}
+
+.ShareChips{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.ShareChip{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f1edff;
+    color: #5c3fd1;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 8px;
+    border-radius: 50px;
+    white-space: nowrap;
+}
+
+.ShareChipIcon{
+    font-size: 13px;
+}
+
+.ShareChipClose{
+    font-size: 13px;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.ShareChipClose:hover{
+    opacity: 1;
+}
+
+.SharePreviewGrid{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.SharePreviewItem{
+    position: relative;
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+}
+
+.SharePreviewImg{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.SharePreviewRemove{
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ff3b30;
+    color: #fff;
+    border: 2px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.ShareOptions{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.shareOption{
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 50px;
+    transition: background 0.15s ease;
+}
+
+.shareOption:hover{
+    background: #f5f4fa;
+}
+
+.shareOptionActive{
+    background: #f1edff;
+}
+
+.shareOptionActive .ShareOptiontext,
+.shareOptionActive .ShareIcon{
+    color: #5c3fd1;
+}
+
+.ShareIcon{
+    font-size: 16px;
+    margin-right: 5px;
+    color: #8a8a93;
+}
+
+.ShareOptiontext{
+    font-size: 13px;
+    font-weight: 500;
+    color: #1c1c1f;
+}
+
+.ShareTagSearching {
+    font-size: 13px;
+    color: #8a8a8a;
+    padding: 6px 0;
+}
+
+.ShareTagResults {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-top: 6px;
+}
+
+.ShareTagResultItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.ShareTagResultItem:hover {
+    background: #f5f5f5;
+}
+
+.ShareTagResultImg {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.ShareTagResultType {
+    margin-left: auto;
+    font-size: 11px;
+    color: #a0a0a0;
+    text-transform: uppercase;
+}
+
+/* Inline panel — lives in normal flow, so it can never overlap anything */
+.SharePanel{
+    margin-top: 10px;
+    padding: 12px;
+    background: #faf9ff;
+    border: 1px solid #ececf1;
+    border-radius: 10px;
+}
+
+.SharePanelTitle{
+    font-size: 11px;
+    font-weight: 600;
+    color: #8a8a93;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.SharePanelRow{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.SharePanelInput{
+    flex: 1;
+    min-width: 160px;
+    border: 1px solid #e6e6eb;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    background: #fff;
+}
+
+.SharePanelInput:focus{
+    outline: none;
+    border-color: #7b5cff;
+}
+
+
+.SharePanelGeoBtn{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #e6e6eb;
+    background: #fff;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #1c1c1f;
+    white-space: nowrap;
+}
+
+.SharePanelGeoBtn:hover{
+    background: #f5f4fa;
+}
+
+.SharePanelChips{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.ShareFeelingsGrid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px;
+}
+
+.ShareFeelingOption{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    background: #fff;
+    border: 1px solid #ececf1;
+}
+
+.ShareFeelingOption:hover{
+    background: #f5f4fa;
+}
+
+.ShareFeelingOptionActive{
+    background: #f1edff;
+    border-color: #d9cfff;
+    color: #5c3fd1;
+    font-weight: 600;
+}
+
+.ShareFeelingEmoji{
+    font-size: 16px;
+}

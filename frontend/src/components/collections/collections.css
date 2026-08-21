@@ -1,0 +1,119 @@
+/* Collection */
+.CollectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+}
+
+.CollectionTitle {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.UploadBtn {
+  background: #111;
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.EmptyCollection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60%;
+  gap: 8px;
+  cursor: pointer;
+  color: #aaa;
+  text-align: center;
+  border: 2px dashed #ddd;
+  border-radius: 12px;
+  margin: 16px;
+  padding: 40px;
+}
+
+.EmptyIcon { font-size: 36px; }
+.EmptyCollection p { font-size: 14px; font-weight: 500; color: #555; margin: 0; }
+.EmptyCollection span { font-size: 11px; color: #aaa; }
+
+.CollectionGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+  padding: 0 16px 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 100px);
+}
+
+.CollectionItem {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  min-width: 0;
+  height: 100%;
+  aspect-ratio: 1;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.CollectionItem.featured {
+  border-color: #6366f1;
+}
+
+.CollectionImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.CollectionOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 10px;
+  text-align: center;
+  padding: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.CollectionItem:hover .CollectionOverlay,
+.CollectionItem.featured .CollectionOverlay {
+  opacity: 1;
+}
+
+.collectionBackBtn{
+    width:35px;
+    height:35px;
+    border:none;
+    border-radius:50%;
+    background:#f5f5f5;
+    cursor:pointer;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    transition:.25s;
+}
+
+.collectionBackBtn:hover{
+    background:#ececec;
+}
+
+.btnAndText{
+    display: flex;
+    align-items: center;
+}
+
+.btnAndText h4{
+    margin-left: 10px;
+}

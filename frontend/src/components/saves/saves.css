@@ -1,0 +1,47 @@
+.SavesPage {
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+.SavesHeader {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.SavesHeader .saveBackbtn {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.SavesTitle {
+  grid-column: 2;
+  justify-self: center;
+  font-size: 20px;
+  margin: 0;
+}
+
+.SavesEmpty {
+  color: #8a8a8a;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.saveBackbtn{
+    width:35px;
+    height:35px;
+    border:none;
+    border-radius:50%;
+    background:#f5f5f5;
+    display: grid;
+    place-items: center;
+    cursor:pointer;
+    transition:.25s;
+}
+
+.saveBackbtn:hover{
+    background:#ececec;
+}

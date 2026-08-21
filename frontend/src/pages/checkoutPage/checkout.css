@@ -1,0 +1,208 @@
+.CheckoutWrapper{
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+}
+
+.CheckoutLeft{
+    width: 100%;
+    height: auto;
+    flex: 5;
+    margin: 10px;
+    padding: 40px;
+    background-color: rgba(240, 248, 255, 0.188);
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+
+.DetailsHeader, .LocationHeader{
+  margin: 10px;
+}
+
+.InputWrapper{
+    margin: 10px;
+}
+
+.InputWrapper label{
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.InputWrapper input,
+.InputWrapper textarea{
+    margin: 10px 0 10px 20px;
+    width: 80%;
+    padding: 10px;
+    cursor: pointer;
+    background-color: rgba(110, 110, 110, 0.034);
+    border: 0px;
+    border-radius: 5px;
+    resize: none;
+}
+
+.Date{
+    display: flex;
+    gap: 50px;
+}
+
+
+.Location{
+    margin-top: 10%;
+    padding: 10px;
+}
+
+
+
+.CheckoutRight{
+    width: 100%;
+    height: auto;
+    flex: 5;
+    margin: 2px;
+    padding: 8px;
+    border-radius: 10px;
+}
+
+.SummaryCard{
+    border: 3px inset rgba(38, 37, 37, 0.614);
+    border-radius: 6px;
+    padding: 10px;
+    background-color: rgb(227, 227, 227);
+    color: rgba(0, 0, 0, 0.851);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+}
+
+.SelectBarber {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin: 8px;
+}
+.SelectBarber img{
+    border: 3px solid rgba(31, 31, 31, 0.673);
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+}
+
+.CartItem{
+    border: 2px solid white;
+    border-radius: 10px;
+}
+
+.ServiceName{
+ font-size: 20px;
+ margin-bottom: 3px;
+ font-weight: 600;
+}
+
+.Desc{
+ font-weight: 500;
+ margin-top: 20px;
+}
+
+.SummaryCard p{
+    font-weight: 500;
+}
+.SummaryName{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+.SummaryTime{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+.City{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.Description{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.TransportFee{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.BackBtn{
+    border:none;
+    background:none;
+    cursor:pointer;
+    font-size:16px;
+    margin:20px;
+}
+
+.SummarySection{
+    padding:18px 0;
+    border-bottom:1px solid #ececec;
+}
+
+.SummaryItem{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:12px 0;
+}
+
+.SummaryRow{
+    display:flex;
+    justify-content:space-between;
+    margin:10px 0;
+}
+
+.TotalCost{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:20px;
+    font-weight:bold;
+}
+
+.PaymentMethod{
+    margin-top:20px;
+    padding:20px;
+    border-radius:12px;
+    background:#fff;
+}
+
+.PaymentOption{
+    display:flex;
+    gap:10px;
+    margin:15px 0;
+    cursor:pointer;
+}
+
+.CheckoutBtn{
+    width:100%;
+    margin-top:20px;
+}
+
+.checkOutbtn{
+    width:45px;
+    height:45px;
+    border:none;
+    border-radius:50%;
+    background:#f5f5f5;
+    cursor:pointer;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    transition:.25s;
+}
+
+.checkOutbtn:hover{
+    background:#ececec;
+}

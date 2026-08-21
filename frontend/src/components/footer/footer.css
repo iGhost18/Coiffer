@@ -1,0 +1,97 @@
+.Footer{
+    width: 100%;
+    color: #fff;
+    background-color: #111;
+}
+
+.FooterTop{
+    display: flex;
+    padding: 30px;
+}
+
+.FooterRight{
+ width: 100%;
+}
+
+.FooterRight img{
+ width: 20%;
+}
+
+.FooterRight h5{
+ font-size: 12px;
+ font-weight: 300;
+}
+
+.FooterRight .icons{
+    margin: 20px;
+    width: 50px;
+    height: 25px;
+}
+
+.FooterLeft{
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+}
+
+
+.QuickLinks h3{
+    font-size: 15px;
+}
+
+.QuickLinks li{
+    padding: 10px;
+    font-size: 15px;
+    list-style: none;
+    cursor: pointer;
+}
+
+.BusinessHour{
+    width: 30%;
+}
+
+.BusinessHour h3{
+    font-size: 15px;
+}
+
+.BusinessHourList{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+.BusinessHour h6{
+    font-size: 12px;
+}
+
+
+.Information h3{
+ margin-bottom: 5px;
+ margin-top: -6px;
+ font-size: 15px;
+}
+
+.InfoList{
+    padding: 5px;
+    display: flex;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.Footer hr{
+    margin: 30px;
+}
+
+.FooterBottom{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0px 50px 15px;
+}
+
+
+
+.FooterBottomB b{
+  padding: 20px;
+}
