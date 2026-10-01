@@ -32,7 +32,7 @@ const bookingPayoutRoutes = require("./routes/bookingPayout");
 
 
 const rateLimit = require("./middleware/rateLimit");
-const { initializeSocket } = require("../socket");
+const { initializeSocket } = require("./socket");
 
 const cron = require("node-cron");
 const { runAutoReleaseSweep } = require("./jobs/autoReleasePayouts");

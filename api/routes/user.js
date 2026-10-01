@@ -7,7 +7,7 @@ const bcrypt = require("bcrypt");
 const Notification = require("../models/notification");
 const validate = require("../middleware/validate");
 const { updateUserProfileSchema } = require("../validation/profileSchemas");
-const { sendNotification } = require("../../socket/index");
+const { sendNotification } = require("../socket/index");
 
 const escapeRegex = (value) =>
   String(value ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
