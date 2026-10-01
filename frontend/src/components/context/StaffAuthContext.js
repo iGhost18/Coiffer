@@ -1,6 +1,7 @@
 import axios from "axios";
 import { reconnectSocket } from "../../socket";
 import { createContext, useReducer, useEffect } from "react";
+import { subscribeToPush } from "../../push"
 
 axios.defaults.baseURL = process.env.REACT_APP_API_URL || "";
 
@@ -67,6 +68,10 @@ export const StaffAuthContextProvider = ({ children }) => {
             axios.defaults.headers.common.Authorization =
                 `Bearer ${state.staff.accessToken}`;
             reconnectSocket();
+
+            subscribeToPush().catch((err) =>
+                console.error("Push subscription failed:", err)
+            );
         } else if (
             !JSON.parse(localStorage.getItem("user") || "null")?.accessToken
         ) {

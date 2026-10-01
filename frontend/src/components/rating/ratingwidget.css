@@ -1,0 +1,170 @@
+.RatingWidget {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: #ffffff;
+  border: 1px solid #e3e6ea;
+  border-radius: 12px;
+  padding: 20px 22px;
+  box-shadow: 0 1px 3px rgba(20, 24, 30, 0.04);
+}
+
+.RatingWidget--locked {
+  background: #f5f6f8;
+  border-style: dashed;
+}
+
+/* ---- Stars ---- */
+
+.RatingStarsRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.RatingStars {
+  display: flex;
+  gap: 6px;
+}
+
+.RatingStar {
+  font-size: 30px;
+  line-height: 1;
+  color: #e3e6ea;
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.12s ease;
+  user-select: none;
+}
+
+.RatingStar:hover {
+  transform: scale(1.12);
+}
+
+.RatingStar.filled {
+  color: #d98e3b;
+  text-shadow: 0 1px 2px rgba(217, 142, 59, 0.25);
+}
+
+.RatingStar.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.RatingScoreLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #d98e3b;
+  background: #fbf0e0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+}
+
+.RatingLoginLink {
+  color: #2c6e68;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ---- Review textarea ---- */
+
+.RatingReviewWrap {
+  position: relative;
+}
+
+.RatingReviewInput {
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 14px;
+  border: 1px solid #e3e6ea;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #1b2430;
+  background: #fafbfc;
+  resize: vertical;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.RatingReviewInput::placeholder {
+  color: #a7adb8;
+}
+
+.RatingReviewInput:focus {
+  outline: none;
+  border-color: #2c6e68;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(44, 110, 104, 0.12);
+}
+
+.RatingCharCount {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 10.5px;
+  color: #a7adb8;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+/* ---- Footer ---- */
+
+.RatingFooterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.RatingSavedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #2c6e68;
+  background: #e3f0ee;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+.RatingUnsavedHint {
+  font-size: 12px;
+  color: #a7adb8;
+  font-style: italic;
+}
+
+.RatingJustSaved {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #2c6e68;
+  animation: ratingFadeIn 0.2s ease;
+}
+
+@keyframes ratingFadeIn {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Locked state ---- */
+
+.RatingHint {
+  margin: 0;
+  font-size: 13px;
+  color: #697180;
+}
+
+@media (max-width: 480px) {
+  .RatingWidget {
+    padding: 16px;
+  }
+
+  .RatingStar {
+    font-size: 26px;
+  }
+}

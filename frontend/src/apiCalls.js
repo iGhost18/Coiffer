@@ -1,15 +1,14 @@
-import axios from "axios";
-
-
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || "";
+import api from "./api"; 
 
 export const loginCall = async (userCredential, dispatch) => {
     dispatch({ type: "LOGIN_START" });
     try {
-        const res = await axios.post("/api/auth/login", userCredential);
-        dispatch({ type: "LOGIN_SUCCESS", payload: res.data });
-    }catch (err) {
+        const res = await api.post("/api/auth/login", userCredential);
+        dispatch({
+            type: "LOGIN_SUCCESS",
+            payload: { ...res.data.user, accessToken: res.data.accessToken },
+        });
+    } catch (err) {
         dispatch({ type: "LOGIN_FAILURE", payload: err });
     }
 };
-

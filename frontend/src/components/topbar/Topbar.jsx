@@ -3,6 +3,7 @@ import HomeFilledIcon from '@mui/icons-material/HomeFilled';
 import CollectionsIcon from '@mui/icons-material/Collections';
 import MailIcon from '@mui/icons-material/Mail';
 import CircleNotificationsIcon from '@mui/icons-material/CircleNotifications';
+import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import Menu from "../../components/menu/Menu";
 import api from "../../api";
 import socket from "../../socket";
@@ -18,12 +19,12 @@ export default function Topbar() {
     const {staff} = useContext(StaffAuthContext);
     const PF = process.env.REACT_APP_PUBLIC_FOLDER;
 
-    const currentUser = user || staff;
+    const currentUser = user || staff;   
 
 
     const [notificationCount, setNotificationCount] = useState(0);
     const [messageCount, setMessageCount] = useState(0);
-    const [postCount] = useState(0);
+    const [postCount, setPostCount] = useState(0);
 
 
     useEffect(() => {
@@ -34,56 +35,86 @@ export default function Topbar() {
     useEffect(() => {
         const handleNotification = (notification) => {
             setNotificationCount((prev) => prev + 1);
+        };
 
-            if (notification.type === "message") {
+        // Don't bump the badge for a message that arrives while the user
+        // is already sitting inside /messenger with the chat open — they're
+        // actively seeing it, so it isn't "unread" from the topbar's
+        // point of view.
+        const handleIncomingMessage = () => {
+            if (window.location.pathname === "/messenger") return;
             setMessageCount((prev) => prev + 1);
-            }
         };
 
         socket.on("getNotification", handleNotification);
+        socket.on("getMessage", handleIncomingMessage);
 
         return () => {
             socket.off("getNotification", handleNotification);
+            socket.off("getMessage", handleIncomingMessage);
         };
     }, []);
 
+    
     useEffect(() => {
-
         if (!currentUser?._id) return;
 
-        const fetchNotifications = async () => {
+        const fetchPostCount = async () => {
             try {
                 const res = await api.get(
-                    "/api/notification/" + currentUser._id
+                    `/api/post/count/${currentUser._id}`
                 );
-
-                const notifications = Array.isArray(res.data)
-                    ? res.data
-                    : [];
-
-                const unread = notifications.filter(
-                    (n) => !n.isRead
-                );
-
-                setMessageCount(
-                    unread.filter(
-                        (n) => n.type === "message"
-                    ).length
-                );
-
+                setPostCount(res.data.count);
             } catch (err) {
-                console.log("Failed to fetch notifications:", err);
+                console.log("Failed to fetch post count:", err);
             }
         };
 
-        fetchNotifications();
+        fetchPostCount();
+    }, [currentUser]);
 
+
+    useEffect(() => {
+        if (!currentUser?._id) return;
+
+        const fetchUnreadMessageCount = async () => {
+            try {
+                const res = await api.get(
+                    `/api/message/unread/${currentUser._id}`
+                );
+
+                setMessageCount(res.data.count);
+            } catch (err) {
+                console.log(
+                    "Failed to fetch unread message count:",
+                    err
+                );
+            }
+        };
+
+        // Initial count
+        fetchUnreadMessageCount();
+
+        // Messenger tells Topbar when messages have been read
+        const handleMessagesRead = () => {
+            fetchUnreadMessageCount();
+        };
+
+        window.addEventListener(
+            "messagesRead",
+            handleMessagesRead
+        );
+
+        return () => {
+            window.removeEventListener(
+                "messagesRead",
+                handleMessagesRead
+            );
+        };
     }, [currentUser]);
 
     useEffect(() => {
-        if (!(user || staff)) return;
-
-        const currentUser = user || staff;
+        if (!currentUser?._id) return;
 
         const loadBadges = async () => {
             try {
@@ -125,7 +156,16 @@ export default function Topbar() {
                             <HomeFilledIcon/>
                         </div>
                     </Link>
-                    <Link to="/feed">
+
+                    <Link
+                        to="/feed"
+                        onClick={() => {
+                            setPostCount(0);
+                            if (currentUser?._id) {
+                                api.put(`/api/post/mark-viewed/${currentUser._id}`).catch(console.error);
+                            }
+                        }}
+                    >
                         <div className='TopbarIconItem'>
                             <CollectionsIcon/>
                             {postCount > 0 && (
@@ -135,7 +175,8 @@ export default function Topbar() {
                             )}
                         </div>
                     </Link>
-                    <Link to="/messenger">
+
+                    <Link to="/messenger" onClick={() => setMessageCount(0)}>
                         <div className='TopbarIconItem'>
                             <MailIcon/>
                             {messageCount > 0 && (
@@ -145,6 +186,13 @@ export default function Topbar() {
                             )}
                         </div>
                     </Link>
+                        
+                    <Link to="/store">
+                        <div className='TopbarIconItem'>
+                            <StorefrontRoundedIcon />
+                        </div>
+                    </Link>
+                                    
                     <Link to="/notification"  onClick={() => setNotificationCount(0)}>
                         <div className='TopbarIconItem'>
                             <CircleNotificationsIcon/>
@@ -159,23 +207,25 @@ export default function Topbar() {
             </div>
            
         </div>
-        <Link
-           to={
-                user
-                ? `/userprofile/${user.username}`
-                : staff
-                ? `/staffprofile/${staff._id}`
-                : "/login"
-            }
-            className="TopbarRight"
-            >
-           <img
-                src={getImage(currentUser?.profilePicture)}
-                alt=""
-                className="TopbarImg"
-            />
-        </Link>
-        <Menu />
+        <div className="TopbarRightGroup">
+            <Link
+                to={
+                    user?.username
+                    ? `/userprofile/${user.username}`
+                    : staff?._id
+                    ? `/staffprofile/${staff._id}`
+                    : "/login"
+                }
+                className="TopbarRight"
+                >
+            <img
+                    src={getImage(currentUser?.profilePicture)}
+                    alt=""
+                    className="TopbarImg"
+                />
+            </Link>
+            <Menu />
+        </div>
     </div>
   )
 }

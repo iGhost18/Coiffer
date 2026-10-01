@@ -1,5 +1,6 @@
 .ServiceBody{
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   padding: 20px;
   gap: 20px;
@@ -24,6 +25,7 @@
 
 .CutDetails{
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     min-height: 180px;  
 }
@@ -58,6 +60,8 @@
 
 .CutCardPandD{
     display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
     align-items: center;
     justify-content: space-between;
     padding: 0 30px;
@@ -87,6 +91,14 @@
     display: block;
 }
 
+.CutCardStaffActions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+  margin-right: 5px;
+  margin-bottom: 5px;
+  margin-top: auto;
+}
 
 .CutCardButton:hover{
     background-color: #666;
@@ -125,4 +137,63 @@
 
 .SRVDTbtn:hover{
     background:#ececec;
+}
+
+
+.editBtn,
+.deleteBtn{
+    padding: 5px 16px;
+    border-radius: 50px;
+    font-weight: 500;
+    font-size: 13px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.editBtn{
+    background-color: #111;
+    color: #fff;
+}
+
+.editBtn:hover{
+    background-color: #444;
+    transform: scale(0.9);
+}
+
+.deleteBtn{
+    background-color: #be0505;
+    color: #fff;
+}
+
+.deleteBtn:hover{
+    background-color: #8a0303;
+    transform: scale(0.9);
+}
+
+@media (max-width: 900px) {
+  .CutCardContainer {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .CutDetails img {
+    width: 110px;
+    margin: 10px;
+  }
+
+  .CutCardHeader {
+    font-size: 17px;
+    margin-left: 10px;
+  }
+
+  .CutCardWriteUp {
+    padding: 8px 10px;
+  }
+
+  .CutCardPandD {
+    padding: 0 12px;
+  }
 }

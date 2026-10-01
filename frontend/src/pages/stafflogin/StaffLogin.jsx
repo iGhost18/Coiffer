@@ -1,6 +1,6 @@
 import "./staffLogin.css";
 import { useState, useContext } from "react";
-import axios from "axios";
+import api from "../../api"; 
 import { useNavigate } from "react-router-dom";
 import { StaffAuthContext } from "../../components/context/StaffAuthContext";
 
@@ -18,7 +18,7 @@ export default function StaffLogin() {
     dispatch({type:"LOGIN_START"});
 
     try{
-      const res = await axios.post(
+      const res = await api.post(
         "/api/auth/staff/login",
         { identifier , password }
       );
@@ -26,7 +26,10 @@ export default function StaffLogin() {
       
       dispatch({
         type:"LOGIN_SUCCESS",
-        payload:res.data
+        payload: {
+          ...res.data.staff,       
+          accessToken: res.data.accessToken,   
+        },
       });
 
 
@@ -53,7 +56,8 @@ export default function StaffLogin() {
       <video autoPlay muted loop playsInline className="bg-video">
         <source src="assets/logomotion.mp4"  type="video/mp4" />
       </video>
-      <h2>Staff Login</h2>
+      <div className="overlay"></div> 
+      <h2>Expert Login</h2>
       <form onSubmit={handleSubmit}>
         <input
           type="text"
@@ -74,7 +78,7 @@ export default function StaffLogin() {
         </div>
         <button type="submit" className="primary-btn">Login</button>
         <div className="barber-link">
-         <span> New staff?</span> <a href="/invite">Register with invite →</a>
+         <span> New Expert?</span> <a href="/invite">Register with invite →</a>
         </div>
       </form>
       {error && <p className="form-message error">{error}</p>}

@@ -146,6 +146,22 @@
   background: var(--schedule-order);
 }
 
+.EstimatedDelivery {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 15px;
+  margin-top: 10px;
+  border-radius: 8px;
+  background: #f7f7f7;
+  font-size: 14px;
+}
+
+.EstimatedDelivery span {
+  font-weight: 600;
+}
+
 .schedule-card-body {
   padding: 12px 16px;
 }
@@ -153,6 +169,7 @@
 .schedule-card-top {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 6px;
 }
@@ -264,6 +281,8 @@
 .schedule-card-contact {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
   font-size: 12px;
   color: var(--schedule-muted);
   background: var(--schedule-bg);
@@ -325,6 +344,20 @@
 
   .schedule-card-time {
     font-size: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  .schedule-card {
+    grid-template-columns: 44px 3px 1fr;
+  }
+
+  .schedule-card-body {
+    padding: 10px 12px;
+  }
+
+  .schedule-card-main-title {
+    font-size: 14px;
   }
 }
 

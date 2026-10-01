@@ -8,10 +8,12 @@ import { StaffAuthContext } from '../context/StaffAuthContext';
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
+import api from "../../api"; 
 
 export default function Services({ staffId }) {
   const { staff } = useContext(StaffAuthContext);
   const [services, setServices] = useState([])
+  const [editingId, setEditingId] = useState(null); 
 
   useEffect(() => {
     if (!staffId) return;
@@ -44,73 +46,132 @@ export default function Services({ staffId }) {
       setNewService((prev) => ({ ...prev, img: previewUrl, file }))
     }
   }
+  const handleEditClick = (service) => {
+    setEditingId(service._id);
+    setNewService({
+      label: service.label,
+      img: service.img,
+      file: null,
+    });
+    setShowForm(true);
+  };
+
+  const handleDeleteService = async (id) => {
+    if (!window.confirm("Delete this service?")) return;
+
+    try {
+      await api.delete(`/api/services/${id}`);
+      setServices((prev) => prev.filter((s) => s._id !== id));
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data || "Failed to delete service.");
+    }
+  };
 
   const handleAddService = async (e) => {
     e.preventDefault()
     if (!newService.label.trim() || !newService.img) return
 
     try {
-      const formData = new FormData()
-      formData.append('file', newService.file)
+      let url = newService.img;
 
-      const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
-      if (!uploadRes.ok) throw new Error('Upload failed')
-      const { url } = await uploadRes.json()
+      // only upload a new image if the user picked a new file
+      if (newService.file) {
+        const formData = new FormData()
+        formData.append('file', newService.file)
+        const uploadRes = await api.post('/api/upload', formData)
+        url = uploadRes.data.url;
+      }
 
-      const res = await fetch('/api/services', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          label: newService.label,
-          img: url,
-          staffId: staff._id,   // <-- attach the logged-in staff
-        }),
-      })
+      const payload = {
+        label: newService.label,
+        img: url,
+        staffId: staff._id,
+      };
 
-      if (!res.ok) throw new Error('Failed to save service')
-      const saved = await res.json()
+      if (editingId) {
+        const res = await api.put(`/api/services/${editingId}`, payload);
+        const updated = res.data;
+        setServices((prev) => prev.map((s) => (s._id === editingId ? updated : s)));
+      } else {
+        const res = await api.post('/api/services', payload);
+        const saved = res.data;
+        setServices((prev) => [...prev, saved]);
+      }
 
-      URL.revokeObjectURL(newService.img) // Clean up the preview URL
-      setServices((prev) => [...prev, saved])
+      if (newService.file) URL.revokeObjectURL(newService.img);
       setNewService({ img: '', label: '' })
+      setEditingId(null);
       setShowForm(false)
     } catch (err) {
       console.error(err)
+      alert(err.response?.data || "Failed to save service.");
     }
   }
 
   return (
     <div className="serviceWrapper">
       <div className="serviceHeader">
-        {staff?._id === staffId && (
+        {staff?._id === staffId && !staff?.isAdmin && (
           <button className="addServiceBtn" onClick={() => setShowForm(true)}>
             + Add Service
           </button>
+        )}
+
+        {staff?._id === staffId && staff?.isAdmin && (
+          <Link to="/dashboard" className="dashboardBtn">
+            Dashboard
+          </Link>
         )}
       </div>
 
       <Swiper
         modules={[Navigation, Pagination]}
-        spaceBetween={20}
+        spaceBetween={16}
         loop={false}
-        slidesPerView={3}
-        navigation
-        pagination={{ clickable: true }}
+        slidesPerView={1.2}    
         breakpoints={{
-          640: { slidesPerView: 2 },
-          1024: { slidesPerView: 3 },
+          500: { slidesPerView: 1.5, spaceBetween: 16 },
+          768: { slidesPerView: 2, spaceBetween: 20 },
+          1024: { slidesPerView: 3, spaceBetween: 20 },
         }}
       >
-        {services.map((service) => (
-          <SwiperSlide key={service._id}>
-            <Link to={`/servicedetail/${service._id}`} className="serviceCard">
-              <div className="serviceBox">
-                <img src={service.img} alt={service.label} />
-                <span>{service.label}</span>
-              </div>
-            </Link>
-          </SwiperSlide>
-        ))}
+      {services.map((service) => (
+        <SwiperSlide key={service._id}>
+          <Link to={`/servicedetail/${service._id}`} className="serviceCard">
+            <div className="serviceBox">
+              <img src={service.img} alt={service.label} />
+              <span>{service.label}</span>
+
+              {staff?._id === staffId && (
+                <div
+                  className="serviceCardStaffActions"
+                  onClick={(e) => e.preventDefault()} // don't navigate when clicking these
+                >
+                  <button
+                    className="editServiceBtn"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleEditClick(service);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="deleteServiceBtn"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDeleteService(service._id);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          </Link>
+        </SwiperSlide>
+      ))}
       </Swiper>
 
       {showForm && (
@@ -140,16 +201,17 @@ export default function Services({ staffId }) {
               )}
 
               <div className="modalActions">
-              <button type="button" className="cancelBtn" onClick={() => {
-                if (newService.img) URL.revokeObjectURL(newService.img);
-                setNewService({ img: '', label: '' });
-                setShowForm(false);
-              }}>
-                Cancel
-              </button>
-              <button type="submit" className="submitBtn">
-                Save Service
-              </button>
+                <button type="button" className="cancelBtn" onClick={() => {
+                  if (newService.file && newService.img) URL.revokeObjectURL(newService.img);
+                  setNewService({ img: '', label: '' });
+                  setEditingId(null);
+                  setShowForm(false);
+                }}>
+                  Cancel
+                </button>
+                <button type="submit" className="submitBtn">
+                  Save Service
+                </button>
               </div>
             </form>
           </div>

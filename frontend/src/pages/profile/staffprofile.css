@@ -40,6 +40,7 @@
   align-items: center;
   gap: 0;
   padding: 30px 0 40px;
+  flex-wrap: wrap;
 }
 
 .StaffGallery img {
@@ -76,6 +77,7 @@
 /* ===== HEADER ===== */
 .ProfileHeader {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   margin-top: 20px;
   gap: 15px;
@@ -102,8 +104,9 @@
 }
 
 .HeaderButtons {
-  margin-left: 55%;
+  margin-left: auto;
   display: flex;
+  flex-wrap: wrap;
   gap: 20px;
 }
 .MessageBtn {
@@ -148,6 +151,7 @@
 /* ===== STATS ===== */
 .Stats {
   display: flex;
+  fex-wrap: wrap;
   justify-content: space-around;
   margin: 20px 0;
 }
@@ -159,6 +163,7 @@
 /* ===== LOCATION ===== */
 .LocationRow {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   font-size: 15px;
   color: gray;
@@ -167,12 +172,13 @@
 /* ===== INFO CARDS ===== */
 .InfoCards {
   display: flex;
+  flex-wrap: wrap;
   gap: 30px;
   margin: 15px 0  80px;
 }
 
 .InfoCard {
-  flex: 1;
+  flex: 1 1 160px;
   padding: 12px;
   background: #f7f7f7;
   border-radius: 10px;
@@ -335,7 +341,7 @@
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  margin: 50px;
+  margin: 20px 0;
 }
 
 .Card:hover {
@@ -427,3 +433,74 @@
     cursor:pointer;
     z-index:10;
 }
+
+
+@media (max-width: 900px) {
+  .StaffGallery img {
+    width: 220px;
+    height: 190px;
+  }
+
+  .StaffGallery .centerImg {
+    width: 200px;
+    height: 220px;
+    margin-top: -20px;
+    margin-bottom: -20px;
+  }
+}
+
+@media (max-width: 500px) {
+  .StaffGallery {
+    flex-direction: column;
+  }
+
+  .StaffGallery img,
+  .StaffGallery img:first-child,
+  .StaffGallery img:last-child {
+    width: 100%;
+    max-width: 320px;
+    height: 220px;
+    margin: 0;
+  }
+
+  .StaffGallery .centerImg {
+    width: 100%;
+    max-width: 320px;
+    height: 240px;
+    margin: 0;
+    order: -1;   /* main photo shows first when stacked */
+  }
+}
+
+@media (max-width: 700px) {
+  .ProfileHeader {
+    padding: 20px;
+  }
+
+  .HeaderButtons {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .LocationRow {
+    flex-direction: column;
+  }
+
+  .TimeSlotRow {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .MessageBtn,
+  .FollowBtn {
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+}
+

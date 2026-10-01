@@ -1,7 +1,7 @@
 .UserProfile{
   width: 100%;
   padding: 20px;
-  position: relative; /* anchors the back button */
+  position: relative; 
 }
 
 .ProfileBackBtn {
@@ -81,6 +81,7 @@
   justify-content: center;
   gap: 30px;
   flex: 1;
+  flex-wrap: wrap;
 }
 
 .Bio {
@@ -94,6 +95,8 @@
   margin: 20px 0;
   display: flex;
   place-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .MessageBtn {
@@ -414,4 +417,31 @@
   color: #1a7a3c;
   font-size: 11px;
   font-weight: 600;
+}
+
+
+@media (max-width: 768px) {
+  .FieldGrids {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+@media (max-width: 500px) {
+  .UserProfile {
+    padding-top: 60px; 
+  }
+}
+
+@media (max-width: 480px) {
+  .HeaderBottom {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 400px) {
+  .UserStats { gap: 18px; }
+  .MessageBtn, .LikeBtn { padding: 10px 20px; font-size: 13px; }
 }

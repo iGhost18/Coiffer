@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./login.css"; // adjust path to wherever login.css lives
-import axios from "axios";
+import api from "../../api";
 import CircularProgress from "@mui/material/CircularProgress";
 
 export default function ForgotPassword({ role = "user" }) {
@@ -19,7 +19,7 @@ export default function ForgotPassword({ role = "user" }) {
     setMessage("");
     setLoading(true);
     try {
-      const res = await axios.post(endpoint, { email });
+      const res = await api.post(endpoint, { email });
       setMessage(res.data?.message || res.data);
     } catch (err) {
       setError(err.response?.data?.message || (typeof err.response?.data === "string" ? err.response.data : "Something went wrong."));

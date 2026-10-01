@@ -1,0 +1,101 @@
+.delivery-tracker {
+  margin-top: 12px;
+}
+
+.delivery-tracker-steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+  padding: 8px 4px 0;
+}
+
+.delivery-tracker-step {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.delivery-tracker-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #d8d0c2;
+  background: #fff;
+  color: #a39a8a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  position: relative;
+  z-index: 2;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Completed steps: fully filled teal circle with a checkmark */
+.delivery-tracker-step.completed .delivery-tracker-circle {
+  background: #2c6e68;
+  border-color: #2c6e68;
+  color: #fff;
+}
+
+/* The current step: not completed yet, but highlighted so it stands out */
+.delivery-tracker-step.active:not(.completed) .delivery-tracker-circle {
+  border-color: #2c6e68;
+  color: #2c6e68;
+  box-shadow: 0 0 0 4px rgba(44, 110, 104, 0.12);
+}
+
+.delivery-tracker-label {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a39a8a;
+  white-space: nowrap;
+  max-width: 76px;
+}
+
+.delivery-tracker-step.active .delivery-tracker-label {
+  color: #2c6e68;
+}
+
+.delivery-tracker-step.completed .delivery-tracker-label {
+  color: #25201b;
+}
+
+/* Connecting line — drawn from the center of one circle to the next,
+   sitting behind the circles (z-index below them). */
+.delivery-tracker-line {
+  position: absolute;
+  top: 13px; /* vertical center of the 28px circle */
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: #e7ddcd;
+  z-index: 1;
+}
+
+.delivery-tracker-step.completed .delivery-tracker-line {
+  background: #2c6e68;
+}
+
+@media (max-width: 480px) {
+  .delivery-tracker-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .delivery-tracker-label {
+    font-size: 10px;
+    max-width: 60px;
+  }
+
+  .delivery-tracker-line {
+    top: 11px;
+  }
+}

@@ -72,27 +72,27 @@ function Home() {
 
         <div className="HomeContentTopText">
           <p>
-            A great haircut is more than just a style it's a symbol that defines us. Haircutting is an art that expresses freedom, it's more than just trimming hair-it's a form of self-expression, creativity, and innovation.
+            A great look is more than just a style it's a symbol that defines us. Grooming is an art that expresses freedom, it's more than just a haircut or a fresh set of nails-it's a form of self-expression, creativity, and innovation.
           </p>
           <p>
-            We believe in the power of a great haircut to boost confidence and showcase your personality. That's why we offer classic cuts, modern styles, and premium grooming services tailored to your unique look. Our passion for delivering exceptional service drives us to stay ahead of the latest trends and techniques while honoring the timeless traditions that have defined barbering for generations.
+            We believe in the power of a great look to boost confidence and showcase your personality. That's why we offer haircuts, braiding, skin care, tattoos, piercings, and premium grooming services tailored to your unique style. Our passion for delivering exceptional service drives us to stay ahead of the latest trends and techniques while honoring the timeless traditions that have defined beauty and grooming for generations.
           </p>
           <p>
-            Our experienced barbers take the time to listen to your needs, provide expert advice, and deliver a personalized grooming experience that exceeds expectations. By combining precision, creativity, and passion, we craft styles that not only look great but also make you feel confident and comfortable.
+            Our experienced professionals take the time to listen to your needs, provide expert advice, and deliver a personalized experience that exceeds expectations. By combining precision, creativity, and passion, we craft looks that not only look great but also make you feel confident and comfortable-from head to toe.
           </p>
         </div>
       </div>
 
       <div className="HomeContentCenter">
         <div className="Map">
-          <StaffSnapMap showBackButton={false} />
+          <StaffSnapMap showBackButton={false} embedded />
         </div>
 
         <div className="Choose">
           <h1>Why Choose Us?</h1>
           <p className='ChooseLine'>_____</p>
           <p>
-            We combine traditional barbering techniques with modern styles to give you the perfect look.
+            We combine traditional techniques with modern styles to give you the perfect look.
           </p>
 
           <div className='ChooseGrid'>
@@ -100,13 +100,13 @@ function Home() {
               <span className='ChooseGridIcon'>
                 <VerifiedIcon/>
               </span>
-              <span className='ChooseGridText'> Skilled Barbers </span>  Our team of   skilled barbers is dedicated to providing you with the best grooming experience. With years of experience and a passion for their craft, they stay up-to-date with the latest trends and techniques to ensure you have a looking and feeling your best.
+              <span className='ChooseGridText'> Skilled Professionals </span>  Our team of skilled professionals is dedicated to providing you with the best grooming experience. With years of experience and a passion for their craft, they stay up-to-date with the latest trends and techniques to ensure you're looking and feeling your best.
             </h5>
             <h5 className='ChooseGridCard'>
               <span className='ChooseGridIcon'>
                 <ContentCutTwoToneIcon/>
               </span> 
-              <span className='ChooseGridText'> Premiun Service </span> We understand that  every client is unique, which is why we take the time to listen to your needs and preferences. From classic cuts to modern styles, we offer a full range of premium services.
+              <span className='ChooseGridText'> Premium Service </span> We understand that every client is unique, which is why we take the time to listen to your needs and preferences. From classic cuts to modern styles and full body grooming, we offer a full range of premium services.
             </h5>
             <h5 className='ChooseGridCard'>
               <span className="ChooseGridIcon">
@@ -133,8 +133,12 @@ function Home() {
               <Swiper
                 modules={[Pagination]}
                 pagination={{ clickable: true }}
-                spaceBetween={30}
-                slidesPerView={3.4}
+                spaceBetween={20}
+                slidesPerView={1.2}
+                breakpoints={{
+                  640: { slidesPerView: 2, spaceBetween: 20 },
+                  1024: { slidesPerView: 3.4, spaceBetween: 30 },
+                }}
                 loop={homepageServices.length > 4}
               >
                 {homepageServices.map((service) => (
@@ -160,7 +164,7 @@ function Home() {
 
         <div className="HomeBottomText">
           <h3>Ready for Your Next Great Look?</h3>
-          <h6>Book your appointment today and experience the premium barbering 
+          <h6>Book your appointment today and experience the premium grooming 
             service that keeps our clients coming back.
           </h6>
           <button onClick={() => navigate("/friends")}>Book An Appointment </button>

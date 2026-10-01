@@ -1,22 +1,30 @@
 import "./staffregister.css";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../api";
 
+const DAYS = [
+  { short: "Mo", full: "Monday" },
+  { short: "Tu", full: "Tuesday" },
+  { short: "We", full: "Wednesday" },
+  { short: "Th", full: "Thursday" },
+  { short: "Fr", full: "Friday" },
+  { short: "Sa", full: "Saturday" },
+  { short: "Su", full: "Sunday" },
+];
 
-
-
-const DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-
-// ── Password strength helper ─────────────────────────────────────
+// ── Password strength helper — aligned to the actual backend policy:
+// 12+ chars, one uppercase, one lowercase, one digit. Symbols aren't
+// required, so they're not scored — a meter that rewards something
+// the server doesn't check for just misleads people.
 function PasswordStrength({ value }) {
   let score = 0;
-  if (value.length >= 8) score++;
+  if (value.length >= 12) score++;
   if (/[A-Z]/.test(value)) score++;
+  if (/[a-z]/.test(value)) score++;
   if (/[0-9]/.test(value)) score++;
-  if (/[^A-Za-z0-9]/.test(value)) score++;
 
-  const level = score <= 1 ? "weak" : score <= 2 ? "mid" : "strong";
+  const level = score <= 1 ? "weak" : score <= 2 ? "mid" : score <= 3 ? "good" : "strong";
   const label = ["", "Weak", "Fair", "Good", "Strong"][score];
 
   return (
@@ -36,14 +44,13 @@ function PasswordStrength({ value }) {
   );
 }
 
-
 // ── Main component ────────────────────────────────────────────────
 function StaffReg() {
   const [step, setStep] = useState(1);
-  const {token} = useParams();
+  const { token } = useParams();
   const navigate = useNavigate();
-  const [loading,setLoading] = useState(true);
-  const [valid,setValid] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [valid, setValid] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
     token: token,
@@ -61,12 +68,12 @@ function StaffReg() {
     workType: "",
     location: "",
     specialties: "",
-    workDays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+    workDays: DAYS.map((d) => d.short),
     profilePicture: "",
   });
 
   const [homepageServices, setHomepageServices] = useState([]);
- 
+
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoError, setPhotoError] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -74,6 +81,7 @@ function StaffReg() {
 
   const MAX_SIZE = 2 * 1024 * 1024; // 2MB
   const ALLOWED_TYPES = ["image/jpeg", "image/png"];
+  const MAX_SPECIALTIES = 20; // matches staffRegisterSchema
 
   const handlePhotoClick = () => {
     fileInputRef.current?.click();
@@ -105,7 +113,7 @@ function StaffReg() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await axios.post("/api/upload", formData, {
+      const res = await api.post("/api/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           "x-invite-token": token,
@@ -123,19 +131,21 @@ function StaffReg() {
     }
   };
 
-
   const verifyInvite = useCallback(async () => {
     try {
-      const res = await axios.get(`/api/invite/verify/${token}`);
+      const res = await api.get(`/api/invite/verify/${token}`);
 
-      setForm(prev => ({
+      setForm((prev) => ({
         ...prev,
         email: res.data.email,
       }));
 
       setValid(true);
     } catch (err) {
-      setError(err.response?.data?.message || (typeof err.response?.data === "string" ? err.response.data : "Invalid invite."));
+      setError(
+        err.response?.data?.message ||
+          (typeof err.response?.data === "string" ? err.response.data : "Invalid invite.")
+      );
     } finally {
       setLoading(false);
     }
@@ -148,7 +158,7 @@ function StaffReg() {
   useEffect(() => {
     const fetchHomepageServices = async () => {
       try {
-        const res = await axios.get("/api/homepage-services");
+        const res = await api.get("/api/homepage-services");
         setHomepageServices(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.log(err);
@@ -157,39 +167,41 @@ function StaffReg() {
     fetchHomepageServices();
   }, []);
 
-
-
-
-
   const update = (fields) => {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
-      ...fields
+      ...fields,
     }));
   };
 
-  const nextStep = () => setStep(s=>s+1);
-  const prevStep = () => setStep(s=>s-1);
+  const nextStep = () => setStep((s) => s + 1);
+  const prevStep = () => setStep((s) => s - 1);
 
   const toggleRole = (roleName) => {
     const has = form.roles.includes(roleName);
 
     update({
-      roles: has ? form.roles.filter((r) => r !== roleName) : [...form.roles, roleName]
+      roles: has ? form.roles.filter((r) => r !== roleName) : [...form.roles, roleName],
     });
   };
 
-
-  const toggleDay = (day) => {
-
-    const has = form.workDays.includes(day);
+  const toggleDay = (shortDay) => {
+    const has = form.workDays.includes(shortDay);
 
     update({
-      workDays: has ? form.workDays.filter(d=>d!==day) : [...form.workDays,day]
+      workDays: has ? form.workDays.filter((d) => d !== shortDay) : [...form.workDays, shortDay],
     });
   };
 
+  const specialtiesList = () =>
+    form.specialties
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
   const handleSubmit = async () => {
+    setError("");
+
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -198,58 +210,68 @@ function StaffReg() {
       setError("Select at least one role.");
       return;
     }
+    if (specialtiesList().length > MAX_SPECIALTIES) {
+      setError(`Please list at most ${MAX_SPECIALTIES} specialties.`);
+      return;
+    }
+
+    // Backend expects workDays as full names ("Monday"), not the
+    // short chip labels ("Mo") used for the UI.
+    const fullWorkDays = form.workDays
+      .map((short) => DAYS.find((d) => d.short === short)?.full)
+      .filter(Boolean);
+
+    // Backend expects location as a structured object, not a single
+    // free-text string. We only collect one address line here, so
+    // city/state are left blank and filled in later from settings.
+    const locationPayload = {
+      address: form.location,
+      city: "",
+      state: "",
+      country: "Nigeria",
+    };
 
     try {
+      await api.post("/api/auth/staff/register", {
+        token,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        username: form.username,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+        bio: form.bio,
+        roles: form.roles,
+        experience: form.experience ? Number(form.experience) : undefined,
+        workType: form.workType,
+        location: locationPayload,
+        specialties: specialtiesList(),
+        workDays: fullWorkDays,
+        profilePicture: form.profilePicture,
+      });
 
-      await axios.post(
-        "/api/auth/staff/register",
-        {
-          token,
-
-          firstName: form.firstName,
-          lastName: form.lastName,
-          username: form.username,
-          email: form.email,
-          phone: form.phone,
-          password: form.password,
-          bio: form.bio,
-          roles: form.roles,
-          experience: form.experience,
-          workType: form.workType,
-          location: form.location,
-          specialties: form.specialties
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean),
-          workDays: form.workDays,
-          profilePicture: form.profilePicture,
-        }
-      );
       setStep(5);
-
       alert("Registration successful.");
-
       navigate("/staffLogin");
+    } catch (err) {
+      const fieldErrors = err.response?.data?.errors;
 
-    } catch(err){
-
-      setError(
-        err.response?.data?.message ||
-        err.response?.data ||
-        "Registration failed."
-      );
+      if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+        setError(fieldErrors.map((e) => e.message).join(" "));
+      } else {
+        setError(
+          err.response?.data?.message ||
+            err.response?.data ||
+            "Registration failed."
+        );
+      }
     }
   };
-  
 
-  const initials = (form.firstName?.[0] || "?").toUpperCase() + (form.lastName?.[0] || "").toUpperCase();
+  const initials =
+    (form.firstName?.[0] || "?").toUpperCase() + (form.lastName?.[0] || "").toUpperCase();
 
-  const steps = [
-    "Account",
-    "Profile",
-    "Schedule",
-    "Review"
-  ];
+  const steps = ["Account", "Profile", "Schedule", "Review"];
 
   if (loading) {
     return <h2>Checking invite...</h2>;
@@ -264,18 +286,14 @@ function StaffReg() {
     );
   }
 
-
-
-
   return (
     <div className="sr-page">
-
       {/* ── Top bar ── */}
       <div className="sr-topbar">
         <div className="sr-logo">
-          <img src="/assets/GhostLogo.png" alt="" className='Logo'/>
+          <img src="/assets/GhostLogo.png" alt="" className="Logo" />
         </div>
-        <div className="sr-badge">✂ Staff Portal</div>
+        <div className="sr-badge">✂ Expert Portal</div>
       </div>
 
       {/* ── Invite token banner ── */}
@@ -289,7 +307,6 @@ function StaffReg() {
 
       {/* ── Layout: sidebar + main ── */}
       <div className="sr-body">
-
         {/* Sidebar */}
         <aside className="sr-sidebar">
           {steps.map((label, i) => {
@@ -313,13 +330,12 @@ function StaffReg() {
 
         {/* Main content */}
         <main className="sr-main">
-
           {/* ───────────── STEP 1 — Account ───────────── */}
           {step === 1 && (
             <div className="sr-step-content">
               <div className="sr-step-head">
                 <h2>Create your account</h2>
-                <p>Your login credentials for the Ghosthebarber staff profile</p>
+                <p>Your login credentials for the Ghosthebarber Expert profile</p>
               </div>
 
               <div className="sr-section">
@@ -334,6 +350,8 @@ function StaffReg() {
                       placeholder="Enter first name"
                       value={form.firstName}
                       onChange={(e) => update({ firstName: e.target.value })}
+                      minLength={2}
+                      maxLength={60}
                     />
                   </div>
                   <div className="sr-field">
@@ -344,9 +362,12 @@ function StaffReg() {
                       placeholder="Enter last name"
                       value={form.lastName}
                       onChange={(e) => update({ lastName: e.target.value })}
+                      minLength={2}
+                      maxLength={60}
                     />
                   </div>
                 </div>
+                <span className="sr-field-hint">Letters, spaces, apostrophes and hyphens only.</span>
 
                 <div className="sr-field">
                   <label htmlFor="username">Username</label>
@@ -363,20 +384,19 @@ function StaffReg() {
                         })
                       }
                       className="sr-username-input"
+                      minLength={3}
+                      maxLength={30}
                     />
                   </div>
-                  <span className="sr-field-hint">Clients will see this on your booking profile</span>
+                  <span className="sr-field-hint">
+                    3–30 characters. Letters, numbers, underscores, dots and hyphens only. Clients will see this on your booking profile.
+                  </span>
                 </div>
 
                 <div className="sr-field">
                   <label htmlFor="email">Email Address</label>
                   <div className="sr-locked-wrap">
-                    <input
-                      id="email"
-                      type="email"
-                      value={form.email}
-                      readOnly
-                    />
+                    <input id="email" type="email" value={form.email} readOnly />
                     <span className="sr-locked-badge">Invite locked</span>
                   </div>
                 </div>
@@ -386,10 +406,13 @@ function StaffReg() {
                   <input
                     id="phone"
                     type="tel"
-                    placeholder="+234 800 000 0000"
+                    placeholder="08000000000"
                     value={form.phone}
                     onChange={(e) => update({ phone: e.target.value })}
                   />
+                  <span className="sr-field-hint">
+                    Nigerian numbers can be entered as 08000000000 — we'll format it automatically.
+                  </span>
                 </div>
               </div>
 
@@ -401,11 +424,16 @@ function StaffReg() {
                   <input
                     id="password"
                     type="password"
-                    placeholder="Min. 8 characters"
+                    placeholder="Min. 12 characters"
                     value={form.password}
                     onChange={(e) => update({ password: e.target.value })}
+                    minLength={12}
+                    maxLength={128}
                   />
                   <PasswordStrength value={form.password} />
+                  <span className="sr-field-hint">
+                    At least 12 characters, including one uppercase letter, one lowercase letter, and one number.
+                  </span>
                 </div>
 
                 <div className="sr-field">
@@ -429,7 +457,9 @@ function StaffReg() {
                     <span key={i} className={`sr-dot ${i === step - 1 ? "sr-dot--on" : ""}`} />
                   ))}
                 </div>
-                <button className="sr-btn-next" onClick={nextStep}>Next →</button>
+                <button className="sr-btn-next" onClick={nextStep}>
+                  Next →
+                </button>
               </div>
             </div>
           )}
@@ -489,7 +519,9 @@ function StaffReg() {
                     placeholder="e.g. Specialist in fades, lineups & beard sculpting. 6 years experience."
                     value={form.bio}
                     onChange={(e) => update({ bio: e.target.value })}
+                    maxLength={1000}
                   />
+                  <span className="sr-field-hint">{form.bio.length}/1000 characters</span>
                 </div>
 
                 <div className="sr-field-row">
@@ -521,6 +553,7 @@ function StaffReg() {
                       id="experience"
                       type="number"
                       min="0"
+                      max="80"
                       placeholder="e.g. 6"
                       value={form.experience}
                       onChange={(e) => update({ experience: e.target.value })}
@@ -565,6 +598,7 @@ function StaffReg() {
                       placeholder="e.g. Lekki, VI, Ikoyi — or 15km radius"
                       value={form.location}
                       onChange={(e) => update({ location: e.target.value })}
+                      maxLength={200}
                     />
                   </div>
                 )}
@@ -578,6 +612,7 @@ function StaffReg() {
                       placeholder="e.g. 14 Bode Thomas St, Surulere, Lagos"
                       value={form.location}
                       onChange={(e) => update({ location: e.target.value })}
+                      maxLength={200}
                     />
                   </div>
                 )}
@@ -593,20 +628,27 @@ function StaffReg() {
                     onChange={(e) => update({ specialties: e.target.value })}
                     rows={3}
                   />
-                  <span className="sr-field-hint">Separate multiple specialties with commas</span>
+                  <span className="sr-field-hint">
+                    Separate multiple specialties with commas. Up to {MAX_SPECIALTIES} — you've listed{" "}
+                    {specialtiesList().length}.
+                  </span>
                 </div>
               </div>
 
               <div className="sr-footer">
                 <div className="sr-footer-left">
-                  <button className="sr-btn-back" onClick={prevStep}>← Back</button>
+                  <button className="sr-btn-back" onClick={prevStep}>
+                    ← Back
+                  </button>
                   <div className="sr-progress">
                     {steps.map((_, i) => (
                       <span key={i} className={`sr-dot ${i === step - 1 ? "sr-dot--on" : ""}`} />
                     ))}
                   </div>
                 </div>
-                <button className="sr-btn-next" onClick={nextStep}>Next →</button>
+                <button className="sr-btn-next" onClick={nextStep}>
+                  Next →
+                </button>
               </div>
             </div>
           )}
@@ -622,14 +664,14 @@ function StaffReg() {
               <div className="sr-section">
                 <p className="sr-section-label">Select days</p>
                 <div className="sr-chip-grid">
-                  {DAYS.map((day) => (
+                  {DAYS.map(({ short }) => (
                     <button
-                      key={day}
+                      key={short}
                       type="button"
-                      className={`sr-chip ${form.workDays.includes(day) ? "sr-chip--on" : ""}`}
-                      onClick={() => toggleDay(day)}
+                      className={`sr-chip ${form.workDays.includes(short) ? "sr-chip--on" : ""}`}
+                      onClick={() => toggleDay(short)}
                     >
-                      {day}
+                      {short}
                     </button>
                   ))}
                 </div>
@@ -637,14 +679,18 @@ function StaffReg() {
 
               <div className="sr-footer">
                 <div className="sr-footer-left">
-                  <button className="sr-btn-back" onClick={prevStep}>← Back</button>
+                  <button className="sr-btn-back" onClick={prevStep}>
+                    ← Back
+                  </button>
                   <div className="sr-progress">
                     {steps.map((_, i) => (
                       <span key={i} className={`sr-dot ${i === step - 1 ? "sr-dot--on" : ""}`} />
                     ))}
                   </div>
                 </div>
-                <button className="sr-btn-next" onClick={nextStep}>Next →</button>
+                <button className="sr-btn-next" onClick={nextStep}>
+                  Next →
+                </button>
               </div>
             </div>
           )}
@@ -662,7 +708,9 @@ function StaffReg() {
                 <div className="sr-review-card">
                   <div className="sr-review-row">
                     <span className="sr-review-label">Name</span>
-                    <span className="sr-review-value">{form.firstName} {form.lastName}</span>
+                    <span className="sr-review-value">
+                      {form.firstName} {form.lastName}
+                    </span>
                   </div>
                   <div className="sr-review-row">
                     <span className="sr-review-label">Username</span>
@@ -682,7 +730,7 @@ function StaffReg() {
               <div className="sr-section">
                 <p className="sr-section-label">Profile</p>
                 <div className="sr-review-card">
-                 <div className="sr-review-row">
+                  <div className="sr-review-row">
                     <span className="sr-review-label">Role</span>
                     <span className="sr-review-value">
                       {form.roles.length > 0 ? form.roles.join(", ") : "—"}
@@ -690,12 +738,18 @@ function StaffReg() {
                   </div>
                   <div className="sr-review-row">
                     <span className="sr-review-label">Experience</span>
-                    <span className="sr-review-value">{form.experience ? `${form.experience} years` : "—"}</span>
+                    <span className="sr-review-value">
+                      {form.experience ? `${form.experience} years` : "—"}
+                    </span>
                   </div>
                   <div className="sr-review-row">
                     <span className="sr-review-label">Work Type</span>
                     <span className="sr-review-value">
-                      {form.workType === "mobile" ? "Mobile barber" : form.workType === "stationed" ? "Stationed" : "—"}
+                      {form.workType === "mobile"
+                        ? "Mobile barber"
+                        : form.workType === "stationed"
+                        ? "Stationed"
+                        : "—"}
                     </span>
                   </div>
                   <div className="sr-review-row">
@@ -711,7 +765,7 @@ function StaffReg() {
                 </div>
               </div>
 
-             <div className="sr-section">
+              <div className="sr-section">
                 <p className="sr-section-label">Working Days</p>
                 <div className="sr-review-card">
                   <div className="sr-review-row">
@@ -724,14 +778,16 @@ function StaffReg() {
               </div>
 
               <div className="sr-review-notice">
-                ✓ You can edit all of these details later from your staff dashboard
+                ✓ You can edit all of these details later from your Expert dashboard
               </div>
 
               {error && <p className="sr-field-error">{error}</p>}
 
               <div className="sr-footer">
-                <div className="sr-footer-left"> 
-                  <button className="sr-btn-back" onClick={prevStep}>← Back</button>
+                <div className="sr-footer-left">
+                  <button className="sr-btn-back" onClick={prevStep}>
+                    ← Back
+                  </button>
                   <div className="sr-progress">
                     {steps.map((_, i) => (
                       <span key={i} className={`sr-dot ${i === step - 1 ? "sr-dot--on" : ""}`} />
@@ -751,8 +807,8 @@ function StaffReg() {
               <div className="sr-success-icon">✂</div>
               <h2 className="sr-success-title">You're all set, {form.firstName || "there"}!</h2>
               <p className="sr-success-sub">
-                Your staff profile is live on Ghosthebarber. Clients can now discover
-                and book appointments with you.
+                Your Expert profile is live on Ghosthebarber. Clients can now discover and book
+                appointments with you.
               </p>
               {form.username && (
                 <div className="sr-success-handle">
@@ -764,26 +820,18 @@ function StaffReg() {
                   <span>{form.workType === "mobile" ? "🚗" : "✂"}</span>
                   <span>{form.workType === "mobile" ? "Mobile barber" : "Stationed barber"}</span>
                 </div>
-               {form.specialties.trim() && (
+                {form.specialties.trim() && (
                   <div className="sr-summary-item">
                     <span>⭐</span>
-                    <span>
-                      {form.specialties
-                        .split(",")
-                        .map((s) => s.trim())
-                        .filter(Boolean)
-                        .slice(0, 3)
-                        .join(", ")}
-                    </span>
+                    <span>{specialtiesList().slice(0, 3).join(", ")}</span>
                   </div>
                 )}
-            
               </div>
-              <button className="sr-btn-next sr-success-btn"
-               onClick={() => navigate("/staffLogin")}>Go to Dashboard →</button>
+              <button className="sr-btn-next sr-success-btn" onClick={() => navigate("/staffLogin")}>
+                Go to Dashboard →
+              </button>
             </div>
           )}
-
         </main>
       </div>
     </div>

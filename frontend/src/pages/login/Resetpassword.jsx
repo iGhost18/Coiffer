@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./login.css";
-import axios from "axios";
+import api from "../../api";
 import { useParams, useNavigate } from "react-router-dom";
 import CircularProgress from "@mui/material/CircularProgress";
 
@@ -29,7 +29,7 @@ export default function ResetPassword({ role = "user" }) {
 
     setLoading(true);
     try {
-      const res = await axios.post(endpoint, { password });
+      const res = await api.post(endpoint, { password });
       setMessage(res.data?.message || res.data);
       setTimeout(() => navigate(role === "staff" ? "/staffLogin" : "/login"), 2000);
     } catch (err) {

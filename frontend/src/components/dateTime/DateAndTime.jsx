@@ -1,6 +1,48 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../api"; // Adjust the import path as needed
 import './dateAndTime.css';
+
+// Services store duration as free text ("30 mins", "1 hr", "1 hr 30 mins"),
+// occasionally as a bare number of minutes. Normalize it once so the rest
+// of the component only ever deals with an integer.
+function parseDurationToMinutes(duration) {
+    if (!duration) return 30;
+    if (typeof duration === "number") return duration;
+
+    const str = String(duration).toLowerCase();
+    const hourMatch = str.match(/(\d+)\s*(?:hr|hour)/);
+    const minMatch = str.match(/(\d+)\s*(?:min)/);
+
+    let minutes = 0;
+    if (hourMatch) minutes += parseInt(hourMatch[1], 10) * 60;
+    if (minMatch) minutes += parseInt(minMatch[1], 10);
+
+    if (!hourMatch && !minMatch) {
+        const bareNumber = parseInt(str, 10);
+        if (!isNaN(bareNumber)) minutes = bareNumber;
+    }
+
+    return minutes || 30;
+}
+
+// Build a "YYYY-MM-DD" string from the date's LOCAL components — never
+// use toISOString() for this, since it converts to UTC first and can
+// shift the date by a day depending on the user's timezone offset.
+function toLocalDateString(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+// Display-only: "13:00" -> "1:00 PM". The value passed to setSelectedTime
+// and the backend stays the 24hr string — this only changes what's rendered.
+function formatTo12Hour(time24) {
+    const [h, m] = time24.split(":").map(Number);
+    const period = h >= 12 ? "PM" : "AM";
+    const hour12 = h % 12 || 12;
+    return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
+}
 
 export function TimeSlots({
     selectedDate,
@@ -8,15 +50,25 @@ export function TimeSlots({
     setSelectedTime,
     staffId,
     serviceId,
+    duration, // e.g. "30 mins", "1 hr", or already-parsed minutes
+    refreshKey,
 }) {
 
     const [timeSlots, setTimeSlots] = useState([]);
+    const [exactNextAvailable, setExactNextAvailable] = useState(null);
     const [loading, setLoading] = useState(false);
+    
+
+    const durationMinutes = useMemo(
+        () => parseDurationToMinutes(duration),
+        [duration]
+    );
 
     useEffect(() => {
 
         if (!selectedDate || !staffId || !serviceId) {
             setTimeSlots([]);
+            setExactNextAvailable(null);
             return;
         }
 
@@ -25,11 +77,6 @@ export function TimeSlots({
             try {
 
                 setLoading(true);
-                console.log({
-                  selectedDate,
-                  staffId,
-                  serviceId,
-                });
 
                 const res = await api.get(
                     "/api/booking/available-slots",
@@ -37,15 +84,19 @@ export function TimeSlots({
                         params: {
                             staffId,
                             serviceId,
-                            date: selectedDate.toISOString().split("T")[0],
+                            date: toLocalDateString(selectedDate),
+                            duration: durationMinutes,
                         },
                     }
                 );
-                console.log(res.data);
-                setTimeSlots(res.data);
+
+                setTimeSlots(res.data.slots || []);
+                setExactNextAvailable(res.data.exactNextAvailable || null);
 
             } catch (err) {
                 console.log(err);
+                setTimeSlots([]);
+                setExactNextAvailable(null);
             } finally {
                 setLoading(false);
             }
@@ -54,7 +105,7 @@ export function TimeSlots({
 
         loadSlots();
 
-    }, [selectedDate, staffId, serviceId]);
+    }, [selectedDate, staffId, serviceId, durationMinutes, refreshKey]);
 
     return (
 
@@ -70,6 +121,24 @@ export function TimeSlots({
                 <p>Loading available times...</p>
             )}
 
+            {!loading && exactNextAvailable && (
+                <button
+                    type="button"
+                    className="NextAvailableBanner"
+                    onClick={() => setSelectedTime(exactNextAvailable)}
+                >
+                    <span className="NextAvailableLabel">Next available</span>
+                    <span className="NextAvailableTime">{formatTo12Hour(exactNextAvailable)}</span>
+                    <span className="NextAvailableDuration">({durationMinutes} min)</span>
+                </button>
+            )}
+
+            {!loading && selectedDate && timeSlots.length > 0 && !exactNextAvailable && (
+                <p className="NoSlotsMessage">
+                    No slots long enough for this service on this day.
+                </p>
+            )}
+
             <div className="TimeGrid">
 
                 {timeSlots.map((slot) => (
@@ -82,11 +151,12 @@ export function TimeSlots({
                         className={`TimeSlot
                             ${selectedTime === slot.time ? "active" : ""}
                             ${!slot.available ? "disabled" : ""}
+                            ${exactNextAvailable && slot.time === exactNextAvailable ? "nextAvailable" : ""}
                             ${slot.reason}
                         `}
                     >
 
-                        {slot.time}
+                        {formatTo12Hour(slot.time)}
 
                     </button>
 
@@ -207,5 +277,3 @@ export function DatePicker({ selectedDate, setSelectedDate }) {
     </div>
   );
 }
-
-

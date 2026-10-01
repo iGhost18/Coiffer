@@ -9,6 +9,7 @@ import { useCart } from "../../components/context/CartContext";
 import { StaffAuthContext } from "../../components/context/StaffAuthContext";
 import { useNavigate } from "react-router-dom";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import api from "../../api";  
 
 
 export default function ServiceDetail() {
@@ -23,6 +24,7 @@ export default function ServiceDetail() {
   const [loading, setLoading] = useState(true);
 
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null); 
 
   const [newDetail, setNewDetail] = useState({
     name: "",
@@ -80,41 +82,44 @@ export default function ServiceDetail() {
     e.preventDefault();
 
     try {
-      // upload image
-      const formData = new FormData();
-      formData.append("file", newDetail.file);
+      let url = newDetail.img;
 
-      const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-      if (!uploadRes.ok) throw new Error("Image upload failed");
-      const { url } = await uploadRes.json();
-
-      // save detail
-      const res = await fetch("/api/servicedetail", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: newDetail.name,
-          desc: newDetail.desc,
-          duration: newDetail.duration,
-          price: Number(newDetail.price),
-          img: url,
-          serviceId,
-          staffId: staff._id,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to save service detail");
+      // only upload a new image if the user picked one
+      if (newDetail.file) {
+        const formData = new FormData();
+        formData.append("file", newDetail.file);
+        const uploadRes = await api.post("/api/upload", formData);
+        url = uploadRes.data.url;
       }
 
-      const savedDetail = await res.json();
+      const payload = {
+        name: newDetail.name,
+        desc: newDetail.desc,
+        duration: newDetail.duration,
+        price: Number(newDetail.price),
+        img: url,
+        serviceId,
+        staffId: staff._id,
+      };
 
-      setServiceDetails((prev) => [...prev, saved]);
+      if (editingId) {
+        // update existing
+        const res = await api.put(`/api/servicedetail/${editingId}`, payload);
+        const updatedDetail = res.data;
+
+        setServiceDetails((prev) =>
+          prev.map((d) => (d._id === editingId ? updatedDetail : d))
+        );
+      } else {
+        // create new
+        const res = await api.post("/api/servicedetail", payload);
+        const savedDetail = res.data;
+
+        setServiceDetails((prev) => [...prev, savedDetail]);
+      }
 
       setShowForm(false);
-
+      setEditingId(null);
       setNewDetail({
         name: "",
         desc: "",
@@ -123,6 +128,30 @@ export default function ServiceDetail() {
         img: "",
         file: null,
       });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEditClick = (detail) => {
+    setEditingId(detail._id);
+    setNewDetail({
+      name: detail.name,
+      desc: detail.desc,
+      duration: detail.duration,
+      price: detail.price,
+      img: detail.img,
+      file: null, // no new file selected unless user picks one
+    });
+    setShowForm(true);
+  };
+
+  const handleDeleteServiceDetail = async (id) => {
+    if (!window.confirm("Delete this service detail?")) return;
+
+    try {
+      await api.delete(`/api/servicedetail/${id}`);
+      setServiceDetails((prev) => prev.filter((d) => d._id !== id));
     } catch (err) {
       console.error(err);
     }
@@ -159,54 +188,57 @@ export default function ServiceDetail() {
           {serviceDetails.length === 0 ? (
             <h3>No service details added yet.</h3>
           ) : (
-            serviceDetails.map((detail) => (
-              <div className="CutCard" key={detail._id}>
-                <div className="CutDetails">
+           serviceDetails.map((detail) => (
+            <div className="CutCard" key={detail._id}>
+              <div className="CutDetails">
+                <img src={getImage(detail.img)} alt={detail.name} />
 
-                  <img src={getImage(detail.img)} alt={detail.name} />
+                <div className="CutCardText">
+                  <h5 className="CutCardHeader">{detail.name}</h5>
+                  <h6 className="CutCardWriteUp">{detail.desc}</h6>
 
-                  <div className="CutCardText">
-
-                    <h5 className="CutCardHeader">
-                      {detail.name}
-                    </h5>
-
-                    <h6 className="CutCardWriteUp">
-                      {detail.desc}
-                    </h6>
-
-                    <div className="CutCardPandD">
-
-                      <h3 className="Price">
-                        <TbCurrencyNaira className="PriceIcon" />
-                        {detail.price.toLocaleString()}
-                      </h3>
-
-                      <h6 className="Duration">
-                        {detail.duration}
-                      </h6>
-
-                    </div>
-
-                    <button
-                      className="CutCardButton"
-                      onClick={() =>
-                        addToCart({
-                          ...detail,
-                          itemId: detail._id,
-                          serviceDetailId: detail._id,
-                          itemType: "service",
-                        })
-                      }
-                    >
-                      Schedule
-                    </button>
-
+                  <div className="CutCardPandD">
+                    <h3 className="Price">
+                      <TbCurrencyNaira className="PriceIcon" />
+                      {detail.price.toLocaleString()}
+                    </h3>
+                    <h6 className="Duration">{detail.duration}</h6>
                   </div>
 
+                  <button
+                    className="CutCardButton"
+                    onClick={() =>
+                      addToCart({
+                        ...detail,
+                        itemId: detail._id,
+                        serviceDetailId: detail._id,
+                        itemType: "service",
+                      })
+                    }
+                  >
+                    Schedule
+                  </button>
+
+                  {staff && (
+                    <div className="CutCardStaffActions">
+                      <button
+                        className="editBtn"
+                        onClick={() => handleEditClick(detail)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="deleteBtn"
+                        onClick={() => handleDeleteServiceDetail(detail._id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
-            ))
+            </div>
+          ))
           )}
             
           {staff && (
@@ -232,7 +264,7 @@ export default function ServiceDetail() {
             onClick={(e) => e.stopPropagation()}
           >
 
-            <h3>Add Service Detail</h3>
+            <h3>{editingId ? "Edit Service Detail" : "Add Service Detail"}</h3>
 
             <form onSubmit={handleAddServiceDetail}>
 
@@ -302,7 +334,18 @@ export default function ServiceDetail() {
                 <button
                   type="button"
                   className="cancelBtn"
-                  onClick={() => setShowForm(false)}
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingId(null);
+                    setNewDetail({
+                      name: "",
+                      desc: "",
+                      duration: "",
+                      price: "",
+                      img: "",
+                      file: null,
+                    });
+                  }}
                 >
                   Cancel
                 </button>

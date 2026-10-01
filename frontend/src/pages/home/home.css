@@ -1,11 +1,17 @@
 .Home * {
     box-sizing: border-box;
-    max-width: 100%;
 }
 
 .Home{
     width: 100%;
     background-color: white;
+    overflow-x: hidden;
+}
+.Home .leaflet-container img,
+.Home .leaflet-tile,
+.Home .leaflet-marker-icon,
+.Home .leaflet-popup-content-wrapper img {
+    max-width: none;
 }
 
 .HomeContentTop{
@@ -13,22 +19,19 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-top: -20%;
     background-color: rgba(0, 0, 0, 0.930);
-    border-radius: 10px;
+    border-radius: 0 0 0 10px;
 }
-
 
 .HomeImg{
     width: 100%;
     height: auto;
     display: block;
-    object-fit: cover;
 }
 
 .HomeContentTopText{
     width: 100%;
-    padding: 5%;
+    padding: 6% 5%;
     margin: 0;
     font-size: 13px;
     font-weight: 400;
@@ -39,7 +42,7 @@
 
 .HomeContentTop p{
     color: white;
-    font-size:medium;
+    font-size: clamp(14px, 2vw, 16px);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin-top: 40px;
     text-align: center;
@@ -54,6 +57,7 @@
 .Map{
     width: 95%;
     height: auto;
+    min-height: 650px;
     margin: 40px auto;
     overflow: hidden;
     border-radius: 20px;
@@ -83,18 +87,21 @@
     margin-bottom: 50px;
     font-style: oblique;
     font-family: 'Times New Roman', Times, serif;
-    font-size: 40px;
+    font-size: clamp(24px, 5vw, 40px);
 }
 .ChooseGrid{
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
-    align-items: center;
+    align-items: stretch;
     gap: 20px;
     padding-top: 30px;
 }
 
 .ChooseGridCard{
-    width: 300px;     
+    width: 300px;
+    flex: 1 1 260px;
+    max-width: 320px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -134,7 +141,7 @@
     overflow: hidden;
     cursor: pointer;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    margin: 50px;
+    margin: 16px;
 }
 
 
@@ -216,17 +223,20 @@
 
 .HomeBottomText{
     width: 100%;
-    height: 300px;
+    min-height: 300px;
+    height: auto;
     background-color: #666;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    padding: 30px 16px;
 }
 
 .HomeBottomText h3{
-    font-size: 50px;
+    font-size: clamp(28px, 5vw, 50px);
     color: #fff;
+    text-align: center;
 }
 
 .HomeBottomText h6{
@@ -236,6 +246,7 @@
     line-height: 1.6;  
     margin: 10px; 
     color: #fff;
+    text-align: center;
 }
 
 .HomeBottomText button{
@@ -255,3 +266,38 @@
     opacity: 1;
 }
 
+
+
+/* ---------- Responsive breakpoints ---------- */
+
+@media (max-width: 1024px) {
+    .ChooseGridCard{
+        flex: 1 1 45%;
+    }
+}
+
+@media (max-width: 768px) {
+    .Map{
+        height: 50vh;
+    }
+    .ChooseGridCard{
+        flex: 1 1 100%;
+        max-width: 400px;
+    }
+    .Card{
+        margin: 10px;
+    }
+    .HomeBottomText button{
+        padding: 16px 40px;
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .HomeContentTopText{
+        font-size: 12px;
+    }
+    .Picture img{
+        height: 180px;
+    }
+}

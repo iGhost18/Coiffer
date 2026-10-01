@@ -1,6 +1,6 @@
 import "./staffsettings.css";
 import { useState, useEffect, useContext, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import api from "../../api"; 
 import socket from "../../socket";
@@ -12,6 +12,7 @@ const DAY_SHORT = { Monday: "Mo", Tuesday: "Tu", Wednesday: "We", Thursday: "Th"
 export default function StaffSettings() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { staff, dispatch } = useContext(StaffAuthContext);
 
   const [loading, setLoading] = useState(true);
@@ -33,7 +34,8 @@ export default function StaffSettings() {
     schedule: {},
     workType: "",
     profilePicture: "",
-    coverPictures: ["","",""],
+    coverPicture: ["","",""],
+    flutterwave: { subaccountId: null, subaccountStatus: "not_connected" },   // ← add this line
   });
 
   const [homepageServices, setHomepageServices] = useState([]);
@@ -44,10 +46,70 @@ export default function StaffSettings() {
   const [locationSharing, setLocationSharing] = useState(false);
   const [locationStatus, setLocationStatus] = useState("");
   const watchIdRef = useRef(null);
-
+  const [banks, setBanks] = useState([]);
+  const [showPayoutForm, setShowPayoutForm] = useState(false);
+  const [payoutBank, setPayoutBank] = useState("");
+  const [payoutAccountNumber, setPayoutAccountNumber] = useState("");
+  const [connectingPayout, setConnectingPayout] = useState(false);
+  const [payoutError, setPayoutError] = useState("");
+  
   const isOwnProfile = staff?._id === id;
-
   const update = (fields) => setForm((prev) => ({ ...prev, ...fields }));
+  const [bankAccount, setBankAccount] = useState(null);
+  const hasBankAccount = !!bankAccount;
+  const payoutRef = useRef(null);
+
+  const openPayoutSetup = () => {
+    setShowPayoutForm(true);
+    payoutRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const startEditPayout = () => {
+    setPayoutBank(bankAccount?.account_bank || "");
+    setPayoutAccountNumber("");
+    setPayoutError("");
+    setShowPayoutForm(true);
+  };
+
+  const cancelPayoutForm = () => {
+    setShowPayoutForm(false);
+    setPayoutAccountNumber("");
+    setPayoutError("");
+  };
+
+
+  useEffect(() => {
+    if (!isOwnProfile) return;
+    api
+      .get("/api/payment/staff/bank-account")
+      .then((res) => setBankAccount(res.data.bankAccount))
+      .catch((err) => console.log(err));
+  }, [isOwnProfile]);
+
+  useEffect(() => {
+    if (loading) return; // the page only renders after loading finishes
+    if (location.state?.focus === "payout" && !hasBankAccount) {
+      setShowPayoutForm(true);
+      payoutRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [loading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+
+  useEffect(() => {
+    if (!showPayoutForm || banks.length > 0) return;
+    const fetchBanks = async () => {
+      try {
+        const res = await api.get("/api/payment/banks");
+        setBanks(res.data.banks || []);
+      } catch (err) {
+        console.log(err);
+        setPayoutError("Couldn't load bank list.");
+      }
+    };
+    fetchBanks();
+  }, [showPayoutForm]); // eslint-disable-line react-hooks/exhaustive-deps
+
+
 
   // ── Guard: only the staff member themselves can edit this page ──
   useEffect(() => {
@@ -79,7 +141,8 @@ export default function StaffSettings() {
           schedule: s.schedule || {},
           workType: s.workType || "stationed",
           profilePicture: s.profilePicture || "",
-          coverPictures: s.coverPictures?.length === 3 ? s.coverPictures : ["", "", ""],
+          coverPicture: s.coverPicture?.length === 3 ? s.coverPicture : ["", "", ""],
+          flutterwave: s.flutterwave || { subaccountId: null, subaccountStatus: "not_connected" },   // ← add this line
         });
       } catch (err) {
         console.log(err);
@@ -191,6 +254,33 @@ export default function StaffSettings() {
     }
   }, [form.workType]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleConnectPayout = async () => {
+    setPayoutError("");
+    if (!payoutBank || !payoutAccountNumber) {
+      setPayoutError("Select your bank and enter your account number.");
+      return;
+    }
+    setConnectingPayout(true);
+    try {
+      const res = await api.post("/api/payment/staff/bank-account", {
+        account_bank: payoutBank,
+        account_number: payoutAccountNumber,
+      });
+      setBankAccount({
+        account_name: res.data.account_name,
+        account_bank: payoutBank,
+        last4: payoutAccountNumber.slice(-4),
+      });
+      setShowPayoutForm(false);
+      setPayoutAccountNumber("");
+    } catch (err) {
+      console.log(err);
+      setPayoutError(err.response?.data?.message || "Couldn't save your account. Try again.");
+    } finally {
+      setConnectingPayout(false);
+    }
+  };
+
   const toggleRole = (roleName) => {
     const has = form.roles.includes(roleName);
     update({ roles: has ? form.roles.filter((r) => r !== roleName) : [...form.roles, roleName] });
@@ -261,9 +351,9 @@ export default function StaffSettings() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      const updated = [...form.coverPictures];
+      const updated = [...form.coverPicture];
       updated[index] = res.data.url;
-      update({ coverPictures: updated });
+      update({ coverPicture: updated });
     } catch (err) {
       console.log(err);
       setError("Cover photo upload failed.");
@@ -291,7 +381,7 @@ export default function StaffSettings() {
         schedule: form.schedule,
         workType: form.workType,
         profilePicture: form.profilePicture,
-        coverPictures: form.coverPictures,
+        coverPicture: form.coverPicture,
         userId: id,
         userid: id, // staff PUT route checks this exact casing
       });
@@ -323,7 +413,7 @@ export default function StaffSettings() {
       <h2 className="ss-title">Edit Profile</h2>
  
 
-      {error && <p className="ss-error">{error}</p>}
+     
 
       {/* ── Photos ── */}
       <div className="ss-section">
@@ -332,7 +422,7 @@ export default function StaffSettings() {
           {[0, 1, 2].map((i) => (
             <div className="ss-cover-wrap" key={i}>
               <img
-                src={form.coverPictures[i] || "/assets/person/noCover.png"}
+                src={form.coverPicture[i] || "/assets/person/noCover.png"}
                 alt=""
                 className="ss-cover-preview"
               />
@@ -408,6 +498,63 @@ export default function StaffSettings() {
           <input value={form.phone} onChange={(e) => update({ phone: e.target.value })} />
         </div>
       </div>
+
+      <div className="ss-section" ref={payoutRef}>
+        <p className="ss-section-label">Payments &amp; Payouts</p>
+
+        {hasBankAccount && !showPayoutForm ? (
+          <div className="ss-payout-connected">
+            <p className="ss-payout-status">✓ Payout account connected</p>
+            <p className="ss-hint">
+              {bankAccount.account_name} •••• {bankAccount.last4}
+            </p>
+            <button type="button" className="ss-btn-payout" onClick={startEditPayout}>
+              Edit account
+            </button>
+          </div>
+        ) : !showPayoutForm ? (
+          <>
+            <p className="ss-hint">Add your bank account so you can receive payment for your services.</p>
+            <button type="button" className="ss-btn-payout" onClick={openPayoutSetup}>
+              Add bank account
+            </button>
+          </>
+        ) : (
+          <div className="ss-payout-form">
+            <div className="ss-field">
+              <label>Bank</label>
+              <select value={payoutBank} onChange={(e) => setPayoutBank(e.target.value)}>
+                <option value="">Select your bank</option>
+                {banks.map((b, i) => (
+                  <option key={`${b.code}-${i}`} value={b.code}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="ss-field">
+              <label>Account Number</label>
+              <input
+                value={payoutAccountNumber}
+                onChange={(e) => setPayoutAccountNumber(e.target.value.replace(/\D/g, ""))}
+                maxLength={10}
+                placeholder="0123456789"
+              />
+            </div>
+            {hasBankAccount && (
+              <p className="ss-hint">Saving replaces your current account ({bankAccount.account_name} •••• {bankAccount.last4}).</p>
+            )}
+            {payoutError && <p className="ss-error">{payoutError}</p>}
+            <div className="ss-payout-form-actions">
+              <button type="button" className="ss-btn-payout" onClick={handleConnectPayout} disabled={connectingPayout}>
+                {connectingPayout ? "Saving..." : hasBankAccount ? "Save changes" : "Save account"}
+              </button>
+              <button type="button" className="ss-btn-cancel" onClick={cancelPayoutForm}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
 
       {/* ── Work Type ── */}
       <div className="ss-section">
@@ -585,7 +732,7 @@ export default function StaffSettings() {
                     min="1"
                     className="ss-max-bookings"
                     value={dayData.maxBookings}
-                    onChange={(e) => updateScheduleField(day, "maxBookings", e.target.value)}
+                    onChange={(e) => updateScheduleField(day, "maxBookings", Number(e.target.value))}
                     placeholder="Max/day"
                   />
                 </div>

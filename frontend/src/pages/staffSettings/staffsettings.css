@@ -169,9 +169,10 @@
 
 
 .ss-profile-pic-preview{
-  width: 332px;
-  height: 332px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
+  object-fit: cover;
 }
 
 /* ===== CHIPS (roles / working days) ===== */
@@ -382,4 +383,100 @@
 }
 .header-btn:hover{
     background:#ececec;
+}
+
+
+.ss-btn-payout {
+  padding: 12px 22px;
+  background: black;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.ss-btn-payout:hover { opacity: 0.85; }
+.ss-btn-payout:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.ss-payout-connected {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.ss-payout-status {
+  color: #059669;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+.ss-payout-form {
+  margin-top: 12px;
+  max-width: 340px;
+}
+.ss-payout-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .ss-cover-grid {
+    grid-template-columns: 1fr;  
+  }
+
+  .ss-cover-grid .ss-cover-wrap {
+    height: 160px;  
+  }
+
+  .ss-day-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .ss-day-toggle {
+    min-width: 0;
+  }
+
+  .ss-day-times {
+    width: 100%;
+  }
+
+  .ss-day-times label {
+    width: 100%;
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  .ss-day-times select,
+  .ss-day-times input[type="time"] {
+    flex: 1 1 100px;
+  }
+
+  .ss-page {
+    padding: 20px 16px 40px;
+  }
+}
+
+@media (max-width: 500px) {
+  .ss-profile-pic-preview {
+    width: 90px;
+    height: 90px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ss-field-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .ss-worktype-grid {
+    flex-direction: column;
+  }
 }

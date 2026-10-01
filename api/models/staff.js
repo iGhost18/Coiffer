@@ -2,11 +2,6 @@ const mongoose = require("mongoose");
 
 const DayScheduleSchema = new mongoose.Schema(
     {
-        isOpen: {
-            type: Boolean,
-            default: true,
-        },
-
         startTime: {
             type: String,
             default: "09:00",
@@ -15,16 +10,6 @@ const DayScheduleSchema = new mongoose.Schema(
         endTime: {
             type: String,
             default: "18:00",
-        },
-
-        breakStart: {
-            type: String,
-            default: "",
-        },
-
-        breakEnd: {
-            type: String,
-            default: "",
         },
 
         slotDuration: {
@@ -65,7 +50,8 @@ const StaffSchema = new mongoose.Schema({
         required:true,
         maxlength:50,
         unique:true,
-        trim:true
+        trim:true,
+        lowercase:true
     },
 
     password:{
@@ -98,7 +84,7 @@ const StaffSchema = new mongoose.Schema({
 
     workType: {
       type: String,
-      enum: ["mobile", "stationed"],
+      enum: ["mobile", "stationed", "both"],
       default: "stationed",
     },
     experience:{
@@ -140,11 +126,13 @@ const StaffSchema = new mongoose.Schema({
 
     collection: [{ type: String }],
     featured: [{ type: String }],
-
-
-    rating:{
-        type:Number,
-        default:0
+    rating: {
+        type: Number,
+        default: 0
+    },
+    ratingCount: {
+        type: Number,
+        default: 0
     },
     specialties: [{ type: String }],
 
@@ -159,6 +147,8 @@ const StaffSchema = new mongoose.Schema({
         Saturday: { type: DayScheduleSchema, default: () => ({}) },
         Sunday: { type: DayScheduleSchema, default: () => ({}) },
     },
+    
+    slotInterval: { type: Number, default: 30 }, 
     
     services:[
         {
@@ -176,7 +166,7 @@ const StaffSchema = new mongoose.Schema({
            }
         }
     ],
-
+    
     openingHours:{
         Monday:String,
         Tuesday:String,
@@ -186,8 +176,40 @@ const StaffSchema = new mongoose.Schema({
         Saturday:String,
         Sunday:String
     },
+
+    flutterwave: {
+        subaccountId: {
+            type: String,
+            default: null,
+        },
+
+        subaccountStatus: {
+            type: String,
+            enum: ["not_connected", "pending", "active", "disabled"],
+            default: "not_connected",
+        },
+    },
+
+    flutterwave: {
+        subaccountId: String,          // keep whatever you already have
+        subaccountStatus: String,
+        bankAccount: {
+            account_bank: { type: String, default: null },   // bank code, e.g. "058"
+            account_number: { type: String, default: null },
+            account_name: { type: String, default: null },
+        },
+    },
+    
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    lastScheduleView: {
+        type: Date,
+        default: null
+    },
+    lastFeedView: {
+        type: Date,
+        default: null
+    },
 
 }, {timestamps:true})
 

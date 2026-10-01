@@ -23,13 +23,15 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  width: 80%;
+  width: 100%;
   background: rgba(255, 255, 255, 0.05);
   padding: 2rem;
   border-radius: 12px;
   backdrop-filter: blur(6px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
 }
+
 
 .InviteLanding input {
   padding: 0.75rem 1rem;
@@ -72,4 +74,116 @@
   margin-top: 1rem;
   color: #ff6b6b;
   font-size: 0.9rem;
+}
+
+.invite-card {
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.invite-card form {
+  gap: 12px;
+}
+
+.InviteLanding textarea {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+  resize: vertical;
+  transition: border 0.2s ease, background 0.2s ease;
+}
+
+.InviteLanding textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.InviteLanding textarea:focus {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.InviteLanding input,
+.InviteLanding textarea {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left; /* typed text reads better left-aligned; remove this line to center it too */
+}
+
+.invite-hint {
+  font-size: 14px;
+  opacity: 0.75;
+  margin: 0;
+}
+
+.invite-sent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 2rem;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.invite-sent-title {
+  font-weight: 600;
+  margin: 0;
+}
+
+.invite-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: center;
+}
+
+.invite-divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 24px auto;
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.invite-divider::before,
+.invite-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.3;
+}
+
+.invite-divider span {
+  padding: 0 10px;
+}
+
+@media (max-width: 400px) {
+  .InviteLanding {
+    padding: 1.25rem;
+  }
+
+  .InviteLanding form,
+  .invite-sent {
+    padding: 1.5rem;
+  }
+
+  .InviteLanding h2 {
+    font-size: 1.4rem;
+  }
 }

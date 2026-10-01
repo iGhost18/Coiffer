@@ -38,12 +38,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #e0e0e0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 500;
-  font-size: 14px;
+  object-fit: cover;  
 }
 
 .status-dot {

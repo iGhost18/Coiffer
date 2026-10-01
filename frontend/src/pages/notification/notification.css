@@ -106,9 +106,7 @@
 .notification-item:hover .notification-avatar-img{
     transform:scale(1.05);
 }
-.notification-icon .material-icons{
-    font-size:28px;
-}
+
 
 .notification-content{
     flex:1;
@@ -128,6 +126,10 @@
     font-size:17px;
     font-weight:600;
     color:#222;
+    overflow: hidden;          
+    text-overflow: ellipsis;   
+    white-space: nowrap;       
+    min-width: 0;  
 }
 
 .notification-top span{
@@ -214,14 +216,7 @@
     padding:15px;
 }
 
-.notification-icon{
-    width:48px;
-    height:48px;
-}
 
-.notification-icon .material-icons{
-    font-size:24px;
-}
 
 .notification-top{
     flex-direction:column;
@@ -232,4 +227,28 @@
     margin-top:2px;
 }
 
+}
+
+@media (max-width: 400px) {
+  .notification-avatar-img {
+    width: 46px;
+    height: 46px;
+  }
+
+  .notification-item {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .notification-top h4 {
+    font-size: 15px;
+  }
+
+  .notification-content p {
+    font-size: 13px;
+  }
+
+  .notification-header h2 {
+    font-size: 18px;
+  }
 }

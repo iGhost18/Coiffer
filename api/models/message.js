@@ -10,6 +10,11 @@ const MessageSchema = new mongoose.Schema(
         },
         text:{
             type:String,
+            default: "",
+        },
+        media: {
+            url: { type: String },
+            type: { type: String, enum: ["image", "video"] },
         },
         type: {
         type: String,

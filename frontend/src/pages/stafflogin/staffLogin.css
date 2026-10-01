@@ -20,6 +20,15 @@
   z-index: -2;
 }
 
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: -1;
+}
 
 .StaffLogin form{
     display:flex;
@@ -143,4 +152,41 @@
   .StaffLogin h2 { font-size: 36px; }
   .StaffLogin input { font-size: 20px; }
   .primary-btn { height: 56px; font-size: 20px; }
+}
+
+@media (max-width: 420px) {
+  .StaffLogin {
+    padding: 16px;
+  }
+
+  .StaffLogin h2 {
+    font-size: 28px;
+  }
+
+  .StaffLogin input {
+    font-size: 17px;
+  }
+
+  .primary-btn {
+    height: 50px;
+    font-size: 17px;
+  }
+
+  .barber-link {
+    font-size: 14px;
+  }
+
+  .barber-link span {
+    padding: 8px 12px;
+    display: inline-block;
+  }
+
+  .forgot-link {
+    font-size: 14px;
+  }
+
+  .form-message {
+    font-size: 15px;
+    padding: 10px;
+  }
 }

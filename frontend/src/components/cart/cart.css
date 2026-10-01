@@ -1,11 +1,11 @@
 
 .CartWrapper {
-  flex: 0 0 30%;
+  flex: 0 0 36%;
   width: 100%;
   align-self: flex-start;
   position: sticky;
-  top: 90px; 
-  max-height: calc(100vh - 100px);
+  top: calc(var(--topbar-height, 90px) + 10px);  
+  max-height: calc(100vh - var(--topbar-height, 90px) - 20px);
   overflow-y: auto;
 }
 
@@ -39,8 +39,15 @@
   display: flex;
   align-items: center;
   justify-content: space-around;
+  flex-wrap: wrap;      
+  gap: 10px;            
   border-bottom: 1px solid #eee;
   padding: 10px 0;
+}
+
+.ItemCon {
+  min-width: 0;
+  flex: 1;
 }
 
 .CartItem img{
@@ -114,4 +121,24 @@
 
 .btnAndText span{
     margin-left: 10px;
+}
+
+@media (max-width: 900px) {
+  .CartWrapper {
+    flex: none;
+    width: 100%;
+    position: static;      /* no longer sticky */
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+@media (max-width: 420px) {
+  .CartItem img {
+    width: 60px;
+  }
+
+  .Controls button {
+    padding: 4px 8px;
+  }
 }

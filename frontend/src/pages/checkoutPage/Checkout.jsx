@@ -2,17 +2,24 @@ import "./checkout.css";
 import Topbar from "../../components/topbar/Topbar";
 import Footer from "../../components/footer/Footer";
 import { useState, useContext } from "react";
-import { DatePicker, TimeSlots } from "../../components/dateTime/DateAndTime";
+import {
+  DatePicker,
+  TimeSlots,
+} from "../../components/dateTime/DateAndTime";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../components/context/CartContext";
 import { TbCurrencyNaira } from "react-icons/tb";
 import { AuthContext } from "../../components/context/AuthContext";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import api from "../../api"; // Import the api instance
+import { formatTo12Hour } from "../../utils/time";
+import Receipt from "../../components/receipt/Receipt";
+import api from "../../api";
 
 export default function Checkout() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -21,9 +28,29 @@ export default function Checkout() {
     city: "",
     description: "",
   });
-  const [paymentMethod, setPaymentMethod] = useState("Paystack");
+
+  const [paymentMethod, setPaymentMethod] =
+    useState("Flutterwave");
+
+  const [isCheckingOut, setIsCheckingOut] =
+    useState(false);
+
+  const [receiptData, setReceiptData] =
+    useState(null);
 
   const { user } = useContext(AuthContext);
+
+  const navigate = useNavigate();
+
+  const {
+    cartItems,
+    total,
+  } = useCart();
+
+  const grandTotal = total;
+
+  const deliveryWindow =
+    getDeliveryWindow(formData.state);
 
   const handleChange = (e) => {
     setFormData({
@@ -32,338 +59,692 @@ export default function Checkout() {
     });
   };
 
-  const navigate = useNavigate();
+  function toLocalDateString(date) {
+    const year = date.getFullYear();
 
-  const { cartItems, total, clearCart } = useCart();
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
 
-  const grandTotal = total;
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function formatDisplayDate(date) {
+    const days = [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+    ];
+
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    return `${days[date.getDay()]}, ${date.getDate()} ${
+      months[date.getMonth()]
+    } ${date.getFullYear()}`;
+  }
+
+  function getDeliveryWindow(state) {
+    const normalizedState = String(
+      state || ""
+    )
+      .trim()
+      .toLowerCase();
+
+    if (!normalizedState) {
+      return null;
+    }
+
+    const isLagos =
+      normalizedState === "lagos";
+
+    const start = new Date();
+
+    start.setHours(0, 0, 0, 0);
+
+    // Lagos: tomorrow
+    // Other states: 3 days from today
+    start.setDate(
+      start.getDate() +
+        (isLagos ? 1 : 3)
+    );
+
+    const end = new Date(start);
+
+    // 3-day delivery interval
+    end.setDate(
+      end.getDate() + 3
+    );
+
+    return {
+      start,
+      end,
+    };
+  }
+
+  function formatDeliveryDate(date) {
+    return date.toLocaleDateString(
+      "en-US",
+      {
+        month: "short",
+        day: "numeric",
+      }
+    );
+  }
 
   const handleCheckout = async () => {
-    if (!user) {
-      alert("Please login first.");
-      return;
-    }
+    if (isCheckingOut) return;
 
-    if (cartItems.length === 0) {
-      alert("Your cart is empty.");
-      return;
-    }
+    setIsCheckingOut(true);
 
-    if (!formData.name || !formData.email || !formData.phone) {
-      alert("Please fill in your contact details.");
-      return;
-    }
-
-    // Split the cart: services need a staff member + appointment slot,
-    // products don't. Each type becomes its own record on the backend.
-    const serviceItems = cartItems.filter((item) => item.itemType === "service");
-    const productItems = cartItems.filter((item) => item.itemType === "product");
-
-    if (serviceItems.length > 0 && (!selectedDate || !selectedTime)) {
-      alert("Please select a date and time for your appointment.");
-      return;
-    }
-
-    const contact = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-    };
-
-    const address = {
-      state: formData.state,
-      city: formData.city,
-      description: formData.description,
-    };
-
-  try {
-    const requests = [];
-
-      if (serviceItems.length > 0) {
-        // Group services by staffId so each staff member gets their own
-        // booking — instead of dumping every service under the first item's staff
-        const servicesByStaff = serviceItems.reduce((acc, item) => {
-          const key = item.staffId;
-          if (!acc[key]) acc[key] = [];
-          acc[key].push(item);
-          return acc;
-        }, {});
-
-        Object.entries(servicesByStaff).forEach(([staffId, items]) => {
-          const serviceTotal = items.reduce(
-            (sum, item) => sum + item.price * item.quantity,
-            0
-          );
-
-          const booking = {
-            customerId: user._id,
-            staffId,
-            contact,
-            services: items,
-            appointmentDate: selectedDate,
-            appointmentTime: selectedTime,
-            address,
-            paymentMethod,
-            total: serviceTotal,
-          };
-
-          requests.push(api.post("/api/booking", booking));
-        });
+    try {
+      if (!user) {
+        alert("Please login first.");
+        return;
       }
 
-      if (productItems.length > 0) {
-        const productTotal = productItems.reduce(
-          (sum, item) => sum + item.price * item.quantity,
-          0
+      if (cartItems.length === 0) {
+        alert("Your cart is empty.");
+        return;
+      }
+
+      if (
+        !formData.name ||
+        !formData.email ||
+        !formData.phone
+      ) {
+        alert(
+          "Please fill in your contact details."
+        );
+        return;
+      }
+
+      const serviceItems =
+        cartItems.filter(
+          (item) =>
+            item.itemType === "service"
         );
 
-        const order = {
-          customerId: user._id,
-          contact,
-          items: productItems,
-          address,
-          paymentMethod,
-          total: productTotal,
-        };
-
-        requests.push(api.post("/api/order", order));
+      if (
+        serviceItems.length > 0 &&
+        (!selectedDate || !selectedTime)
+      ) {
+        alert(
+          "Please select a date and time for your appointment."
+        );
+        return;
       }
 
-      await Promise.all(requests);
-      await clearCart();
+      if (
+        paymentMethod !== "Flutterwave"
+      ) {
+        alert(
+          "Please select Flutterwave."
+        );
+        return;
+      }
 
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        state: "",
-        city: "",
-        description: "",
-      });
-      setSelectedDate(null);
-      setSelectedTime(null);
-      setPaymentMethod("Paystack");
+      const contact = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+      };
 
-      alert("Checkout complete!");
-      navigate("/schedule");
+      const address = {
+        state: formData.state,
+        city: formData.city,
+        description:
+          formData.description,
+      };
+
+      const appointmentDate =
+        selectedDate
+          ? toLocalDateString(
+              selectedDate
+            )
+          : null;
+
+      const appointmentTime =
+        selectedTime || null;
+
+      const response =
+        await api.post(
+          "/api/payment/create",
+          {
+            contact,
+            address,
+            cartItems,
+            appointmentDate,
+            appointmentTime,
+          }
+        );
+
+      if (
+        !response.data?.checkoutUrl
+      ) {
+        throw new Error(
+          "Flutterwave checkout URL was not returned."
+        );
+      }
+
+      /*
+       * Do NOT clear the cart here.
+       * The customer has not paid yet.
+       */
+
+      window.location.href = response.data.checkoutUrl;
     } catch (err) {
-      console.error(err);
-      alert("Checkout failed.");
+      console.error(
+        "Payment initiation failed:",
+        err.response?.status,
+        JSON.stringify(err.response?.data || err.message)
+      );
+
+      if (err.response?.status === 409) {
+        alert(
+          "Sorry, that time slot was just booked by someone else. Please pick another time."
+        );
+        setSelectedTime(null);
+        setRefreshKey((k) => k + 1);
+      } else {
+        alert(
+          err.response?.data?.errors
+            ?.map((item) => `${item.field}: ${item.message}`)
+            .join("\n") ||
+            err.response?.data?.message ||
+            err.message ||
+            "Payment initiation failed."
+        );
+      }
+    } finally {
+      setIsCheckingOut(false);
     }
   };
+
+  const hasServiceItems =
+    cartItems.some(
+      (item) =>
+        item.itemType === "service"
+    );
 
   return (
     <>
       <Topbar />
 
-        <button
-          className="checkOutbtn"
-          onClick={() =>
-            navigate(-1)
-          }
-        >
-          <ChevronLeftIcon />
-        </button>
+      <button
+        className="checkOutbtn"
+        onClick={() => navigate(-1)}
+      >
+        <ChevronLeftIcon />
+      </button>
 
       <div className="CheckoutWrapper">
-        {/* LEFT SIDE */}
+
+        {/* ==================================================
+            LEFT SIDE
+        ================================================== */}
+
         <div className="CheckoutLeft">
           <form>
-            <h3 className="DetailsHeader">Contact Details</h3>
 
-            <div className="InputWrapper">
-              <label>Name</label>
-              <input type="text" name="name" value={formData.name} onChange={handleChange} />
-            </div>
+            {/* CONTACT DETAILS */}
+            <div className="FormSection">
+              <h3 className="FormSectionTitle">
+                Contact details
+              </h3>
 
-            <div className="InputWrapper">
-              <label>Email</label>
-              <input type="email" name="email" value={formData.email} onChange={handleChange} />
-            </div>
+              <p className="FormSectionHint">
+                We'll send your confirmation here.
+              </p>
 
-            <div className="InputWrapper">
-              <label>Phone</label>
-              <input type="tel" name="phone" value={formData.phone} onChange={handleChange} />
-            </div>
-
-            {cartItems.some((item) => item.itemType === "service") && (
               <div className="InputWrapper">
-                <div className="Date">
-                  <label>Date</label>
-                  <DatePicker selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-                </div>
+                <label>Name</label>
 
-                <div className="Time">
-                  <label>Time</label>
-                  <TimeSlots
-                    selectedDate={selectedDate}
-                    selectedTime={selectedTime}
-                    setSelectedTime={setSelectedTime}
-                    staffId={cartItems.find(i => i.itemType === "service")?.staffId}
-                    serviceId={cartItems.find(i => i.itemType === "service")?.itemId}
-                  />
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="InputWrapper">
+                <label>Email</label>
+
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="InputWrapper">
+                <label>Phone</label>
+
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+
+            {/* APPOINTMENT */}
+            {hasServiceItems && (
+              <div className="FormSection">
+                <h3 className="FormSectionTitle">
+                  Appointment
+                </h3>
+
+                <p className="FormSectionHint">
+                  Choose a date and time slot.
+                </p>
+
+                <div className="FormGrid2">
+
+                  <div className="InputWrapper">
+                    <label>Date</label>
+
+                    <DatePicker
+                      selectedDate={
+                        selectedDate
+                      }
+                      setSelectedDate={
+                        setSelectedDate
+                      }
+                    />
+                  </div>
+
+                  <div className="InputWrapper">
+                    <label>Time</label>
+
+                    <TimeSlots
+                      selectedDate={
+                        selectedDate
+                      }
+                      selectedTime={
+                        selectedTime
+                      }
+                      setSelectedTime={
+                        setSelectedTime
+                      }
+                      refreshKey={
+                        refreshKey
+                      }
+                      staffId={
+                        cartItems.find(
+                          (i) =>
+                            i.itemType ===
+                            "service"
+                        )?.staffId
+                      }
+                      serviceId={
+                        cartItems.find(
+                          (i) =>
+                            i.itemType ===
+                            "service"
+                        )?.itemId
+                      }
+                      duration={
+                        cartItems.find(
+                          (i) =>
+                            i.itemType ===
+                            "service"
+                        )?.duration
+                      }
+                    />
+                  </div>
+
                 </div>
               </div>
             )}
 
-            <div className="Location">
-              <h3 className="LocationHeader">Location</h3>
 
-              <div className="InputWrapper">
-                <label>State</label>
-                <input type="text" name="state" value={formData.state} onChange={handleChange} />
+            {/* LOCATION */}
+            <div className="FormSection">
+              <h3 className="FormSectionTitle">
+                Location
+              </h3>
+
+              <p className="FormSectionHint">
+                Where should the Expert meet you.
+              </p>
+
+              <div className="FormGrid2">
+
+                <div className="InputWrapper">
+                  <label>State</label>
+
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="InputWrapper">
+                  <label>Town / City</label>
+
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                  />
+                </div>
+
               </div>
 
               <div className="InputWrapper">
-                <label>Town / City</label>
-                <input type="text" name="city" value={formData.city} onChange={handleChange} />
-              </div>
+                <label>
+                  Description
+                </label>
 
-              <div className="InputWrapper">
-                <label>Description</label>
-                <textarea name="description" value={formData.description} onChange={handleChange} />
+                <textarea
+                  name="description"
+                  value={
+                    formData.description
+                  }
+                  onChange={handleChange}
+                />
               </div>
             </div>
+
           </form>
         </div>
 
-        {/* RIGHT SIDE */}
+
+        {/* ==================================================
+            RIGHT SIDE
+        ================================================== */}
+
         <div className="CheckoutRight">
+
+          {/* ==================================================
+              ORDER SUMMARY
+          ================================================== */}
+
           <div className="SummaryCard">
-            <h2 className="SummaryHeader">Order Summary</h2>
 
-            <div className="SummarySection">
-              <h4>Selected Items</h4>
+            <h3 className="SummarySectionTitle">
+              Order summary
+            </h3>
 
-              {cartItems.length === 0 ? (
-                <p>Your cart is empty.</p>
-              ) : (
-                cartItems.map((item) => (
-                  <div className="SummaryItem" key={item.itemId}>
-                    <div>
-                      <p className="ServiceName">{item.name}</p>
+            {cartItems.length === 0 ? (
+              <p className="SummaryEmpty">
+                Your cart is empty.
+              </p>
+            ) : (
+              cartItems.map((item) => (
+                <div
+                  className="SummaryLineItem"
+                  key={item.itemId}
+                >
 
-                      <small>
-                        {item.itemType === "service" ? item.duration : "Product"}
-                        {item.quantity > 1 && ` • Qty: ${item.quantity}`}
-                      </small>
-                    </div>
+                  <div>
+                    <p className="SummaryLineName">
+                      {item.name}
+                    </p>
 
-                    <div className="ItemPrice">
-                      <TbCurrencyNaira />
-                      {(item.price * item.quantity).toLocaleString()}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                    <p className="SummaryLineMeta">
+                      {item.itemType ===
+                      "service"
+                        ? item.duration
+                        : "Product"}
 
-            <div className="SummarySection">
-              <h4>Contact</h4>
-
-              <div className="SummaryRow">
-                <span>Name</span>
-                <span>{formData.name || "-"}</span>
-              </div>
-              <div className="SummaryRow">
-                <span>Phone</span>
-                <span>{formData.phone || "-"}</span>
-              </div>
-              <div className="SummaryRow">
-                <span>Email</span>
-                <span>{formData.email || "-"}</span>
-              </div>
-
-              {cartItems.some((item) => item.itemType === "service") && (
-                <>
-                  <div className="SummaryRow">
-                    <span>Date</span>
-                    <span>{selectedDate ? selectedDate.toLocaleString() : "Select Date"}</span>
+                      {item.quantity > 1 &&
+                        ` • Qty: ${item.quantity}`}
+                    </p>
                   </div>
 
-                  <div className="SummaryRow">
-                    <span>Time</span>
-                    <span>{selectedTime || "Select Time"}</span>
-                  </div>
-                </>
-              )}
+                  <span className="SummaryLinePrice">
+                    <TbCurrencyNaira />
+
+                    {(
+                      item.price *
+                      item.quantity
+                    ).toLocaleString()}
+                  </span>
+
+                </div>
+              ))
+            )}
+
+            <div className="SummaryDivider" />
+
+            <div className="SummarySubRow">
+              <span>Name</span>
+              <span>
+                {formData.name || "-"}
+              </span>
             </div>
 
-            <div className="SummarySection">
-              <h4>Address</h4>
-
-              <div className="SummaryRow">
-                <span>State</span>
-                <span>{formData.state || "-"}</span>
-              </div>
-              <div className="SummaryRow">
-                <span>City</span>
-                <span>{formData.city || "-"}</span>
-              </div>
-
-              <div className="SummaryRow">
-                <span>Description</span>
-                <span>{formData.description || "-"}</span>
-              </div>
+            <div className="SummarySubRow">
+              <span>Phone</span>
+              <span>
+                {formData.phone || "-"}
+              </span>
             </div>
 
-            <div className="SummarySection">
-              <div className="SummaryRow">
-                <span>Subtotal</span>
-                <span>
-                  <TbCurrencyNaira />
-                  {total.toLocaleString()}
-                </span>
-              </div>
-
-              <div className="SummaryRow">
-                <span>Transport</span>
-                <span>negotiate with barber</span>
-              </div>
-
-              <div className="TotalCost">
-                <h3>Total</h3>
-                <h2>
-                  <TbCurrencyNaira />
-                  {grandTotal.toLocaleString()}
-                </h2>
-              </div>
+            <div className="SummarySubRow">
+              <span>Email</span>
+              <span>
+                {formData.email || "-"}
+              </span>
             </div>
+
+            {hasServiceItems && (
+              <>
+                <div className="SummarySubRow">
+                  <span>Date</span>
+
+                  <span>
+                    {selectedDate
+                      ? formatDisplayDate(
+                          selectedDate
+                        )
+                      : "Select date"}
+                  </span>
+                </div>
+
+                <div className="SummarySubRow">
+                  <span>Time</span>
+
+                  <span>
+                    {selectedTime
+                      ? formatTo12Hour(
+                          selectedTime
+                        )
+                      : "Select time"}
+                  </span>
+                </div>
+              </>
+            )}
+
+            <div className="SummaryDivider" />
+
+            <div className="SummarySubRow">
+              <span>State</span>
+
+              <span>
+                {formData.state || "-"}
+              </span>
+            </div>
+
+            <div className="SummarySubRow">
+              <span>City</span>
+
+              <span>
+                {formData.city || "-"}
+              </span>
+            </div>
+
+            <div className="SummarySubRow">
+              <span>Description</span>
+
+              <span>
+                {formData.description ||
+                  "-"}
+              </span>
+            </div>
+
+            <div className="SummaryDivider" />
+
+            <div className="SummarySubRow">
+              <span>
+                Estimated delivery
+              </span>
+
+              <span>
+                {deliveryWindow
+                  ? `${formatDeliveryDate(
+                      deliveryWindow.start
+                    )} – ${formatDeliveryDate(
+                      deliveryWindow.end
+                    )}`
+                  : "Enter your state"}
+              </span>
+            </div>
+
+            <div className="SummarySubRow">
+              <span>Subtotal</span>
+
+              <span>
+                <TbCurrencyNaira />
+
+                {total.toLocaleString()}
+              </span>
+            </div>
+
+            <div className="SummarySubRow">
+              <span>Transport</span>
+
+              <span>
+                Negotiate with Expert
+              </span>
+            </div>
+
+            <div className="SummaryTotalRow">
+              <span>Total</span>
+
+              <span className="SummaryTotalValue">
+                <TbCurrencyNaira />
+
+                {grandTotal.toLocaleString()}
+              </span>
+            </div>
+
           </div>
+
+
+          {/* ==================================================
+              PAYMENT METHOD — UNDER ORDER SUMMARY
+          ================================================== */}
 
           <div className="PaymentMethod">
-            <h3>Select Payment Method</h3>
 
-            <label className="PaymentOption">
-              <input
-                type="radio"
-                name="payment"
-                value="Paystack"
-                checked={paymentMethod === "Paystack"}
-                onChange={(e) => setPaymentMethod(e.target.value)}
+            <h3 className="FormSectionTitle">
+              Payment method
+            </h3>
+
+            <div
+              className={`PaymentCard ${
+                paymentMethod ===
+                "Flutterwave"
+                  ? "PaymentCard--selected"
+                  : ""
+              }`}
+              onClick={() =>
+                setPaymentMethod(
+                  "Flutterwave"
+                )
+              }
+              role="radio"
+              aria-checked={
+                paymentMethod ===
+                "Flutterwave"
+              }
+              tabIndex={0}
+            >
+
+              <div className="PaymentCardInfo">
+                <p className="PaymentCardName">
+                  Flutterwave
+                </p>
+
+                <p className="PaymentCardDesc">
+                  Cards, bank transfer, USSD
+                </p>
+              </div>
+
+              <span
+                className={`PaymentCardCheck ${
+                  paymentMethod ===
+                  "Flutterwave"
+                    ? "PaymentCardCheck--on"
+                    : ""
+                }`}
               />
-              Paystack
-            </label>
 
-            <label className="PaymentOption">
-              <input
-                type="radio"
-                name="payment"
-                value="Flutterwave"
-                checked={paymentMethod === "Flutterwave"}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              />
-              Flutterwave
-            </label>
+            </div>
 
-            <button className="CheckoutBtn" onClick={handleCheckout}>
-              Proceed to Payment
+
+            {/* PROCEED TO PAYMENT */}
+            <button
+              type="button"
+              className="CheckoutBtn"
+              onClick={handleCheckout}
+              disabled={isCheckingOut}
+            >
+              {isCheckingOut
+                ? "Processing..."
+                : "Proceed to Payment"}
             </button>
+
           </div>
+
         </div>
       </div>
 
       <Footer />
+
+      {receiptData && (
+        <Receipt
+          {...receiptData}
+          onClose={() =>
+            setReceiptData(null)
+          }
+          onViewSchedule={() =>
+            navigate("/schedule", {
+              replace: true,
+            })
+          }
+        />
+      )}
     </>
   );
 }

@@ -1,0 +1,82 @@
+/* storybar.css */
+.StoryBar {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 12px 8px;
+}
+
+.StoryBubble {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 68px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.StoryRing {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  padding: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.StoryRing.unseen,
+.StoryRing.hasStory {
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+}
+
+.StoryRing.seen,
+.StoryRing.noStory {
+  background: #ccc;
+}
+
+.StoryAvatarImg {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+}
+
+.StoryAddIcon {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #1877f2;
+  color: #fff;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  font-size: 14px;
+}
+
+.StoryLabel {
+  font-size: 12px;
+  margin-top: 4px;
+  max-width: 68px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.StoryAddMore {
+  position: absolute;
+  top: -4px;
+  right: 2px;
+  border: none;
+  background: #1877f2;
+  color: #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  cursor: pointer;
+}

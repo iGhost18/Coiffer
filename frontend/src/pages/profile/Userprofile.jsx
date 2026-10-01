@@ -28,6 +28,7 @@ export default function Userprofile() {
   const [featured, setFeatured] = useState([]);
   const [user, setUser] = useState({});
   const [isClient, setIsClient] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const fileInputRef = useRef(null);
   const profilePicRef = useRef(null);
 
@@ -98,7 +99,11 @@ export default function Userprofile() {
   }, [user, currentUser]);
 
   const handleLike = async () => {
-    if (!currentUser?._id || !user?._id) return;
+    if (!currentUser?._id) {
+      navigate("/login", { state: { from: window.location.pathname } });
+      return;
+    }
+    if (!user?._id) return;
 
     try {
       if (isLike) {
@@ -138,39 +143,57 @@ export default function Userprofile() {
 
     } catch (err) {
       console.log(err);
+      setSaveError(true);
+      setTimeout(() => setSaveError(false), 3000);
     }
   };
 
   const handleUpload = async (e) => {
-    const files = Array.from(e.target.files);
+      const files = Array.from(e.target.files);
 
-    try {
-      const uploadedUrls = [];
+      try {
+        const uploadedUrls = [];
 
-      for (const file of files) {
-        const formData = new FormData();
+        for (const file of files) {
+          const formData = new FormData();
+          formData.append("file", file);
 
-        formData.append("file", file);
+          const res = await api.post("/api/upload", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
 
-        const res = await api.post("/api/upload", formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+          uploadedUrls.push(res.data.url);
+        }
 
-        uploadedUrls.push(res.data.url);
+        const updatedCollection = [...collection, ...uploadedUrls];
+        setCollection(updatedCollection);
+
+        // Persist immediately — collection uploads no longer wait for
+        // "Save Changes" the way other profile fields do.
+        await api.put(`/api/user/${user._id}`, {
+          collection: updatedCollection,
+        });
+
+      } catch (err) {
+        console.log(err);
       }
+  };
 
-      setCollection((prev) => [
-        ...prev,
-        ...uploadedUrls,
-      ]);
+  const handleDeleteCollectionItem = async (url) => {
+      const updatedCollection = collection.filter((u) => u !== url);
+      const updatedFeatured = featured.filter((u) => u !== url);
 
-    } catch (err) {
-      console.log(err);
-    }
+      setCollection(updatedCollection);
+      setFeatured(updatedFeatured);
+
+      try {
+        await api.put(`/api/user/${user._id}`, {
+          collection: updatedCollection,
+          featured: updatedFeatured,
+        });
+      } catch (err) {
+        console.log(err);
+      }
   };
 
   const handleProfilePicUpload = async (e) => {
@@ -203,19 +226,28 @@ export default function Userprofile() {
     }
   };
 
-  const toggleFeatured = (url) => {
-    setFeatured((prev) => {
-      if (prev.includes(url)) {
-        return prev.filter((u) => u !== url);
+  const toggleFeatured = async (url) => {
+      let updatedFeatured;
+
+      if (featured.includes(url)) {
+        updatedFeatured = featured.filter((u) => u !== url);
+      } else {
+        if (featured.length >= 7) {
+          alert("You can only feature up to 7 images");
+          return;
+        }
+        updatedFeatured = [...featured, url];
       }
 
-      if (prev.length >= 7) {
-        alert("You can only feature up to 7 images");
-        return prev;
-      }
+      setFeatured(updatedFeatured);
 
-      return [...prev, url];
-    });
+      try {
+        await api.put(`/api/user/${user._id}`, {
+          featured: updatedFeatured,
+        });
+      } catch (err) {
+        console.log(err);
+      }
   };
 
   const update = (field) => (e) => {
@@ -225,12 +257,18 @@ export default function Userprofile() {
     }));
   };
 
+
   const handleMessage = async () => {
+    if (!currentUser?._id) {
+      navigate("/login", { state: { from: window.location.pathname } });
+      return;
+    }
     try {
-      if (!currentUser?._id || !user?._id) {
+      if (!user?._id) {
         console.log("Missing user IDs");
         return;
       }
+
 
       if (currentUser._id === user._id) {
         return;
@@ -252,10 +290,15 @@ export default function Userprofile() {
   };
 
   const handleAddClient = async () => {
-    if (!user || !staff) {
+    if (!staff) {
+      navigate("/login", { state: { from: window.location.pathname } });
+      return;
+    }
+    if (!user) {
       console.log("User or staff not loaded yet");
       return;
     }
+    
     try {
       await api.put(
         `/api/staff/${staff._id}/addClient`,
@@ -272,6 +315,41 @@ export default function Userprofile() {
       });
     } catch (err) {
       console.error(err);
+      alert(
+        err.response?.data?.message ||
+          "Couldn't add this client. You can only add clients you've had a booking with."
+      );
+    }
+  };
+
+  const handleRemoveClient = async () => {
+    if (!user || !staff) return;
+
+    try {
+      await api.put(
+        `/api/staff/${staff._id}/removeClient`,
+        { userId: user._id }
+      );
+
+      setIsClient(false);
+
+      staffDispatch({
+        type: "UPDATE_STAFF",
+        payload: {
+          clients: (staff.clients || []).filter((id) => String(id) !== String(user._id)),
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Couldn't remove this client.");
+    }
+  };
+
+  const handleToggleClient = () => {
+    if (isClient) {
+      handleRemoveClient();
+    } else {
+      handleAddClient();
     }
   };
 
@@ -368,8 +446,7 @@ export default function Userprofile() {
               {staff && (
                 <button
                   className="MessageBtn"
-                  onClick={handleAddClient}
-                  disabled={isClient}
+                  onClick={handleToggleClient}
                 >
                   {isClient ? "Client ✓ " : "Client + "}
                 </button>
@@ -402,7 +479,17 @@ export default function Userprofile() {
 
         <div className="UserProfileBottom">
           {featured.length > 0 ? (
-            <Swiper modules={[FreeMode]} freeMode spaceBetween={50} slidesPerView={4.5}>
+            <Swiper
+              modules={[FreeMode]}
+              freeMode
+              spaceBetween={12}
+              slidesPerView={2.2}
+              breakpoints={{
+                480: { slidesPerView: 2.5, spaceBetween: 16 },
+                768: { slidesPerView: 3.5, spaceBetween: 24 },
+                1024: { slidesPerView: 4.5, spaceBetween: 50 },
+              }}
+            >
               {featured.map((url, i) => (
                 <SwiperSlide key={i}>
                   <img src={url} alt="" className='SlideImg' />
@@ -422,9 +509,11 @@ export default function Userprofile() {
         toggleFeatured={toggleFeatured}
         fileInputRef={fileInputRef}
         handleUpload={handleUpload}
+        handleDelete={handleDeleteCollectionItem}
         showBackButton={false}
+        isOwner={isOwnProfile}
       />
- 
+    
 
       {/* RIGHT — Settings */} 
       {isOwnProfile && ( 
@@ -443,10 +532,14 @@ export default function Userprofile() {
           </div>
 
           <div className="FieldGrids">
-            <div className="Field">
-              <label>Name</label>
-              <input type="text" value={user.name || ""} onChange={update('name')} placeholder="Full name" />
-            </div>
+          <div className="Field">
+            <label>First Name</label>
+            <input type="text" value={user.firstName || ""} onChange={update('firstName')} placeholder="First name" />
+          </div>
+          <div className="Field">
+            <label>Last Name</label>
+            <input type="text" value={user.lastName || ""} onChange={update('lastName')} placeholder="Last name" />
+          </div>
             <div className="Field">
               <label>Username</label>
               <input type="text" value={user.username || ""} onChange={update('username')} placeholder="@username" />

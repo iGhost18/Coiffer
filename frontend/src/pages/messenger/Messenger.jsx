@@ -3,6 +3,7 @@ import { useContext, useEffect, useState, useRef } from "react";
 import api from "../../api";
 import socket from "../../socket";
 import { useLocation, useNavigate } from "react-router-dom";
+import { MdImage, MdClose } from "react-icons/md";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 
 import { AuthContext } from "../../components/context/AuthContext";
@@ -19,10 +20,13 @@ export default function Messenger() {
   const [arrivalMessages, setArrivalMessages] = useState(null);
   const [chatPartner, setChatPartner] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [pendingMedia, setPendingMedia] = useState(null); // { file, previewUrl, type }
+  const [sendingMedia, setSendingMedia] = useState(false);
   const { user } = useContext(AuthContext);
   const { staff } = useContext(StaffAuthContext);
   const currentUser = user || staff;
   const isStaff = !!staff;
+  const mediaInputRef = useRef();
   const scrollRef = useRef();
   const textareaRef = useRef();
   const location = useLocation();
@@ -69,6 +73,24 @@ export default function Messenger() {
 
     if (belongsToCurrentChat) {
       setMessages((prev) => [...prev, arrivalMessages]);
+
+      // The chat is already open, so this new message has effectively
+      // been "seen" the moment it arrives — mark it read on the backend
+      // immediately, rather than only when the conversation is first
+      // opened. Without this, a message that arrives while you're already
+      // chatting never gets its `read` flag flipped, and the unread
+      // badge silently reappears next time counts are refetched.
+      if (currentChat?._id) {
+        api.put(`/api/message/conversation/${currentChat._id}/read`).catch(console.error);
+      }
+    } else if (arrivalMessages.conversationId) {
+      setConversation((prev) =>
+        prev.map((c) =>
+          c._id === arrivalMessages.conversationId
+            ? { ...c, unreadCount: (c.unreadCount || 0) + 1 }
+            : c
+        )
+      );
     }
   }, [arrivalMessages, currentChat]);
 
@@ -125,13 +147,17 @@ export default function Messenger() {
         const res = await api.get(`/api/conversation/member?id=${friendId}`);
         if (!cancelled) setChatPartner(res.data);
       } catch (err) {
-        if (!cancelled) console.error(err);
+        if (err.response?.status === 404) {
+          if (!cancelled) setChatPartner({ username: "Deleted account", profilePicture: null });
+        } else {
+          if (!cancelled) console.error(err);
+        }
       }
     };
 
     getPartner();
     return () => { cancelled = true; };
-  }, [currentChat, currentUser]);
+  }, [currentChat, currentUser?._id]);
 
   // Get Conversations
   useEffect(() => {
@@ -151,23 +177,52 @@ export default function Messenger() {
     return () => { cancelled = true; };
   }, [currentUser]);
 
-  // Get Messages
+  // Get Messages + mark conversation as read
   useEffect(() => {
     if (!currentChat?._id) return;
+
     let cancelled = false;
 
     const getMessages = async () => {
       try {
         const res = await api.get(`/api/message/${currentChat._id}`);
-        if (!cancelled) setMessages(Array.isArray(res.data) ? res.data : []);
+
+        if (!cancelled) {
+          setMessages(Array.isArray(res.data) ? res.data : []);
+        }
+
+        // Mark all messages in this conversation as read
+        await api.put(
+          `/api/message/conversation/${currentChat._id}/read`
+        );
+
+        // Tell Topbar to refresh its unread message count
+        window.dispatchEvent(new Event("messagesRead"));
+
+        // Also update the conversation's unread count locally
+        setConversation((prev) =>
+          prev.map((c) =>
+            c._id === currentChat._id
+              ? { ...c, unreadCount: 0 }
+              : c
+          )
+        );
+
       } catch (err) {
-        if (!cancelled) console.error("Error fetching messages:", err);
+        if (!cancelled) {
+          console.error("Error fetching messages:", err);
+        }
       }
     };
 
     getMessages();
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+    };
   }, [currentChat]);
+
+
 
   // auto-grow the textarea as the user types
   useEffect(() => {
@@ -185,25 +240,68 @@ export default function Messenger() {
   };
 
   // Send Message — persist first; the server emits to the receiver after saving.
+  // Send Message — persist first; the server emits to the receiver after saving.
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!newMessages.trim() || !currentChat || !currentUser) return;
+    if ((!newMessages.trim() && !pendingMedia) || !currentChat || !currentUser) return;
 
-    const message = {
-      sender: currentUser._id,
-      text: newMessages,
-      conversationId: currentChat._id,
-    };
+    setSendingMedia(true);
 
     try {
+      let media = null;
+
+      if (pendingMedia) {
+        const formData = new FormData();
+        formData.append("file", pendingMedia.file);
+        const uploadRes = await api.post("/api/upload", formData);
+        media = { url: uploadRes.data.url, type: pendingMedia.type };
+      }
+
+      const message = {
+        sender: currentUser._id,
+        text: newMessages,
+        conversationId: currentChat._id,
+        media,
+      };
+
       const res = await api.post("/api/message", message);
       setMessages((prev) => [...prev, res.data]);
       setNewMessages("");
+      cancelPendingMedia();
     } catch (err) {
       console.error("Error sending message:", err);
+      alert("Couldn't send your message. Try again.");
+    } finally {
+      setSendingMedia(false);
     }
   };
+
+  const handlePickMedia = () => mediaInputRef.current?.click();
+
+  const handleMediaSelected = (e) => {
+    const f = e.target.files[0];
+    e.target.value = "";
+    if (!f) return;
+
+    const isVideo = f.type.startsWith("video/");
+    setPendingMedia({
+      file: f,
+      previewUrl: URL.createObjectURL(f),
+      type: isVideo ? "video" : "image",
+    });
+  };
+
+  const cancelPendingMedia = () => {
+    if (pendingMedia?.previewUrl) URL.revokeObjectURL(pendingMedia.previewUrl);
+    setPendingMedia(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pendingMedia?.previewUrl) URL.revokeObjectURL(pendingMedia.previewUrl);
+    };
+  }, [pendingMedia]);
 
   const handleBookingUpdate = (messageId, newStatus) => {
     setMessages((prev) =>
@@ -217,23 +315,11 @@ export default function Messenger() {
     });
   }, [messages]);
 
-  useEffect(() => {
-    if (!currentUser?._id) return;
 
-    const markMessagesRead = async () => {
-      try {
-        await api.put(`/api/message/read/${currentUser._id}`);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-
-    markMessagesRead();
-  }, [currentUser]);
 
   return (
     <div className="messenger">
-      <div className="chatMenu">
+      <div className={`chatMenu ${currentChat ? "hidden" : ""}`}>
         <div className="chatMenuWrapper">
           <div className="btnback">
             <button className="messengerBackBtn" onClick={() => navigate(-1)}>
@@ -258,10 +344,23 @@ export default function Messenger() {
         </div>
       </div>
 
-      <div className="chatBox">
+      <div className={`chatBox ${!currentChat ? "hidden" : ""}`}>
         <div className="chatBoxWrapper">
           {currentChat ? (
             <>
+              <div className="chatBoxTopBar">
+                <button
+                  className="messengerBackBtn chatBackBtn"
+                  onClick={() => setCurrentChat(null)}
+                  aria-label="Back to conversations"
+                >
+                  <ChevronLeftIcon />
+                </button>
+                <span className="chatBoxPartnerName">
+                  {chatPartner?.username}
+                </span>
+              </div>
+              
               <div className="chatBoxTop">
                 {messages.map((m) => (
                   <div key={m._id} ref={scrollRef}>
@@ -281,7 +380,43 @@ export default function Messenger() {
               </div>
 
               <div className="chatBoxBottom">
+                {pendingMedia && (
+                  <div className="chatMediaPreview">
+                    {pendingMedia.type === "video" ? (
+                      <video src={pendingMedia.previewUrl} className="chatMediaPreviewThumb" muted />
+                    ) : (
+                      <img src={pendingMedia.previewUrl} alt="" className="chatMediaPreviewThumb" />
+                    )}
+                    <button
+                      type="button"
+                      className="chatMediaPreviewRemove"
+                      onClick={cancelPendingMedia}
+                      aria-label="Remove attachment"
+                    >
+                      <MdClose />
+                    </button>
+                  </div>
+                )}
+
                 <div className="messageInputWrapper">
+                  <input
+                    ref={mediaInputRef}
+                    type="file"
+                    style={{ display: "none" }}
+                    accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime"
+                    onChange={handleMediaSelected}
+                  />
+
+                  <button
+                    type="button"
+                    className="chatAttachButton"
+                    onClick={handlePickMedia}
+                    disabled={sendingMedia}
+                    aria-label="Attach photo or video"
+                  >
+                    <MdImage />
+                  </button>
+
                   <textarea
                     ref={textareaRef}
                     className="chatMessageInput"
@@ -295,7 +430,7 @@ export default function Messenger() {
                   <button
                     className="chatSubmitButton"
                     onClick={handleSubmit}
-                    disabled={!newMessages.trim()}
+                    disabled={sendingMedia || (!newMessages.trim() && !pendingMedia)}
                     aria-label="Send message"
                   >
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none">

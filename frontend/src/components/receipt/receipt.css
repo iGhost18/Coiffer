@@ -1,0 +1,177 @@
+.ReceiptOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.ReceiptCard {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  animation: receiptPop 0.25s ease;
+}
+
+@keyframes receiptPop {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.ReceiptHeader {
+  background: #111;
+  color: #fff;
+  padding: 28px 24px 22px;
+  text-align: center;
+  border-radius: 16px 16px 0 0;
+}
+
+.ReceiptCheck {
+  font-size: 42px;
+  color: #4caf50;
+  margin-bottom: 8px;
+}
+
+.ReceiptHeader h2 {
+  margin: 4px 0 4px;
+  font-size: 19px;
+}
+
+.ReceiptSub {
+  font-size: 12.5px;
+  color: #b5b5b5;
+  margin: 0;
+}
+
+.ReceiptBody {
+  padding: 20px 22px 4px;
+}
+
+.ReceiptSection {
+  border-bottom: 1px dashed #e2e2e2;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+}
+
+.ReceiptSectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ReceiptRef {
+  font-family: monospace;
+  font-size: 12px;
+  color: #888;
+}
+
+.ReceiptPill {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: #fdeceb;
+  color: #be0505;
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+
+.ReceiptRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  color: #444;
+  margin-bottom: 6px;
+}
+
+.ReceiptRow span:last-child {
+  color: #111;
+  font-weight: 500;
+  text-align: right;
+  max-width: 60%;
+}
+
+.ReceiptItems {
+  margin-top: 8px;
+}
+
+.ReceiptItem {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  padding: 4px 0;
+}
+
+.ReceiptItemPrice {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.ReceiptTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0 20px;
+}
+
+.ReceiptTotalRow span:first-child {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.ReceiptTotal {
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #be0505;
+}
+
+.ReceiptActions {
+  display: flex;
+  gap: 10px;
+  padding: 0 22px 22px;
+}
+
+.ReceiptBtnGhost,
+.ReceiptBtnPrimary {
+  flex: 1;
+  padding: 12px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.ReceiptBtnGhost {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.ReceiptBtnGhost:hover {
+  background: #e6e6e6;
+}
+
+.ReceiptBtnPrimary {
+  background: #111;
+  color: #fff;
+}
+
+.ReceiptBtnPrimary:hover {
+  opacity: 0.9;
+}
+
+.ReceiptBtnGhost:active,
+.ReceiptBtnPrimary:active {
+  transform: scale(0.97);
+}

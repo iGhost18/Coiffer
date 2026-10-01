@@ -1,8 +1,9 @@
 import "./friend.css";
 import { useContext, useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import socket from "../../socket";
 
 import { AuthContext } from "../context/AuthContext";
 import { StaffAuthContext } from "../context/StaffAuthContext";
@@ -12,6 +13,7 @@ export default function Friend() {
   const { staff } = useContext(StaffAuthContext);
 
   const [friends, setFriends] = useState([]);
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const navigate = useNavigate();
   const PF = process.env.REACT_APP_PUBLIC_FOLDER;
 
@@ -22,8 +24,27 @@ export default function Friend() {
   };
 
   useEffect(() => {
-    const fetchFriends = async () => {
+    const currentUser = user || staff;
+    if (!currentUser?._id) return;
 
+    const handleUsers = (users) => {
+      setOnlineUsers(users.map((u) => String(u.userId)));
+    };
+
+    socket.on("getUsers", handleUsers);
+
+    const requestOnlineUsers = () => socket.emit("requestOnlineUsers");
+    socket.on("connect", requestOnlineUsers);
+    if (socket.connected) requestOnlineUsers();
+
+    return () => {
+      socket.off("getUsers", handleUsers);
+      socket.off("connect", requestOnlineUsers);
+    };
+  }, [user, staff]);
+
+  useEffect(() => {
+    const fetchFriends = async () => {
       if (!user && !staff) {
         console.log("No logged in user");
         return;
@@ -31,13 +52,11 @@ export default function Friend() {
 
       try {
         let res;
-
         if (user) {
-          res = await axios.get(`/api/user/${user._id}/groomers`);
+          res = await api.get(`/api/user/${user._id}/groomers`);
         } else {
-          res = await axios.get(`/api/staff/${staff._id}/clients`);
+          res = await api.get(`/api/staff/${staff._id}/clients`);
         }
-
         setFriends(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.log(err);
@@ -51,59 +70,42 @@ export default function Friend() {
     <div className="friend-list">
       <div className="friend-list-header">
         <div className="btnAndText">
-            <button
-              className="friendBackbtn"
-              onClick={() =>
-                navigate(-1)
+          <button className="friendBackbtn" onClick={() => navigate(-1)}>
+            <ChevronLeftIcon />
+          </button>
+          <h3>{user ? "My Groomers" : "My Clients"}</h3>
+        </div>
+
+        <span className="friend-count">{friends.length}</span>
+      </div>
+
+      {friends.map((friend) => {
+        const isOnline = onlineUsers.includes(String(friend._id));
+
+        return (
+          <div
+            key={friend._id}
+            className="friend-row"
+            onClick={() => {
+              if (user) {
+                navigate(`/staffprofile/${friend._id}`);
+              } else {
+                navigate(`/userprofile/${friend.username}`);
               }
-            >
-              <ChevronLeftIcon />
-            </button>
+            }}
+          >
+            <div className="friend-avatar-wrap">
+              <img src={getImage(friend.profilePicture)} alt="" className="friend-avatar" />
+              <span className={`status-dot ${isOnline ? "online" : "offline"}`}></span>
+            </div>
 
-            <h3>
-              {user ? "My Groomers" : "My Clients"}
-            </h3>
-        </div>
- 
-        <span className="friend-count">
-          {friends.length}
-        </span>
-      </div>
-
-      {friends.map((friend) => (
-      
-        <div
-          key={friend._id}
-          className="friend-row"
-          onClick={() => {
-            if (user) {
-              // logged in as a user, so friends here are staff (groomers)
-              navigate(`/staffprofile/${friend._id}`);
-            } else {
-              // logged in as staff, so friends here are users (clients)
-              navigate(`/userprofile/${friend.username}`);
-            }
-          }}
-        >
-        <div className="friend-avatar-wrap">
-          <img
-            src={getImage(friend.profilePicture)}
-            alt=""
-            className="friend-avatar"
-          />
-        </div>
-
-        <div className="friend-info">
-          <p className="friend-name">
-            {friend.username}
-          </p>
-
-          <p className="friend-status">
-            {user ? friend.role : "Client"}
-          </p>
-        </div>
-      </div>
-      ))}
+            <div className="friend-info">
+              <p className="friend-name">{friend.username}</p>
+              <p className="friend-status">{user ? friend.role : "Client"}</p>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

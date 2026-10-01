@@ -18,7 +18,7 @@ export default function Footer() {
                 <div className="FooterRight">
                 <img src="/assets/GhostLogo.png" alt="" />
                 <h5>
-                    Premium barbering services in a modern, comfortable environment. We provide the best haircuts, styling, <br /> and grooming services.
+                    Premium grooming services in a modern, comfortable environment. We provide the best haircuts, styling, skin care, <br /> and full-body grooming services.
                 </h5>
 
                 <FaYoutube  className='icons'/>
@@ -31,28 +31,8 @@ export default function Footer() {
                 <div className="FooterLeft">
                 <ul className='QuickLinks'>
                     <h3 className='Header'>Quick Links</h3>
-                    <li>Home</li>
-                    <li>Service</li>
-                    <li>Blog</li>
-                    <li>Shop</li>
                     <li>About us</li>
-                    <li>Contact</li>
                 </ul>
-                <div className="BusinessHour">
-                    <h3>Business Hour</h3>
-                    <div className='BusinessHourList'>
-                    <p>Monday  -  Friday:</p>
-                    <h6>8am - 8pm</h6>
-                    </div>
-                    <div className='BusinessHourList'>
-                    <p>Saturday:</p>
-                    <h6>8am - 8pm</h6>
-                    </div>
-                    <div className='BusinessHourList'>
-                    <p>Sunday:</p>
-                    <h6>8am - 8pm</h6>
-                    </div>
-                </div>
                 <div className="Information">
                     <h3>Information</h3>
                     <div className="InfoList">

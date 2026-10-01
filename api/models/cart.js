@@ -18,7 +18,10 @@ const CartItemSchema = new mongoose.Schema(
       type: Number,
       default: 1,
     },
-    duration: Number,
+    duration: {
+      type: String,
+      default: "",
+    },
     staffId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Staff",

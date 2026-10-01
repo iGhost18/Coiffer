@@ -14,8 +14,23 @@
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
   color: var(--text);
   background: var(--ink);
+
   width: 100%;
-  height: 100vh;
+  overflow: hidden;
+}
+
+/* FULL MAP PAGE */
+.staff-snap-map.full-map {
+  height: 100dvh;
+  min-height: 100dvh;
+}
+
+/* MAP INSIDE HOME PAGE */
+.staff-snap-map.embedded-map {
+  width: 100%;
+  height: 650px;
+  min-height: 650px;
+  border-radius: 16px;
   overflow: hidden;
 }
 
@@ -47,18 +62,29 @@
 
 .app-grid {
   display: grid;
-  grid-template-columns: 360px 1fr;
-  height: 100%;
+  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+
   width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
-/* ---------- SIDEBAR ---------- */
+#map-wrap {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  background: var(--ink);
+}
+
 #sidebar {
   background: var(--panel);
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0; 
   z-index: 20;
 }
 
@@ -355,37 +381,7 @@
   filter: grayscale(55%);
   opacity: 0.85;
 }
-.staff-pin .dot {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: var(--live);
-  border: 2px solid var(--ink);
-}
-.staff-pin.offline .dot {
-  background: var(--offline);
-}
 
-/* Leaflet popup theming (global classes, not scoped to .staff-snap-map
-   since Leaflet renders popups in a portal outside the component root) */
-.leaflet-popup-content-wrapper {
-  background: var(--panel, #10192e);
-  color: var(--text, #eef2ff);
-  border-radius: 14px;
-  border: 1px solid var(--line, #223055);
-}
-
-.leaflet-popup-tip {
-  background: var(--panel, #10192e);
-}
-
-.leaflet-popup-content {
-  margin: 14px 16px;
-  min-width: 200px;
-}
 
 .list-subheader {
   padding: 10px 12px 6px;
@@ -514,14 +510,337 @@
   border-color: var(--line, #223055) !important;
 }
 
+/* =========================================================
+   LEAFLET POPUP - HOME / EMBEDDED MAP
+   ========================================================= */
+
+.staff-snap-map .leaflet-popup {
+    margin-bottom: 20px;
+}
+
+.staff-snap-map .leaflet-popup-content-wrapper {
+    width: 260px !important;
+    max-width: 260px !important;
+    padding: 0 !important;
+
+    background: #10192e !important;
+    color: #eef2ff !important;
+
+    border: 1px solid #223055 !important;
+    border-radius: 14px !important;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+}
+
+.staff-snap-map .leaflet-popup-content {
+    width: auto !important;
+    max-width: none !important;
+
+    margin: 14px !important;
+    padding: 0 !important;
+
+    color: #eef2ff !important;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+/* Popup arrow */
+.staff-snap-map .leaflet-popup-tip {
+    width: 18px !important;
+    height: 18px !important;
+
+    background: #10192e !important;
+    border: none !important;
+
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+/* Close button */
+.staff-snap-map .leaflet-popup-close-button {
+    top: 7px !important;
+    right: 8px !important;
+
+    width: 26px !important;
+    height: 26px !important;
+
+    color: #93a0c2 !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+
+    background: transparent !important;
+    border: none !important;
+
+    z-index: 10;
+}
+
+.staff-snap-map .leaflet-popup-close-button:hover {
+    color: #ffffff !important;
+    background: transparent !important;
+}
+
+/* Popup header */
+.staff-snap-map .popup-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    margin: 0 22px 12px 0;
+}
+
+.staff-snap-map .popup-head img {
+    width: 44px !important;
+    height: 44px !important;
+
+    min-width: 44px !important;
+    max-width: 44px !important;
+
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    display: block;
+}
+
+.staff-snap-map .popup-head .name {
+    color: #ffffff !important;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.staff-snap-map .popup-head .service {
+    margin-top: 3px;
+
+    color: #93a0c2 !important;
+    font-size: 12px;
+}
+
+/* Online / offline status */
+.staff-snap-map .popup-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    margin-bottom: 10px;
+
+    color: #eef2ff !important;
+    font-size: 12px;
+}
+
+.staff-snap-map .popup-status .dot {
+    width: 8px !important;
+    height: 8px !important;
+
+    min-width: 8px !important;
+    max-width: 8px !important;
+
+    border-radius: 50%;
+}
+
+/* Distance */
+.staff-snap-map .popup-dist {
+    margin-bottom: 12px;
+
+    color: #93a0c2 !important;
+    font-size: 12px;
+}
+
+.staff-snap-map .popup-dist b {
+    color: #fdea1b !important;
+}
+
+/* Buttons */
+.staff-snap-map .popup-actions {
+    display: flex;
+    gap: 8px;
+
+    width: 100%;
+    margin-top: 10px;
+}
+
+.staff-snap-map .popup-actions a,
+.staff-snap-map .popup-actions button {
+    flex: 1;
+
+    min-width: 0;
+    width: auto !important;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 9px 8px !important;
+
+    border-radius: 9px !important;
+    border: none !important;
+
+    font-family: inherit;
+    font-size: 12px !important;
+    font-weight: 800;
+
+    text-decoration: none;
+    cursor: pointer;
+
+    box-sizing: border-box;
+}
+
+/* Profile button */
+.staff-snap-map .popup-actions .profile-btn {
+    background: #fdea1b !important;
+    color: #1a1a05 !important;
+}
+
+/* Directions button */
+.staff-snap-map .popup-actions .directions-btn {
+    background: #fdea1b !important;
+    color: #1a1a05 !important;
+}
+
+.staff-snap-map .popup-actions a:hover,
+.staff-snap-map .popup-actions button:hover {
+    filter: brightness(1.08);
+}
+
+
+
 @media (max-width: 760px) {
   .app-grid {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: minmax(0, 45dvh) minmax(0, 1fr);
+    height: 100%;
   }
+
   #sidebar {
     border-right: none;
     border-bottom: 1px solid var(--line);
-    max-height: 46vh;
+    min-height: 0;
+    max-height: 45dvh;
   }
+
+  #map-wrap {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 1200px) {
+  .staff-snap-map.embedded-map {
+    height: 600px;
+    min-height: 600px;
+  }
+}
+
+/* =========================
+   TABLET
+========================= */
+@media (max-width: 900px) {
+
+  .staff-snap-map.embedded-map {
+    height: 800px;
+    min-height: 800px;
+  }
+
+  .staff-snap-map.embedded-map .app-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 48% 52%;
+    height: 100%;
+  }
+
+  .staff-snap-map.embedded-map #sidebar {
+    width: 100%;
+    min-height: 0;
+    max-height: none;
+
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+
+    overflow: hidden;
+  }
+
+  .staff-snap-map.embedded-map #list {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .staff-snap-map.embedded-map #map-wrap {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+@media (max-width: 600px) {
+
+  .staff-snap-map.embedded-map {
+    height: 850px;
+    min-height: 850px;
+  }
+
+  .staff-snap-map.embedded-map .app-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 52% 48%;
+    height: 100%;
+  }
+
+  .staff-snap-map.embedded-map #sidebar {
+    width: 100%;
+    min-height: 0;
+    max-height: none;
+
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+
+    overflow: hidden;
+  }
+
+  .staff-snap-map.embedded-map #list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .staff-snap-map.embedded-map #map-wrap {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* Make the controls slightly more compact */
+  .staff-snap-map.embedded-map .controls {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  .staff-snap-map.embedded-map .stat-strip {
+    padding: 8px 14px;
+  }
+
+  .staff-snap-map.embedded-map #list {
+    padding: 6px 10px 12px;
+  }
+}
+
+/* Mobile popup */
+@media (max-width: 600px) {
+
+    .staff-snap-map .leaflet-popup-content-wrapper {
+        width: 240px !important;
+        max-width: 240px !important;
+    }
+
+    .staff-snap-map .leaflet-popup-content {
+        margin: 12px !important;
+    }
+
+    .staff-snap-map .popup-actions {
+        gap: 6px;
+    }
+
+    .staff-snap-map .popup-actions a,
+    .staff-snap-map .popup-actions button {
+        font-size: 11px !important;
+        padding: 9px 6px !important;
+    }
 }

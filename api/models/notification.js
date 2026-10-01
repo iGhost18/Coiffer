@@ -39,7 +39,8 @@ const NotificationSchema = new mongoose.Schema(
             "payment",
             "service",
             "groomer",
-            "bookingConfirmed"
+            "bookingConfirmed",
+            "delivery"
         ],
         default:"message",
         required:true

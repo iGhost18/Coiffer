@@ -1,11 +1,12 @@
 .Feed {
   flex: 5.5;
+  min-width: 0;
 }
 
  
 .StickyTab{
   position: sticky;
-  top: 13%;
+  top: var(--topbar-height);
   z-index: 10;
   background: white;
 }
@@ -41,4 +42,22 @@
  
 .FeedPosts {
   padding-top: 5px;
+}
+
+@media (max-width: 768px) {
+  .Feed {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .FeedTab {
+    padding: 10px 0;
+    font-size: 13px;
+  }
+
+  .FeedPosts {
+    padding: 5px 10px 0;
+  }
 }

@@ -74,10 +74,6 @@
   background: #e8e8e8;
 }
 
-/* .DayCell.sunday {
-  color: #f87171;
-} */
-
 .DayCell.past {
   color: #bbb;
   background: #f9f9f9;
@@ -105,6 +101,51 @@
   font-weight: 600;
   color: #111;
   margin: 0 0 1rem;
+}
+
+/* Next-available banner, driven off the service's duration */
+.NextAvailableBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 0 0 12px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #6366f1;
+  background: #eef0ff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.NextAvailableBanner:hover {
+  background: #e0e3ff;
+}
+
+.NextAvailableLabel {
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #6366f1;
+}
+
+.NextAvailableTime {
+  font-size: 14px;
+  font-weight: 700;
+  color: #312e81;
+}
+
+.NextAvailableDuration {
+  font-size: 12px;
+  font-weight: 500;
+  color: #7c7fe0;
+}
+
+.NoSlotsMessage {
+  font-size: 13px;
+  color: #999;
+  margin: 0 0 12px;
 }
 
 .TimeGrid {
@@ -144,4 +185,56 @@
   color: #ccc;
   cursor: default;
   border-color: #f0f0f0;
+}
+
+/* Already-booked slots read differently from ones that are just past —
+   struck-through time plus a small "Booked" tag, so it's clear the slot
+   is taken rather than simply unavailable. */
+.TimeSlot.booked {
+  position: relative;
+  color: #c4c4c4;
+  background: #fafafa;
+  border-color: #eee;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.TimeSlot.booked::after {
+  content: "Booked";
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  color: #d1a3a3;
+}
+
+/* Slots outside working hours, or that can't fit before closing —
+   these were previously falling back to the barely-visible .disabled
+   style, making them look almost identical to open slots. Give them
+   their own clearly-marked treatment, same idea as .booked. */
+.TimeSlot.closed {
+  position: relative;
+  color: #c4c4c4;
+  background: #fafafa;
+  border-color: #eee;
+  cursor: not-allowed;
+}
+
+.TimeSlot.closed::after {
+  content: "Closed";
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #b3b3b3;
+}
+
+/* Marks the same slot the NextAvailableBanner points to, so the grid and
+   the banner agree even after the customer starts clicking around */
+.TimeSlot.nextAvailable:not(.active) {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px #6366f1 inset;
 }

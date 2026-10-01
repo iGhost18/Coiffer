@@ -2,19 +2,22 @@ const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
 
-       username:{
+    username:{
         type:String,
         required:true,
         minlength:3,
         maxlength:20,
-        unique:true
+        unique:true,
+        trim:true
     },
 
     email:{
         type:String,
         required:true,
         maxlength:50,
-        unique:true
+        unique:true,
+        lowercase:true,
+        trim:true
     },
 
     password:{
@@ -23,7 +26,12 @@ const UserSchema = new mongoose.Schema({
         minlength:8,
     },
 
-    name:{
+    firstName:{
+        type:String,
+        default:""
+    },
+
+    lastName:{
         type:String,
         default:""
     },
@@ -34,9 +42,14 @@ const UserSchema = new mongoose.Schema({
         sparse: true,
     },
     
-    birthday:{
-        type:Number,
-        default:null
+    bio: {
+        type: String,
+        default: ""
+    },
+    
+    birthDay: {
+        type: String,
+        default: ""
     },
 
     birthMonth:{
@@ -132,7 +145,15 @@ const UserSchema = new mongoose.Schema({
     },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
-
+    
+    lastScheduleView: {
+        type: Date,
+        default: null
+    },
+    lastFeedView: {
+        type: Date,
+        default: null
+    },
 },{timestamps:true});
 
 module.exports = mongoose.model("User", UserSchema);

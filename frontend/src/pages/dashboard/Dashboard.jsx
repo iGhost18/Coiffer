@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProducts } from "../../components/context/ProductsContext";
+import { StaffAuthContext } from "../../components/context/StaffAuthContext";
 import { Link } from 'react-router-dom';
 import api from "../../api"; 
 import "./dashboard.css";
@@ -45,18 +46,30 @@ function Pill({ status }) {
   return <span className={`pill ${status}`}>{status}</span>;
 }
 
+function Avatar({ src, fallbackText }) {
+  const [error, setError] = useState(false);
+  if (src && !error) {
+    return <img src={src} alt="" className="av-img" onError={() => setError(true)} />;
+  }
+  return <div className="av">{fallbackText}</div>;
+}
+
 export default function DispatchAdmin() {
   const navigate = useNavigate();
 
   const [view, setView] = useState("overview");
   const [peopleTab, setPeopleTab] = useState("professionals");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [homepageServices, setHomepageServices] = useState([]);
-  const [invites, setInvites] = useState([]); // was initialInvites — now fetched
+  const [invites, setInvites] = useState([]);
   const [people, setPeople] = useState({ professionals: [], users: [] });
+  const [viewTitle, viewSub] = VIEW_META[view];
+  const peopleList = people[peopleTab];
+
   const [orders, setOrders] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [liveActivity, setLiveActivity] = useState([]); // actions taken this session
+  const [liveActivity, setLiveActivity] = useState([]);
 
   // Expandable detail rows
   const [expandedOrderId, setExpandedOrderId] = useState(null);
@@ -71,6 +84,8 @@ export default function DispatchAdmin() {
   const [prdImage, setPrdImage] = useState("");
   const [prdDescription, setPrdDescription] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [prdCategory, setPrdCategory] = useState("");
+  const [prdDiscountPrice, setPrdDiscountPrice] = useState("");
 
   const [hsName, setHsName] = useState("");
   const [hsDesc, setHsDesc] = useState("");
@@ -78,15 +93,30 @@ export default function DispatchAdmin() {
   const [hsImgUploading, setHsImgUploading] = useState(false);
 
   const [invEmail, setInvEmail] = useState("");
-  const [invRole, setInvRole] = useState("Professional");
+  const [invRole, setInvRole] = useState("");
   const [inviteResult, setInviteResult] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const resetForm = () => {
+  const [sendingInviteId, setSendingInviteId] = useState(null);
+  const [emailOnCreate, setEmailOnCreate] = useState(true);
+
+  const { staff } = useContext(StaffAuthContext);
+
+  // Switches the active section and closes the mobile drawer, since on
+  // small screens picking a nav item should return you to the content.
+  const goToView = (nextView) => {
+    setView(nextView);
+    setSidebarOpen(false);
+  };
+
+    const resetForm = () => {
     setPrdName("");
     setPrdPrice("");
     setPrdImage("");
     setPrdDescription("");
     setPrdAvailable(true);
+    setPrdCategory("");
+    setPrdDiscountPrice("");
     setEditingId(null);
   };
 
@@ -97,7 +127,60 @@ export default function DispatchAdmin() {
     setPrdImage(p.image);
     setPrdDescription(p.description);
     setPrdAvailable(p.availability);
+    setPrdCategory(p.category || "");
+    setPrdDiscountPrice(p.discountPrice || "");
   };
+
+
+
+  const filteredPeopleList = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return peopleList;
+    return peopleList.filter((p) => {
+      const name = peopleTab === "professionals"
+        ? (p.displayName || `${p.firstName} ${p.lastName}`)
+        : (p.firstName || p.lastName ? `${p.firstName} ${p.lastName}` : p.username);
+      return (name || "").toLowerCase().includes(q) || (p.email || "").toLowerCase().includes(q);
+    });
+  }, [peopleList, searchQuery, peopleTab]);
+
+  const filteredOrders = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return orders;
+    return orders.filter((o) =>
+      o._id.toLowerCase().includes(q) ||
+      (o.contact?.name || "").toLowerCase().includes(q) ||
+      (o.customerId?.username || "").toLowerCase().includes(q)
+    );
+  }, [orders, searchQuery]);
+
+  const filteredBookings = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return bookings;
+    return bookings.filter((b) =>
+      b._id.toLowerCase().includes(q) ||
+      (b.contact?.name || "").toLowerCase().includes(q) ||
+      (b.staffId?.username || "").toLowerCase().includes(q)
+    );
+  }, [bookings, searchQuery]);
+
+  const filteredInvites = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return invites;
+    return invites.filter((i) => i.email.toLowerCase().includes(q));
+  }, [invites, searchQuery]);
+
+  const filteredProducts = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) => p.name.toLowerCase().includes(q));
+  }, [products, searchQuery]);
+
+  const filteredHomepageServices = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return homepageServices;
+    return homepageServices.filter((s) => s.name.toLowerCase().includes(q));
+  }, [homepageServices, searchQuery]);
 
   const handleSubmit = () => {
     if (!prdName.trim()) return;
@@ -107,6 +190,8 @@ export default function DispatchAdmin() {
       image: prdImage,
       description: prdDescription,
       available: prdAvailable,
+      category: prdCategory.trim(),
+      discountPrice: prdDiscountPrice === "" ? null : Number(prdDiscountPrice),
     };
     if (editingId) {
       updateProduct(editingId, payload);
@@ -133,11 +218,48 @@ export default function DispatchAdmin() {
     }
   };
 
+  const updateDeliveryStatus = async (orderId, deliveryStatus) => {
+    try {
+      await api.put(`/api/order/${orderId}/delivery-status`, {
+        deliveryStatus,
+      });
+
+      // Update the order immediately in the UI
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order._id === orderId
+            ? {
+                ...order,
+                deliveryStatus,
+              }
+            : order
+        )
+      );
+    } catch (error) {
+      console.error(
+        "Failed to update delivery status:",
+        error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to update delivery status"
+      );
+    }
+  };
+
+  const DELIVERY_STEPS = [
+    "processing",
+    "shipped",
+    "out_for_delivery",
+    "delivered",
+  ];
+
   // ---------- PEOPLE ----------
   useEffect(() => {
     const fetchProfessionals = async () => {
       try {
-        const res = await api.get("/api/staff");
+        const res = await api.get("/api/staff/admin/all");
         setPeople((prev) => ({ ...prev, professionals: Array.isArray(res.data) ? res.data : [] }));
       } catch (err) {
         console.error(err);
@@ -147,9 +269,6 @@ export default function DispatchAdmin() {
   }, []);
 
   useEffect(() => {
-    // NOTE: assuming GET /api/user returns all users, matching the pattern
-    // of /api/staff. If your users route needs a different path/shape,
-    // send it over and I'll adjust this.
     const fetchUsers = async () => {
       try {
         const res = await api.get("/api/user/all");
@@ -160,6 +279,17 @@ export default function DispatchAdmin() {
     };
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    if (homepageServices.length === 0) {
+      setInvRole("");
+      return;
+    }
+    const stillValid = homepageServices.some((s) => s.name === invRole);
+    if (!stillValid) {
+      setInvRole(homepageServices[0].name);
+    }
+  }, [homepageServices]);
 
   function logActivity(event, detail) {
     setLiveActivity((prev) =>
@@ -243,6 +373,24 @@ export default function DispatchAdmin() {
     }
   }
 
+  async function sendInviteEmail(invite) {
+    setSendingInviteId(invite._id);
+    try {
+      await api.post("/api/invite-request/send", {
+        email: invite.email,
+        token: invite.token,
+      });
+      alert(`Invite emailed to ${invite.email}`);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Couldn't send the invite email.");
+    } finally {
+      setSendingInviteId(null);
+    }
+  }
+
+  
+
   // ---------- INVITES ----------
   useEffect(() => {
     const fetchInvites = async () => {
@@ -265,10 +413,22 @@ export default function DispatchAdmin() {
 
     try {
       const res = await api.post("/api/invite/create", { email, role: invRole });
-      setInvites((prev) => [res.data.invite, ...prev]);
+      const invite = res.data.invite;
+
+      setInvites((prev) => [invite, ...prev]);
       setInviteResult(res.data.inviteLink);
       setInvEmail("");
       logActivity("Invite generated", email);
+
+      if (emailOnCreate && invite?.token) {
+        try {
+          await api.post("/api/invite-request/send", { email, token: invite.token });
+          logActivity("Invite emailed", email);
+        } catch (err) {
+          console.error(err);
+          alert("Invite created, but the email couldn't be sent. Use \"Email invite\" in the table to retry.");
+        }
+      }
     } catch (err) {
       console.error(err);
       alert("Couldn't generate invite. Try again.");
@@ -339,9 +499,6 @@ export default function DispatchAdmin() {
   }
 
   // ---------- PROFILE NAVIGATION ----------
-  // ASSUMPTION: profile routes are "/staff/:id" and "/profile/:id".
-  // Paste your router file (App.js or wherever <Routes> live) so I can
-  // confirm/fix these paths if they don't match your actual routes.
   function viewProfile(person, type) {
     if (type === "professionals") {
       navigate(`/staffprofile/${person._id}`);
@@ -351,10 +508,6 @@ export default function DispatchAdmin() {
   }
 
   // ---------- DERIVED: PAYMENTS ----------
-  // No separate Payment model exists yet, so this is derived directly from
-  // orders + bookings, since both already carry paymentMethod/total/status.
-  // Mapping assumption: "cancelled" is treated as a failed transaction.
-  // Adjust if you'd rather track refunds/failures as a distinct state.
   const derivedPayments = useMemo(() => {
     const fromOrders = orders.map((o) => ({
       ref: `ORD-${o._id.slice(-6).toUpperCase()}`,
@@ -392,8 +545,6 @@ export default function DispatchAdmin() {
   }, [derivedPayments]);
 
   // ---------- DERIVED: ACTIVITY FEED ----------
-  // Merges real timestamped events (order/booking/invite creation) with
-  // anything logged locally this session (logActivity), sorted by recency.
   const combinedActivity = useMemo(() => {
     const fromOrders = orders.map((o) => ({
       event: "Order placed",
@@ -446,9 +597,6 @@ export default function DispatchAdmin() {
     ];
   }, [paymentStats, orders, bookings, people]);
 
-  const [viewTitle, viewSub] = VIEW_META[view];
-  const peopleList = people[peopleTab];
-
   useEffect(() => {
     const fetchHomepageServices = async () => {
       try {
@@ -462,13 +610,26 @@ export default function DispatchAdmin() {
   }, []);
 
   return (
-    <div className="app">
+    <div className="dispatch-admin">
+      {/* Mobile hamburger trigger — hidden above 900px via CSS */}
+      <button
+        className="mobileMenuBtn"
+        onClick={() => setSidebarOpen(true)}
+        aria-label="Open menu"
+      >
+        ☰
+      </button>
+
+      {sidebarOpen && (
+        <div className="sidebarOverlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* SIDEBAR */}
-      <div className="sidebar">
+      <div className={`sidebar ${sidebarOpen ? "sidebar--open" : ""}`}>
         <div className="brand">
           <Link to="/">
             <div className="name">
-              <img src="/assets/GhostLogo.png" alt=""/>
+              <img src="/assets/GhostLogo.png" alt="" />
             </div>
           </Link>
           <div>
@@ -478,49 +639,49 @@ export default function DispatchAdmin() {
 
         <div className="nav-group">
           <div className="nav-label">Overview</div>
-          <div className={`nav-item ${view === "overview" ? "active" : ""}`} onClick={() => setView("overview")}>
+          <div className={`nav-item ${view === "overview" ? "active" : ""}`} onClick={() => goToView("overview")}>
             <span className="ic">◆</span> Overview
           </div>
         </div>
 
         <div className="nav-group">
           <div className="nav-label">Content</div>
-          <div className={`nav-item ${view === "services" ? "active" : ""}`} onClick={() => setView("services")}>
+          <div className={`nav-item ${view === "services" ? "active" : ""}`} onClick={() => goToView("services")}>
             <span className="ic">⌂</span> Homepage services <span className="count">{homepageServices.length}</span>
           </div>
-          <div className={`nav-item ${view === "products" ? "active" : ""}`} onClick={() => setView("products")}>
+          <div className={`nav-item ${view === "products" ? "active" : ""}`} onClick={() => goToView("products")}>
             <span className="ic">▣</span> Store products <span className="count">{products.length}</span>
           </div>
         </div>
 
         <div className="nav-group">
           <div className="nav-label">Commerce</div>
-          <div className={`nav-item ${view === "orders" ? "active" : ""}`} onClick={() => setView("orders")}>
+          <div className={`nav-item ${view === "orders" ? "active" : ""}`} onClick={() => goToView("orders")}>
             <span className="ic">↓</span> Product orders{" "}
             <span className="count">{orders.filter((o) => o.status === "pending").length}</span>
           </div>
-          <div className={`nav-item ${view === "bookings" ? "active" : ""}`} onClick={() => setView("bookings")}>
+          <div className={`nav-item ${view === "bookings" ? "active" : ""}`} onClick={() => goToView("bookings")}>
             <span className="ic">▤</span> Bookings{" "}
             <span className="count">{bookings.filter((b) => b.status === "pending").length}</span>
           </div>
-          <div className={`nav-item ${view === "payments" ? "active" : ""}`} onClick={() => setView("payments")}>
+          <div className={`nav-item ${view === "payments" ? "active" : ""}`} onClick={() => goToView("payments")}>
             <span className="ic">$</span> Payments
           </div>
         </div>
 
         <div className="nav-group">
           <div className="nav-label">People</div>
-          <div className={`nav-item ${view === "people" ? "active" : ""}`} onClick={() => setView("people")}>
+          <div className={`nav-item ${view === "people" ? "active" : ""}`} onClick={() => goToView("people")}>
             <span className="ic">◎</span> Professionals &amp; users
           </div>
-          <div className={`nav-item ${view === "invites" ? "active" : ""}`} onClick={() => setView("invites")}>
+          <div className={`nav-item ${view === "invites" ? "active" : ""}`} onClick={() => goToView("invites")}>
             <span className="ic">✉</span> Invites{" "}
             <span className="count">{invites.filter((i) => i.status === "active").length}</span>
           </div>
         </div>
 
         <div className="sidebar-foot">
-          Signed in as <strong style={{ color: "#c9cfd8" }}>admin@dispatch.io</strong>
+          Signed in as <strong style={{ color: "#c9cfd8" }}>coiffer@gmail.com</strong>
         </div>
       </div>
 
@@ -532,9 +693,16 @@ export default function DispatchAdmin() {
             <div className="view-sub">{viewSub}</div>
           </div>
           <div className="topbar-right">
-            <div className="search">⌕ Search records…</div>
+            <div className="search">
+              <span>⌕</span>
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search records…"
+              />
+            </div>
             <div className="admin-chip">
-              <div className="av">A</div>
+              <Avatar src={staff?.profilePicture} fallbackText={staff?.username?.[0]?.toUpperCase() || "A"} />
             </div>
           </div>
         </div>
@@ -560,7 +728,7 @@ export default function DispatchAdmin() {
                     <div className="desc">Latest changes across the console</div>
                   </div>
                 </div>
-                <div className="panel-body">
+                <div className="panel-body flush">
                   <table>
                     <thead>
                       <tr>
@@ -579,11 +747,11 @@ export default function DispatchAdmin() {
                       ) : (
                         combinedActivity.map((a, i) => (
                           <tr key={i}>
-                            <td>
+                            <td data-label="Event">
                               <strong>{a.event}</strong>
                             </td>
-                            <td className="mono">{a.detail}</td>
-                            <td style={{ color: "var(--text-dim)" }}>{a.when}</td>
+                            <td data-label="Detail" className="mono">{a.detail}</td>
+                            <td data-label="When" style={{ color: "var(--text-dim)" }}>{a.when}</td>
                           </tr>
                         ))
                       )}
@@ -601,7 +769,7 @@ export default function DispatchAdmin() {
                 <div className="panel-head">
                   <div>
                     <h3>Add a service to the homepage</h3>
-                    <div className="desc">Appears immediately in the homepage services section</div>
+                    <div className="desc">dispatch-adminears immediately in the homepage services section</div>
                   </div>
                 </div>
 
@@ -648,10 +816,10 @@ export default function DispatchAdmin() {
                 </div>
                 <div className="panel-body">
                   <div className="card-grid">
-                    {homepageServices.length === 0 ? (
+                    {filteredHomepageServices.length === 0 ? (
                       <EmptyState title="No services yet" sub="Add one above to get it live on the homepage." />
                     ) : (
-                      homepageServices.map((s) => (
+                      filteredHomepageServices.map((s) => (
                         <div className="item-card" key={s._id}>
                           <div className="item-thumb">
                             {s.img ? (
@@ -688,11 +856,11 @@ export default function DispatchAdmin() {
                 <div className="panel-head">
                   <div>
                     <h3>{editingId ? "Edit Product" : "Add Product"}</h3>
-                    <div className="desc">Manage products that appear in the GhostCut store.</div>
+                    <div className="desc">Manage products that dispatch-adminear in the GhostCut store.</div>
                   </div>
                 </div>
 
-                <div className="panel-body">
+                               <div className="panel-body">
                   <div className="form-row">
                     <div className="field">
                       <label>Product Name</label>
@@ -706,6 +874,27 @@ export default function DispatchAdmin() {
                         value={prdPrice}
                         onChange={(e) => setPrdPrice(e.target.value)}
                         placeholder="5000"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="field">
+                      <label>Category</label>
+                      <input
+                        value={prdCategory}
+                        onChange={(e) => setPrdCategory(e.target.value)}
+                        placeholder="e.g. Hair Cream"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label>Discount price (₦, optional)</label>
+                      <input
+                        type="number"
+                        value={prdDiscountPrice}
+                        onChange={(e) => setPrdDiscountPrice(e.target.value)}
+                        placeholder="Leave blank for no discount"
                       />
                     </div>
                   </div>
@@ -766,10 +955,10 @@ export default function DispatchAdmin() {
 
                 <div className="panel-body">
                   <div className="card-grid">
-                    {products.length === 0 ? (
+                    {filteredProducts.length === 0 ? (
                       <EmptyState title="No products yet" sub="Add your first product above." />
                     ) : (
-                      products.map((p) => (
+                      filteredProducts.map((p) => (
                         <div className="item-card" key={p._id}>
                           <div className="item-thumb">
                             {p.image ? (
@@ -781,8 +970,18 @@ export default function DispatchAdmin() {
 
                           <div className="item-body">
                             <div className="item-title">{p.name}</div>
+                            {p.category && <div className="item-category">{p.category}</div>}
                             <div className="item-desc">{p.description}</div>
-                            <div className="item-price">{naira(p.price)}</div>
+                            <div className="item-price">
+                              {p.discountPrice ? (
+                                <>
+                                  <span className="item-price-original">{naira(p.price)}</span>{" "}
+                                  <span className="item-price-discount">{naira(p.discountPrice)}</span>
+                                </>
+                              ) : (
+                                naira(p.price)
+                              )}
+                            </div>
 
                             <span className={`pill ${p.available ? "live" : "revoked"}`}>
                               {p.available ? "Available" : "Out of Stock"}
@@ -830,12 +1029,24 @@ export default function DispatchAdmin() {
                     <div className="field">
                       <label>Role</label>
                       <select value={invRole} onChange={(e) => setInvRole(e.target.value)}>
-                        <option>Professional</option>
-                        <option>Staff</option>
-                        <option>Support agent</option>
+                        {homepageServices.length === 0 ? (
+                          <option value="">Add a homepage service first</option>
+                        ) : (
+                          homepageServices.map((s) => (
+                            <option key={s._id} value={s.name}>{s.name}</option>
+                          ))
+                        )}
                       </select>
                     </div>
                   </div>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, margin: "8px 0", fontSize: 13 }}>
+                      <input
+                        type="checkbox"
+                        checked={emailOnCreate}
+                        onChange={(e) => setEmailOnCreate(e.target.checked)}
+                      />
+                      Email this invite to the applicant
+                    </label>
                   <button className="btn btn-primary" onClick={generateInvite}>
                     + Generate invite
                   </button>
@@ -855,7 +1066,7 @@ export default function DispatchAdmin() {
                   <div>
                     <h3>Active invites</h3>
                     <div className="desc">
-                      {invites.length} invite{invites.length === 1 ? "" : "s"} total
+                      {filteredInvites.length} invite{filteredInvites.length === 1 ? "" : "s"} total
                     </div>
                   </div>
                 </div>
@@ -871,32 +1082,41 @@ export default function DispatchAdmin() {
                       </tr>
                     </thead>
                     <tbody>
-                      {invites.length === 0 ? (
+                      {filteredInvites.length === 0 ? (
                         <tr>
                           <td colSpan={5}>
                             <EmptyState title="No invites yet" sub="Generate one above." />
                           </td>
                         </tr>
                       ) : (
-                        invites.map((i) => {
+                        filteredInvites.map((i) => {
                           const status = i.used ? "used" : new Date(i.expiresAt) < new Date() ? "expired" : "active";
 
                           return (
                             <tr key={i._id}>
-                              <td>{i.email}</td>
-                              <td>{i.role}</td>
-                              <td>
+                              <td data-label="Email">{i.email}</td>
+                              <td data-label="Role">{i.role}</td>
+                              <td data-label="Status">
                                 <Pill status={status} />
                               </td>
-                              <td className="id">{i.token?.slice(0, 8)}…</td>
-                              <td style={{ textAlign: "right" }}>
+                              <td data-label="Token" className="id">{i.token?.slice(0, 8)}…</td>
+                              <td data-label="" style={{ textAlign: "right" }}>
                                 <button className="btn btn-ghost btn-sm" onClick={() => copyToken(i.token)}>
                                   Copy link
                                 </button>{" "}
                                 {status === "active" && (
-                                  <button className="btn btn-danger btn-sm" onClick={() => revokeInvite(i._id)}>
-                                    Revoke
-                                  </button>
+                                  <>
+                                    <button
+                                      className="btn btn-ghost btn-sm"
+                                      onClick={() => sendInviteEmail(i)}
+                                      disabled={sendingInviteId === i._id}
+                                    >
+                                      {sendingInviteId === i._id ? "Sending..." : "Email invite"}
+                                    </button>{" "}
+                                    <button className="btn btn-danger btn-sm" onClick={() => revokeInvite(i._id)}>
+                                      Revoke
+                                    </button>
+                                  </>
                                 )}
                               </td>
                             </tr>
@@ -949,52 +1169,59 @@ export default function DispatchAdmin() {
                       </tr>
                     </thead>
                     <tbody>
-                      {peopleList.length === 0 ? (
+                      {filteredPeopleList.length === 0 ? (
                         <tr>
                           <td colSpan={7}>
                             <EmptyState title="Nobody here yet" sub="" />
                           </td>
                         </tr>
                       ) : (
-                        peopleList.map((p) => (
+                        filteredPeopleList.map((p) => (
                           <tr key={p._id}>
-                            <td>
+                            <td data-label="Name">
                               <div className="who">
-                                <div className="av">
-                                  {peopleTab === "professionals"
-                                    ? `${p.firstName?.[0] || "?"}${p.lastName?.[0] || ""}`
-                                    : `${p.username?.[0] || "?"}`.toUpperCase()}
-                                </div>
+                                <Avatar
+                                  src={p.profilePicture}
+                                  fallbackText={
+                                    peopleTab === "professionals"
+                                      ? `${p.firstName?.[0] || "?"}${p.lastName?.[0] || ""}`
+                                      : `${p.username?.[0] || "?"}`.toUpperCase()
+                                  }
+                                />
                                 {peopleTab === "professionals"
                                   ? p.displayName || `${p.firstName} ${p.lastName}`
-                                  : p.username}
+                                  : (p.firstName || p.lastName ? `${p.firstName} ${p.lastName}`.trim() : p.username)}
                               </div>
                             </td>
-                            <td style={{ color: "var(--text-dim)" }}>
+                            <td data-label="Contact" style={{ color: "var(--text-dim)" }}>
                               {p.email}
                               {p.phone ? " · " + p.phone : ""}
                             </td>
 
                             {peopleTab === "professionals" ? (
                               <>
-                                <td>{Array.isArray(p.roles) ? p.roles.join(", ") : p.role || "—"}</td>
-                                <td className="mono">{p.experience != null ? `${p.experience} yrs` : "—"}</td>
-                                <td className="mono">{p.rating ? p.rating.toFixed(1) : "—"}</td>
+
+                                <td data-label="Role">
+                                  {p.isAdmin ? "Admin" : Array.isArray(p.roles) ? p.roles.join(", ") : p.role || "—"}
+                                </td>
+                                
+                                <td data-label="Experience" className="mono">{p.experience != null ? `${p.experience} yrs` : "—"}</td>
+                                <td data-label="Rating" className="mono">{p.rating ? p.rating.toFixed(1) : "—"}</td>
                               </>
                             ) : (
                               <>
-                                <td className="mono">{p.Groomers?.length ?? 0}</td>
-                                <td className="mono">{p.cuts?.length ?? 0}</td>
+                                <td data-label="Groomers" className="mono">{p.Groomers?.length ?? 0}</td>
+                                <td data-label="Appointments" className="mono">{p.cuts?.length ?? 0}</td>
                               </>
                             )}
 
-                            <td className="mono">{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "—"}</td>
-                            <td>
+                            <td data-label="Joined" className="mono">{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "—"}</td>
+                            <td data-label="Status">
                               <span className={`pill ${p.isAdmin ? "revoked" : "live"}`}>
                                 {p.isAdmin ? "admin" : "active"}
                               </span>
                             </td>
-                            <td style={{ textAlign: "right" }}>
+                            <td data-label="" style={{ textAlign: "right" }}>
                               <button className="btn btn-ghost btn-sm" onClick={() => viewProfile(p, peopleTab)}>
                                 View profile
                               </button>
@@ -1019,6 +1246,7 @@ export default function DispatchAdmin() {
                     <div className="desc">Orders placed from the store</div>
                   </div>
                 </div>
+
                 <div className="panel-body flush">
                   <table>
                     <thead>
@@ -1028,67 +1256,225 @@ export default function DispatchAdmin() {
                         <th>Item</th>
                         <th>Total</th>
                         <th>Status</th>
+                        <th>Delivery</th>
                         <th></th>
                       </tr>
                     </thead>
+
                     <tbody>
-                      {orders.length === 0 ? (
+                      {filteredOrders.length === 0 ? (
                         <tr>
-                          <td colSpan={6}>
+                          <td colSpan={7}>
                             <EmptyState title="No orders yet" sub="" />
                           </td>
                         </tr>
                       ) : (
-                        orders.map((o) => {
+                        filteredOrders.map((o) => {
                           const isOpen = expandedOrderId === o._id;
-                          const addressText = [o.address?.description, o.address?.city, o.address?.state]
+
+                          const addressText = [
+                            o.address?.description,
+                            o.address?.city,
+                            o.address?.state,
+                          ]
                             .filter(Boolean)
                             .join(", ");
 
+                          const currentDeliveryIndex = DELIVERY_STEPS.indexOf(
+                            o.deliveryStatus || "processing"
+                          );
+
+                          const safeDeliveryIndex =
+                            currentDeliveryIndex >= 0
+                              ? currentDeliveryIndex
+                              : 0;
+
                           return (
                             <React.Fragment key={o._id}>
+                              {/* ORDER ROW */}
                               <tr
-                                onClick={() => setExpandedOrderId(isOpen ? null : o._id)}
+                                onClick={() =>
+                                  setExpandedOrderId(isOpen ? null : o._id)
+                                }
                                 style={{ cursor: "pointer" }}
                               >
-                                <td className="id">{o._id.slice(-6).toUpperCase()}</td>
-                                <td>{o.contact?.name || o.customerId?.username}</td>
-                                <td>{o.items?.map((i) => i.name).join(", ")}</td>
-                                <td className="mono">{naira(o.total)}</td>
-                                <td>
+                                <td
+                                  data-label="Order"
+                                  className="id"
+                                >
+                                  {o._id.slice(-6).toUpperCase()}
+                                </td>
+
+                                <td data-label="Customer">
+                                  {o.contact?.name ||
+                                    o.customerId?.username ||
+                                    "Unknown"}
+                                </td>
+
+                                <td data-label="Item">
+                                  {o.items
+                                    ?.map((i) => i.name)
+                                    .join(", ")}
+                                </td>
+
+                                <td
+                                  data-label="Total"
+                                  className="mono"
+                                >
+                                  {naira(o.total)}
+                                </td>
+
+                                {/* ORDER STATUS */}
+                                <td data-label="Status">
                                   <Pill status={o.status} />
                                 </td>
-                                <td style={{ textAlign: "right" }} onClick={(e) => e.stopPropagation()}>
+
+                                {/* DELIVERY STATUS */}
+                                <td
+                                  data-label="Delivery"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
                                   <select
                                     className="select-sm"
+                                    data-delivery={o.deliveryStatus || "processing"}
+                                    value={o.deliveryStatus || "processing"}
+                                    onChange={(e) => updateDeliveryStatus(o._id, e.target.value)}
+                                  >
+                                    {DELIVERY_STEPS.map(
+                                      (status, index) => (
+                                        <option
+                                          key={status}
+                                          value={status}
+                                          disabled={
+                                            index <
+                                            safeDeliveryIndex
+                                          }
+                                        >
+                                          {status ===
+                                          "out_for_delivery"
+                                            ? "Out for delivery"
+                                            : status
+                                                .charAt(0)
+                                                .toUpperCase() +
+                                              status.slice(1)}
+                                        </option>
+                                      )
+                                    )}
+                                  </select>
+                                </td>
+
+                                {/* ORDER STATUS SELECT */}
+                                <td
+                                  data-label=""
+                                  style={{
+                                    textAlign: "right",
+                                  }}
+                                  onClick={(e) =>
+                                    e.stopPropagation()
+                                  }
+                                >
+                                 <select
+                                    className="select-sm"
+                                    data-order-status={o.status}
                                     value={o.status}
                                     onChange={(e) => updateOrderStatus(o._id, e.target.value)}
                                   >
-                                    <option value="pending">pending</option>
-                                    <option value="fulfilled">fulfilled</option>
-                                    <option value="cancelled">cancelled</option>
+                                    <option value="pending">
+                                      pending
+                                    </option>
+
+                                    <option value="fulfilled">
+                                      fulfilled
+                                    </option>
+
+                                    <option value="cancelled">
+                                      cancelled
+                                    </option>
                                   </select>
                                 </td>
                               </tr>
+
+                              {/* EXPANDED ORDER DETAILS */}
                               {isOpen && (
                                 <tr>
-                                  <td colSpan={6}>
+                                  <td colSpan={7}>
                                     <div className="detail-panel">
                                       <div>
-                                        <strong>Contact:</strong> {o.contact?.name} · {o.contact?.phone} ·{" "}
+                                        <strong>Contact:</strong>{" "}
+                                        {o.contact?.name} ·{" "}
+                                        {o.contact?.phone} ·{" "}
                                         {o.contact?.email}
                                       </div>
+
                                       {addressText && (
                                         <div>
-                                          <strong>Delivery address:</strong> {addressText}
+                                          <strong>
+                                            Delivery address:
+                                          </strong>{" "}
+                                          {addressText}
                                         </div>
                                       )}
+
                                       <div>
-                                        <strong>Payment method:</strong> {o.paymentMethod}
+                                        <strong>
+                                          Payment method:
+                                        </strong>{" "}
+                                        {o.paymentMethod}
                                       </div>
+
+                                      <div>
+                                        <strong>
+                                          Delivery status:
+                                        </strong>{" "}
+                                        {o.deliveryStatus ===
+                                        "out_for_delivery"
+                                          ? "Out for delivery"
+                                          : o.deliveryStatus ||
+                                            "Processing"}
+                                      </div>
+
+                                      {o.estimatedDeliveryStart &&
+                                        o.estimatedDeliveryEnd && (
+                                          <div>
+                                            <strong>
+                                              Estimated delivery:
+                                            </strong>{" "}
+                                            {new Date(
+                                              o.estimatedDeliveryStart
+                                            ).toLocaleDateString(
+                                              "en-US",
+                                              {
+                                                month: "short",
+                                                day: "numeric",
+                                                year: "numeric",
+                                              }
+                                            )}{" "}
+                                            –{" "}
+                                            {new Date(
+                                              o.estimatedDeliveryEnd
+                                            ).toLocaleDateString(
+                                              "en-US",
+                                              {
+                                                month: "short",
+                                                day: "numeric",
+                                                year: "numeric",
+                                              }
+                                            )}
+                                          </div>
+                                        )}
+
                                       <div>
                                         <strong>Items:</strong>{" "}
-                                        {o.items?.map((i) => `${i.name} ×${i.quantity || 1} (${naira(i.price)})`).join(", ")}
+                                        {o.items
+                                          ?.map(
+                                            (i) =>
+                                              `${i.name} ×${
+                                                i.quantity || 1
+                                              } (${naira(
+                                                i.price
+                                              )})`
+                                          )
+                                          .join(", ")}
                                       </div>
                                     </div>
                                   </td>
@@ -1116,98 +1502,98 @@ export default function DispatchAdmin() {
                   </div>
                 </div>
                 <div className="panel-body flush">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Booking</th>
-                    <th>Client</th>
-                    <th>Professional</th>
-                    <th>Service</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bookings.length === 0 ? (
-                    <tr>
-                      <td colSpan={7}>
-                        <EmptyState title="No bookings yet" sub="" />
-                      </td>
-                    </tr>
-                  ) : (
-                    bookings.map((b) => {
-                      const isOpen = expandedBookingId === b._id;
-                      const addressText = [b.address?.description, b.address?.city, b.address?.state]
-                        .filter(Boolean)
-                        .join(", ");
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Booking</th>
+                        <th>Client</th>
+                        <th>Professional</th>
+                        <th>Service</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredBookings.length === 0 ? (
+                        <tr>
+                          <td colSpan={7}>
+                            <EmptyState title="No bookings yet" sub="" />
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredBookings.map((b) => {
+                          const isOpen = expandedBookingId === b._id;
+                          const addressText = [b.address?.description, b.address?.city, b.address?.state]
+                            .filter(Boolean)
+                            .join(", ");
 
-                      return (
-                        <React.Fragment key={b._id}>
-                          <tr
-                            onClick={() => setExpandedBookingId(isOpen ? null : b._id)}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <td className="id">{b._id.slice(-6).toUpperCase()}</td>
-                            <td>{b.contact?.name || b.customerId?.username}</td>
-                            <td>{b.staffId?.username || "—"}</td>
-                            <td>{b.services?.map((s) => s.name).join(", ")}</td>
-                            <td className="mono">{new Date(b.appointmentDate).toLocaleDateString()}</td>
-                            <td>
-                              <Pill status={b.status} />
-                            </td>
-                            <td style={{ textAlign: "right" }} onClick={(e) => e.stopPropagation()}>
-                              <select
-                                className="select-sm"
-                                value={b.status}
-                                onChange={(e) => updateBookingStatus(b._id, e.target.value)}
+                          return (
+                            <React.Fragment key={b._id}>
+                              <tr
+                                onClick={() => setExpandedBookingId(isOpen ? null : b._id)}
+                                style={{ cursor: "pointer" }}
                               >
-                                <option value="pending">pending</option>
-                                <option value="confirmed">confirmed</option>
-                                <option value="completed">completed</option>
-                                <option value="cancelled">cancelled</option>
-                              </select>
-                            </td>
-                          </tr>
-                          {isOpen && (
-                            <tr>
-                              <td colSpan={7}>
-                                <div className="detail-panel">
-                                  <div>
-                                    <strong>Contact:</strong> {b.contact?.name} · {b.contact?.phone} ·{" "}
-                                    {b.contact?.email}
-                                  </div>
-                                  <div>
-                                    <strong>Professional:</strong> {b.staffId?.username}
-                                  </div>
-                                  <div>
-                                    <strong>Time:</strong> {b.appointmentTime}
-                                  </div>
-                                  {addressText && (
-                                    <div>
-                                      <strong>Address:</strong> {addressText}
+                                <td data-label="Booking" className="id">{b._id.slice(-6).toUpperCase()}</td>
+                                <td data-label="Client">{b.contact?.name || b.customerId?.username}</td>
+                                <td data-label="Professional">{b.staffId?.username || "—"}</td>
+                                <td data-label="Service">{b.services?.map((s) => s.name).join(", ")}</td>
+                                <td data-label="Date" className="mono">{new Date(b.appointmentDate).toLocaleDateString()}</td>
+                                <td data-label="Status">
+                                  <Pill status={b.status} />
+                                </td>
+                                <td data-label="" style={{ textAlign: "right" }} onClick={(e) => e.stopPropagation()}>
+                                  <select
+                                    className="select-sm"
+                                    value={b.status}
+                                    onChange={(e) => updateBookingStatus(b._id, e.target.value)}
+                                  >
+                                    <option value="pending">pending</option>
+                                    <option value="confirmed">confirmed</option>
+                                    <option value="completed">completed</option>
+                                    <option value="cancelled">cancelled</option>
+                                  </select>
+                                </td>
+                              </tr>
+                              {isOpen && (
+                                <tr>
+                                  <td colSpan={7}>
+                                    <div className="detail-panel">
+                                      <div>
+                                        <strong>Contact:</strong> {b.contact?.name} · {b.contact?.phone} ·{" "}
+                                        {b.contact?.email}
+                                      </div>
+                                      <div>
+                                        <strong>Professional:</strong> {b.staffId?.username}
+                                      </div>
+                                      <div>
+                                        <strong>Time:</strong> {b.appointmentTime}
+                                      </div>
+                                      {addressText && (
+                                        <div>
+                                          <strong>Address:</strong> {addressText}
+                                        </div>
+                                      )}
+                                      <div>
+                                        <strong>Payment method:</strong> {b.paymentMethod}
+                                      </div>
+                                      <div>
+                                        <strong>Services:</strong>{" "}
+                                        {b.services?.map((s) => `${s.name} ×${s.quantity || 1} (${naira(s.price)})`).join(", ")}
+                                      </div>
+                                      <div>
+                                        <strong>Total:</strong> {naira(b.total)}
+                                      </div>
                                     </div>
-                                  )}
-                                  <div>
-                                    <strong>Payment method:</strong> {b.paymentMethod}
-                                  </div>
-                                  <div>
-                                    <strong>Services:</strong>{" "}
-                                    {b.services?.map((s) => `${s.name} ×${s.quantity || 1} (${naira(s.price)})`).join(", ")}
-                                  </div>
-                                  <div>
-                                    <strong>Total:</strong> {naira(b.total)}
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </React.Fragment>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -1258,11 +1644,11 @@ export default function DispatchAdmin() {
                       ) : (
                         derivedPayments.map((p) => (
                           <tr key={p.ref}>
-                            <td className="id">{p.ref}</td>
-                            <td>{p.from}</td>
-                            <td className="mono">{p.forItem}</td>
-                            <td className="mono">{naira(p.amount)}</td>
-                            <td>
+                            <td data-label="Reference" className="id">{p.ref}</td>
+                            <td data-label="From">{p.from}</td>
+                            <td data-label="For" className="mono">{p.forItem}</td>
+                            <td data-label="Amount" className="mono">{naira(p.amount)}</td>
+                            <td data-label="Status">
                               <Pill status={p.status} />
                             </td>
                           </tr>

@@ -30,6 +30,108 @@
   text-align: center;
 }
 
+
+.StoreSearchWrap {
+  padding: 0 24px 12px;
+}
+
+.StoreSearchInput {
+  width: 100%;
+  max-width: 420px;
+  padding: 10px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.StoreSearchInput:focus {
+  border-color: #1c1815;
+}
+
+.StoreCategoryTabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 24px 16px;
+}
+
+.StoreCategoryTab {
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  color: #6b6258;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.StoreCategoryTab.active {
+  background: #1c1815;
+  color: #fff;
+  border-color: #1c1815;
+}
+
+.ProductCategory {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgb(215, 0, 0);
+  margin-bottom: 4px;
+}
+
+.DiscountBadge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgb(215, 0, 0);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  z-index: 2;
+}
+
+.StoreImage {
+  position: relative;
+}
+
+.PriceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.PriceOriginal {
+  text-decoration: line-through;
+  color: #9a9088;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.PriceTag--discount {
+  background: rgb(215, 0, 0);
+}
+
+@media (max-width: 480px) {
+  .StoreSearchWrap {
+    padding: 0 14px 10px;
+  }
+
+  .StoreCategoryTabs {
+    padding: 0 14px 12px;
+  }
+}
+
 .CartLink {
   grid-column: 3;
   justify-self: end;
@@ -64,6 +166,13 @@
   display: flex;
   flex-direction: column;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.StoreCard.outOfStock {
+  opacity: 0.6;
+}
+
+.StoreCard.outOfStock .StoreImage img {
+  filter: grayscale(0.6);
 }
 
 .StoreCard:hover {
@@ -178,9 +287,23 @@
 }
 
 
-
+@media (max-width: 700px) {
+  .StoreGrid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0 16px;
+  }
+}
 
 @media (max-width: 480px) {
+
+  .Header {
+    font-size: 22px;
+  }
+
+  .StoreHeader {
+    padding: 14px;
+    gap: 8px;
+  }
   .store {
     width: 100%;
   }
@@ -192,5 +315,25 @@
 
   .StoreHeader {
     grid-template-columns: auto 1fr auto; /* let outer columns shrink to content */
+  }
+
+  .StoreImage {
+    height: 160px;
+    margin-bottom: 20px;
+  }
+
+  .ProductName {
+    font-size: 14px;
+  }
+
+  .ProductDesc {
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+
+  .PriceTag,
+  .BuyBtn {
+    font-size: 11px;
+    padding: 6px 10px;
   }
 }

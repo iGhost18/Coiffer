@@ -17,6 +17,7 @@ import { Link } from "react-router-dom";
 
 const PF = process.env.REACT_APP_PUBLIC_FOLDER;
 
+
 function NotificationItem({
   item,
   navigate,
@@ -106,10 +107,21 @@ export default function Notification() {
   // ==========================
   useEffect(() => {
     const handleNotification = (notification) => {
-      setNotifications((prev) => [
-        notification,
-        ...prev,
-      ]);
+      console.log("Notification received:", notification);
+
+      setNotifications((prev) => {
+        // Prevent duplicate notifications
+        if (
+          notification?._id &&
+          prev.some(
+            (item) => item._id === notification._id
+          )
+        ) {
+          return prev;
+        }
+
+        return [notification, ...prev];
+      });
     };
 
     socket.on("getNotification", handleNotification);

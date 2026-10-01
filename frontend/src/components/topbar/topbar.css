@@ -1,84 +1,376 @@
-.TopbarContainer{
-    height:120px;
-    width:100%;
-    background-color: black;    
-    display: flex;
-    place-items: center;
-    position: sticky;
-    top:0;
-    z-index: 1000;
+:root {
+    --topbar-height: 120px;
 }
 
-.TopbarLeft{
+.TopbarContainer {
+    height: var(--topbar-height);
+    width: 100%;
+    background-color: black;
+
+    display: flex;
+    align-items: center;
+
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    box-sizing: border-box;
+}
+
+
+/* =========================
+   LEFT - LOGO
+========================= */
+
+.TopbarLeft {
+    display: flex;
     align-items: center;
     justify-content: center;
+
     margin-left: 50px;
-    /* padding: 200px; */
+
+    flex-shrink: 0;
 }
 
-.Logo{
+.Logo {
     width: 200px;
     margin: 20px;
+
     cursor: pointer;
+
+    max-width: 100%;
 }
 
-.TopbarCenter{
+
+/* =========================
+   CENTER - ICONS
+========================= */
+
+.TopbarCenter {
     width: 100%;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
+
+    min-width: 0;
 }
 
-.TopbarCenterWrapper{
+.TopbarCenterWrapper {
     margin-left: 20%;
     margin-top: 3%;
+
+    flex-shrink: 1;
 }
 
-.TopbarIcons{
+.TopbarIcons {
     display: flex;
+
     gap: 150px;
+
+    /* Important */
+    white-space: nowrap;
 }
 
-.TopbarRight{
+
+/* =========================
+   RIGHT - PROFILE
+========================= */
+.TopbarRightGroup {
     display: flex;
     align-items: center;
-    justify-content:end;
+    gap: 10px;
+    flex-shrink: 0;
     margin-right: 3.5%;
+    position: relative;
+}
+
+.TopbarRight {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+.TopbarImg {
+    width: 38px;
+    height: 38px;
+
+    min-width: 38px;
+    min-height: 38px;
+
+    flex-shrink: 0;
+
+    margin: 10px;
+
+    border-radius: 50%;
+    border: 2px solid white;
+
+    object-fit: cover;
+
+    cursor: pointer;
 }
 
 
-.TopbarIconItem{
+/* =========================
+   ICON ITEM
+========================= */
+
+.TopbarIconItem {
     padding: 0 15px;
+
     cursor: pointer;
     position: relative;
+
     color: white;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
 }
 
-.TopbarIconBadge{
-    width: 15px;
-    height: 15px;
+
+/* =========================
+   BADGE
+========================= */
+
+.TopbarIconBadge {
+    width: 16px;
+    height: 16px;
+
     background-color: red;
+
     border-radius: 50%;
+
     color: white;
+
     position: absolute;
-    top: -5px;
-    right: -5px;
+
+    top: 0;
+    right: 15px;
+
+    transform: translate(50%, -50%);
+
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+
+    font-size: 10px;
+    line-height: 1;
+
+    box-sizing: border-box;
 }
 
-.TopbarImg{
-    width: 38px;
-    height: 38px;
-    min-width: 38px;
-    min-height: 38px;
-    flex-shrink: 0;
-    margin: 10px;
-    border-radius: 50%;
-    border: 2px solid white;
-    object-fit: cover;
-    cursor: pointer;
+
+/* ==================================================
+   TABLET
+================================================== */
+
+@media (max-width: 1000px) {
+    :root {
+        --topbar-height: 100px;
+    }
+
+    .TopbarContainer {
+        height: 100px;
+    }
+
+    .TopbarLeft {
+        margin-left: 30px;
+    }
+
+    .Logo {
+        width: 160px;
+        margin: 15px;
+    }
+
+    .TopbarCenterWrapper {
+        margin-left: 10%;
+        margin-top: 2%;
+    }
+
+    .TopbarIcons {
+        gap: 70px;
+    }
+
+    .TopbarIconItem {
+        padding: 0 10px;
+    }
+
+    .TopbarRight {
+        margin-right: 2%;
+    }
 }
 
+
+/* ==================================================
+   SMALL TABLET
+================================================== */
+
+@media (max-width: 768px) {
+    :root {
+        --topbar-height: 85px;
+    }
+
+    .TopbarContainer {
+        height: 85px;
+    }
+
+    .TopbarLeft {
+        margin-left: 20px;
+    }
+
+    .Logo {
+        width: 130px;
+        margin: 10px;
+    }
+
+    .TopbarCenterWrapper {
+        margin-left: 5%;
+        margin-top: 1%;
+    }
+
+    .TopbarIcons {
+        gap: 35px;
+    }
+
+    .TopbarIconItem {
+        padding: 0 7px;
+    }
+
+    .TopbarRight {
+        margin-right: 10px;
+    }
+
+    .TopbarImg {
+        width: 36px;
+        height: 36px;
+
+        min-width: 36px;
+        min-height: 36px;
+
+        margin: 7px;
+    }
+}
+
+
+/* ==================================================
+   MOBILE
+================================================== */
+
+@media (max-width: 600px) {
+    :root {
+        --topbar-height: 70px;
+    }
+
+    .TopbarContainer {
+        height: 70px;
+    }
+
+    .TopbarLeft {
+        margin-left: 10px;
+    }
+
+    .Logo {
+        width: 100px;
+        margin: 5px;
+    }
+
+    .TopbarCenterWrapper {
+        margin-left: 0;
+        margin-top: 0;
+    }
+
+    .TopbarIcons {
+        gap: 10px;
+    }
+
+    .TopbarIconItem {
+        padding: 0 4px;
+    }
+
+    .TopbarIconItem svg {
+        font-size: 22px;
+    }
+
+    .TopbarRight {
+        margin-right: 5px;
+    }
+
+    .TopbarImg {
+        width: 34px;
+        height: 34px;
+
+        min-width: 34px;
+        min-height: 34px;
+
+        margin: 5px;
+    }
+
+    .TopbarIconBadge {
+        width: 14px;
+        height: 14px;
+
+        right: 5px;
+
+        font-size: 9px;
+    }
+}
+
+
+/* ==================================================
+   VERY SMALL PHONES
+================================================== */
+
+@media (max-width: 400px) {
+    :root {
+        --topbar-height: 65px;
+    }
+
+    .TopbarContainer {
+        height: 65px;
+    }
+
+    .TopbarLeft {
+        margin-left: 5px;
+    }
+
+    .Logo {
+        width: 80px;
+        margin: 3px;
+    }
+
+    .TopbarIcons {
+        gap: 3px;
+    }
+
+    .TopbarIconItem {
+        padding: 0 2px;
+    }
+
+    .TopbarIconItem svg {
+        font-size: 20px;
+    }
+
+    .TopbarImg {
+        width: 31px;
+        height: 31px;
+
+        min-width: 31px;
+        min-height: 31px;
+
+        margin: 3px;
+    }
+
+    .TopbarIconBadge {
+        width: 13px;
+        height: 13px;
+
+        right: 3px;
+
+        font-size: 8px;
+    }
+}

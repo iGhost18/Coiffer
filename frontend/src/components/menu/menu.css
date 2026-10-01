@@ -1,14 +1,14 @@
 .TopbarIconMenuButton {
     background: none;
     border: none;
-    padding: 10px;
-    position: fixed;
-    top: 15px;
-    right: 30px;
+    padding: 5px;
+    position: static;
     z-index: 1002;
     cursor: pointer;
     display: flex;
     align-items: center;
+    flex-shrink: 0;
+    padding-bottom: 40px;
 }
 
 .Overlay {
@@ -23,10 +23,10 @@
 
 .MenuList {
     position: fixed;
-    top: 120px;
+    top: var(--topbar-height);
     right: 0;
     width: 280px;
-    height: calc(100vh - 120px);
+    height: calc(100vh - var(--topbar-height));
     box-sizing: border-box;
     border-radius: 25px 0px;
     background-color: #333;

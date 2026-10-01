@@ -1,21 +1,89 @@
 const router = require("express").Router();
+
 const Staff = require("../models/staff");
 const User = require("../models/user");
+const Invite = require("../models/invite");
+const RefreshToken = require("../models/refreshToken");
+
+const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+
 const sendEmail = require("../utils/sendEmail");
-const Invite = require("../models/invite");
 const geocodeAddress = require("../utils/geocode");
 
-const escapeRegex = (value) => String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const { authenticate, requireAdmin } = require("../middleware/auth");
+const validate = require("../middleware/validate");
+const rateLimit = require("../middleware/rateLimit");
+
+const {
+  registerSchema,
+  staffRegisterSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} = require("../validation/authSchemas");
+
+const escapeRegex = (value) =>
+  String(value ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const REFRESH_COOKIE_NAME = "refreshToken";
+
+const hashToken = (token) =>
+  crypto.createHash("sha256").update(token).digest("hex");
+
+const issueRefreshToken = async (ownerId, ownerType) => {
+  const rawToken = crypto.randomBytes(40).toString("hex");
+  const tokenHash = hashToken(rawToken);
+  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
+
+  await RefreshToken.create({ tokenHash, ownerId, ownerType, expiresAt });
+
+  return { rawToken, expiresAt };
+};
+
+const setRefreshCookie = (res, rawToken, expiresAt) => {
+  res.cookie(REFRESH_COOKIE_NAME, rawToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    expires: expiresAt,
+    path: "/api/auth", // only ever sent to auth endpoints, nowhere else
+  });
+};
+
+const clearRefreshCookie = (res) => {
+  res.clearCookie(REFRESH_COOKIE_NAME, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/api/auth",
+  });
+};
+
+const signAccessToken = (id, type) =>
+  jwt.sign({ id, type }, process.env.JWT_SECRET, {
+    algorithm: "HS256",
+    expiresIn: "1h",
+  });
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: "Too many login attempts from this IP, please try again after 15 minutes.",
+});
 
 
 // ─────────────────────────────────────────
 //  STAFF REGISTER
 // ─────────────────────────────────────────
-router.post("/staff/register", async (req, res) => {
-  try {
+router.post(
+  "/staff/register",
+  validate(staffRegisterSchema),
+  async (req, res) => {
+    try {
       const {
         token,
         username,
@@ -35,50 +103,90 @@ router.post("/staff/register", async (req, res) => {
         startTime,
         endTime,
         slotDuration,
-        maxBookings
-      } = req.body;
+        maxBookings,
+      } = req.validated.body;
 
-    if (!token || !username || !email || !password) {
-      return res.status(400).json("All required fields must be filled.");
-    }
+      // Normalize email once, up front, so every downstream check/store uses the same value
+      const normalizedEmail = email.toLowerCase().trim();
 
-    if (String(password).length < 8) {
-      return res.status(400).json("Password must be at least 8 characters.");
-    }
+      // --------------------------------------------------
+      // VERIFY INVITATION
+      // --------------------------------------------------
 
-    const invite = await Invite.findOne({ token });
+      const invite = await Invite.findOne({
+        token,
+        email: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i"),
+        used: false,
+        expiresAt: { $gt: new Date() },
+      });
 
-    if (!invite) return res.status(404).json("Invalid invite.");
-    if (invite.used) return res.status(400).json("Invite already used.");
-    if (invite.expiresAt < new Date()) return res.status(400).json("Invite expired.");
-    if (invite.email !== email) return res.status(400).json("Email mismatch.");
+      if (!invite) {
+        return res.status(400).json({
+          message: "Invalid or expired invitation.",
+        });
+      }
 
-    const existingStaff = await Staff.findOne({
-      $or: [{ email }, { username }],
-    });
+      // --------------------------------------------------
+      // CHECK FOR EXISTING STAFF
+      // --------------------------------------------------
 
-    if (existingStaff) {
-      return res.status(400).json("Staff already exists.");
-    }
+      const existingStaff = await Staff.findOne({
+        $or: [
+          { email: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i") },
+          { username },
+          { phone },
+        ],
+      }).lean();
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+      if (existingStaff) {
+        return res.status(409).json({
+          message: "An account with those details already exists.",
+        });
+      }
 
-    const fullAddress = [
-      location.address,
-      location.city,
-      location.state,
-      location.country || "Nigeria",
-    ]
-      .filter(Boolean)
-      .join(", ");
+      // --------------------------------------------------
+      // HASH PASSWORD
+      // --------------------------------------------------
 
-    const coordinates = await geocodeAddress(fullAddress);
+      const hashedPassword = await bcrypt.hash(password, 12);
 
-    const newStaff = new Staff({
+      // --------------------------------------------------
+      // BUILD ADDRESS
+      // --------------------------------------------------
 
+      const fullAddress = [
+        location.address,
+        location.city,
+        location.state,
+        location.country || "Nigeria",
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      // --------------------------------------------------
+      // GEOCODE LOCATION
+      // --------------------------------------------------
+
+      let coordinates = {
+        lat: null,
+        lng: null,
+      };
+
+      if (fullAddress) {
+        const result = await geocodeAddress(fullAddress);
+
+        if (result) {
+          coordinates = result;
+        }
+      }
+
+      // --------------------------------------------------
+      // CREATE STAFF
+      // --------------------------------------------------
+
+      const newStaff = new Staff({
         username,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
 
         firstName,
@@ -88,24 +196,23 @@ router.post("/staff/register", async (req, res) => {
         desc: bio,
 
         roles: roles || [],
+
         experience,
 
         workType,
 
         location: {
-            address: location.address || "",
-            city: location.city || "",
-            state: location.state || "",
-            country: location.country || "Nigeria",
-
-            coordinates: coordinates || {
-                lat: null,
-                lng: null
-            },
+          address: location.address || "",
+          city: location.city || "",
+          state: location.state || "",
+          country: location.country || "Nigeria",
+          coordinates,
         },
 
         specialties: specialties || [],
+
         workDays: workDays || [],
+
         profilePicture: profilePicture || "",
 
         schedule: {
@@ -117,173 +224,255 @@ router.post("/staff/register", async (req, res) => {
           Saturday: {},
           Sunday: {},
         },
-    });
+      });
 
-    const savedStaff = await newStaff.save();
+      const savedStaff = await newStaff.save();
 
-    invite.used = true;
-    await invite.save();
+      // --------------------------------------------------
+      // MARK INVITE AS USED
+      // --------------------------------------------------
 
-    const { password: _staffPassword, ...safeStaff } = savedStaff.toObject();
-    return res.status(201).json({
-      message: "Staff registered successfully",
-      staff: safeStaff,
-    });
+      invite.used = true;
+      await invite.save();
 
-  } catch (err) {
-    res.status(500).json("Server error");
+      // --------------------------------------------------
+      // NEVER RETURN PASSWORD
+      // --------------------------------------------------
+
+      const safeStaff = savedStaff.toObject();
+
+      delete safeStaff.password;
+      delete safeStaff.resetPasswordToken;
+      delete safeStaff.resetPasswordExpires;
+
+      return res.status(201).json({
+        message: "Staff registered successfully.",
+        staff: safeStaff,
+      });
+
+    } catch (err) {
+      console.error("Staff registration error:", err);
+
+      // Mongo duplicate-key protection
+      if (err.code === 11000) {
+        return res.status(409).json({
+          message: "An account with those details already exists.",
+        });
+      }
+
+      return res.status(500).json({
+        message: "Unable to complete staff registration.",
+      });
+    }
   }
-});
-
+);
 
 
 // USER REGISTER
 
-router.post("/register", async(req,res)=>{
+router.post(
+  "/register",
+  validate(registerSchema),
+  async (req, res) => {
+    try {
+      const {
+        username,
+        email,
+        password,
+        phone,
+        firstName,
+        lastName,
+        city,
+        state,
+        country,
+      } = req.validated.body;
 
-    try{
-        if (!req.body.username || !req.body.email || !req.body.password) {
-            return res.status(400).json("Username, email and password are required.");
-        }
-        if (String(req.body.password).length < 8) {
-            return res.status(400).json("Password must be at least 8 characters.");
-        }
+      // Normalize once — this is what fixes the case-sensitivity bug at its source
+      const normalizedEmail = email.toLowerCase().trim();
 
-        const salt = await bcrypt.genSalt(10);
+      const existingUser = await User.findOne({
+        $or: [
+          { email: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i") },
+          { username },
+          ...(phone ? [{ phone }] : []),
+        ],
+      }).lean();
 
-        const hashedPassword = await bcrypt.hash(
-            req.body.password,
-            salt
-        );
-
-        const newUser = new User({
-          username: req.body.username,
-          email: req.body.email,
-          phone: req.body.phone,
-          password: hashedPassword,
-          city: req.body.city,
-          state: req.body.state,
-          country: req.body.country,
+      if (existingUser) {
+        return res.status(409).json({
+          message: "An account with those details already exists.",
         });
+      }
 
-        const user = await newUser.save();
-        const { password: _userPassword, ...safeUser } = user.toObject();
+      const hashedPassword = await bcrypt.hash(password, 12);
 
-        res.status(201).json(safeUser);
+      const newUser = await User.create({
+        username,
+        email: normalizedEmail,
+        phone: phone || "",
+        password: hashedPassword,
+        firstName: firstName || "",
+        lastName: lastName || "",
+        city: city || "",
+        state: state || "",
+        country: country || "",
+      });
 
-    }catch(err){
-        res.status(500).json(err);
+      const safeUser = newUser.toObject();
+
+      delete safeUser.password;
+      delete safeUser.resetPasswordToken;
+      delete safeUser.resetPasswordExpires;
+
+      return res.status(201).json({
+        message: "Registration successful.",
+        user: safeUser,
+      });
+    } catch (err) {
+      console.error("User registration error:", err);
+
+      return res.status(500).json({
+        message: "Unable to complete registration.",
+      });
     }
-
-});
-
-
+  }
+);
 
 // LOGIN
-router.post("/login", async (req, res) => {
-  try {
-    const { identifier, password } = req.body;
+router.post(
+  "/login", loginLimiter,
+  validate(loginSchema),
+  async (req, res) => {
+    try {
+      const { identifier, password } = req.validated.body;
 
-    const user = await User.findOne({
-      $or: [
-        { email: new RegExp(`^${escapeRegex(identifier)}$`, "i") },
-        { username: new RegExp(`^${escapeRegex(identifier)}$`, "i") },
-        { phone: identifier },
-      ],
-    });
+      const safeIdentifier = identifier.trim();
 
-    if (!user) {
-      return res.status(404).json("User not found");
+      // Case-insensitive email match — fixes accounts registered with mixed-case
+      // emails being unable to log in with a differently-cased version
+      const user = await User.findOne({
+        $or: [
+          { email: new RegExp(`^${escapeRegex(safeIdentifier)}$`, "i") },
+          { username: safeIdentifier },
+          { phone: safeIdentifier },
+        ],
+      });
+
+      if (!user) {
+        return res.status(401).json({
+          message: "Invalid credentials.",
+        });
+      }
+
+      const validPassword = await bcrypt.compare(
+        password,
+        user.password
+      );
+
+      if (!validPassword) {
+        return res.status(401).json({
+          message: "Invalid credentials.",
+        });
+      }
+
+      // Now issues a refresh token + cookie too, same as staff login,
+      // instead of a bare 1h token with no way to renew it
+      const accessToken = signAccessToken(user._id.toString(), "User");
+      const { rawToken, expiresAt } = await issueRefreshToken(user._id, "User");
+      setRefreshCookie(res, rawToken, expiresAt);
+
+      const safeUser = user.toObject();
+
+      delete safeUser.password;
+      delete safeUser.resetPasswordToken;
+      delete safeUser.resetPasswordExpires;
+
+      return res.status(200).json({
+        user: safeUser,
+        accessToken,
+      });
+    } catch (err) {
+      console.error("Login error:", err);
+
+      return res.status(500).json({
+        message: "Unable to login.",
+      });
     }
-
-    const validPassword = await bcrypt.compare(
-      password,
-      user.password
-    );
-
-    if (!validPassword) {
-      return res.status(400).json("Wrong password");
-    }
-
-    const accessToken = jwt.sign(
-      { id: user._id.toString(), type: "User", isAdmin: false },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    const { password: pw, ...others } = user._doc;
-
-    res.status(200).json({ ...others, accessToken });
-
-  } catch (err) {
-    res.status(500).json(err);
   }
-});
-
+);
 
 // ─────────────────────────────────────────
 // STAFF LOGIN
 // ─────────────────────────────────────────
-router.post("/staff/login", async (req, res) => {
-  try {
-    const { identifier, password } = req.body;
+router.post(
+  "/staff/login",
+  loginLimiter,
+  validate(loginSchema),
+  async (req, res) => {
+    try {
+      const { identifier, password } = req.validated.body;
 
-    const staff = await Staff.findOne({
-      $or: [
-        { email: new RegExp(`^${escapeRegex(identifier)}$`, "i") },
-        { username: new RegExp(`^${escapeRegex(identifier)}$`, "i") },
-        { phone: identifier },
-      ],
-    });
+      const safeIdentifier = identifier.trim();
+
+      const staff = await Staff.findOne({
+        $or: [
+          { email: new RegExp(`^${escapeRegex(safeIdentifier)}$`, "i") },
+          { username: safeIdentifier },
+          { phone: safeIdentifier },
+        ],
+      });
 
 
-    if (!staff) {
-      return res.status(404).json("Staff not found.");
-    }
-
-    const validPassword = await bcrypt.compare(
-      password,
-      staff.password
-    );
-
-    if (!validPassword) {
-      return res.status(400).json("Wrong password.");
-    }
-
-    const accessToken = jwt.sign(
-      {
-        id: staff._id.toString(),
-        type: "Staff",
-        isAdmin: staff.isAdmin === true,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
+      // Don't reveal whether the account exists
+      if (!staff) {
+        return res.status(401).json({
+          message: "Invalid credentials.",
+        });
       }
-    );
 
-    const { password: pw, ...others } = staff._doc;
+      const validPassword = await bcrypt.compare(
+        password,
+        staff.password
+      );
 
-    res.status(200).json({
-      ...others,
-      accessToken,
-    });
+      if (!validPassword) {
+        return res.status(401).json({
+          message: "Invalid credentials.",
+        });
+      }
 
-  } catch (err) {
+      const accessToken = signAccessToken(staff._id.toString(), "Staff");
+      const { rawToken, expiresAt } = await issueRefreshToken(staff._id, "Staff");
+      setRefreshCookie(res, rawToken, expiresAt);
 
-    res.status(500).json({
-      message: err.message,
-    });
+      const safeStaff = staff.toObject();
+
+      delete safeStaff.password;
+      delete safeStaff.resetPasswordToken;
+      delete safeStaff.resetPasswordExpires;
+
+      return res.status(200).json({
+        staff: safeStaff,
+        accessToken,
+      });
+
+    } catch (err) {
+      console.error("Staff login error:", err);
+
+      return res.status(500).json({
+        message: "Unable to login.",
+      });
+    }
   }
-});
+);
 
 
 // ─────────────────────────────────────────
 //  USER FORGOT / RESET PASSWORD
 // ─────────────────────────────────────────
-router.post("/forgot-password", async (req, res) => {
+router.post("/forgot-password", loginLimiter, validate(forgotPasswordSchema), async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email } = req.validated.body;
     const user = await User.findOne({ email: new RegExp(`^${escapeRegex(email)}$`, "i") });
 
     // Same response whether or not the user exists — avoids leaking which emails are registered
@@ -311,12 +500,13 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-router.post("/reset-password/:token", async (req, res) => {
+// FIX: was validating against forgotPasswordSchema (expects { email }) instead of
+// resetPasswordSchema (expects { password }) — this is why legitimate resets failed.
+router.post("/reset-password/:token",
+  validate(resetPasswordSchema), async (req, res) => {
   try {
-    const { password } = req.body;
-    if (!password || String(password).length < 8) {
-      return res.status(400).json("Password must be at least 8 characters.");
-    }
+    const { password } = req.validated.body;
+
     const hashedToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
 
     const user = await User.findOne({
@@ -341,9 +531,10 @@ router.post("/reset-password/:token", async (req, res) => {
 // ─────────────────────────────────────────
 //  STAFF FORGOT / RESET PASSWORD
 // ─────────────────────────────────────────
-router.post("/staff/forgot-password", async (req, res) => {
+router.post("/staff/forgot-password", loginLimiter,
+  validate(forgotPasswordSchema), async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email } = req.validated.body;
     const staff = await Staff.findOne({ email: new RegExp(`^${escapeRegex(email)}$`, "i") });
 
     if (!staff) {
@@ -369,12 +560,11 @@ router.post("/staff/forgot-password", async (req, res) => {
   }
 });
 
-router.post("/staff/reset-password/:token", async (req, res) => {
+router.post("/staff/reset-password/:token",
+  validate(resetPasswordSchema), async (req, res) => {
   try {
-    const { password } = req.body;
-    if (!password || String(password).length < 8) {
-      return res.status(400).json("Password must be at least 8 characters.");
-    }
+    const { password } = req.validated.body;
+
     const hashedToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
 
     const staff = await Staff.findOne({
@@ -433,5 +623,93 @@ router.get("/search", async (req, res) => {
   }
 });
 
+// only an existing admin can promote another staff member
+router.put("/staff/:id/promote", authenticate, requireAdmin, async (req, res) => {
+  try {
+
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        message: "Invalid staff ID.",
+      });
+    }
+    const staff = await Staff.findByIdAndUpdate(
+      req.params.id,
+      { isAdmin: true },
+      { new: true }
+    ).select("-password");
+    if (!staff) return res.status(404).json("Staff not found.");
+    res.status(200).json(staff);
+  } catch (err) {
+    res.status(500).json("Server error");
+  }
+});
+
+
+// ─────────────────────────────────────────
+// REFRESH ACCESS TOKEN
+// ─────────────────────────────────────────
+router.post("/refresh", async (req, res) => {
+  try {
+    const rawToken = req.cookies?.[REFRESH_COOKIE_NAME];
+
+    if (!rawToken) {
+      return res.status(401).json({ message: "No refresh token provided." });
+    }
+
+    const tokenHash = hashToken(rawToken);
+
+    const stored = await RefreshToken.findOne({
+      tokenHash,
+      revoked: false,
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!stored) {
+      clearRefreshCookie(res);
+      return res.status(401).json({ message: "Invalid or expired session." });
+    }
+
+    // Rotate on every use: old token is dead, a new one takes its place.
+    // This means a stolen-and-reused refresh token gets invalidated the
+    // moment the real user's client refreshes next.
+    stored.revoked = true;
+    await stored.save();
+
+    const { rawToken: newRawToken, expiresAt } = await issueRefreshToken(
+      stored.ownerId,
+      stored.ownerType
+    );
+    setRefreshCookie(res, newRawToken, expiresAt);
+
+    const accessToken = signAccessToken(stored.ownerId.toString(), stored.ownerType);
+
+    return res.status(200).json({ accessToken });
+  } catch (err) {
+    console.error("Refresh error:", err);
+    return res.status(500).json({ message: "Unable to refresh session." });
+  }
+});
+
+// ─────────────────────────────────────────
+// LOGOUT
+// ─────────────────────────────────────────
+router.post("/logout", async (req, res) => {
+  try {
+    const rawToken = req.cookies?.[REFRESH_COOKIE_NAME];
+
+    if (rawToken) {
+      await RefreshToken.updateOne(
+        { tokenHash: hashToken(rawToken) },
+        { revoked: true }
+      );
+    }
+
+    clearRefreshCookie(res);
+    return res.status(200).json({ message: "Logged out." });
+  } catch (err) {
+    console.error("Logout error:", err);
+    return res.status(500).json({ message: "Unable to log out." });
+  }
+});
 
 module.exports = router;

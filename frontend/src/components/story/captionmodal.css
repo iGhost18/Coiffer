@@ -1,0 +1,103 @@
+.CaptionModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  backdrop-filter: blur(2px);
+}
+
+.CaptionModalCard {
+  width: 100%;
+  max-width: 380px;
+  background: #0d0d0d;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.CaptionModalPreview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 14;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.CaptionModalMedia {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.CaptionModalScrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0) 45%);
+  pointer-events: none;
+}
+
+.CaptionModalInput {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  backdrop-filter: blur(6px);
+  outline: none;
+}
+
+.CaptionModalInput::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.CaptionModalInput:focus {
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.CaptionModalActions {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #0d0d0d;
+}
+
+.CaptionModalCancel,
+.CaptionModalPost {
+  flex: 1;
+  border: none;
+  border-radius: 999px;
+  padding: 11px 0;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.CaptionModalCancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.CaptionModalPost {
+  background: linear-gradient(45deg, #f09433, #dc2743, #bc1888);
+  color: #fff;
+}
+
+.CaptionModalCancel:disabled,
+.CaptionModalPost:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

@@ -7,33 +7,46 @@
 .FooterTop{
     display: flex;
     padding: 30px;
+    gap: 30px;
+    flex-wrap: wrap;
 }
 
 .FooterRight{
- width: 100%;
+    width: 100%;
+    min-width: 250px;
+    flex: 1 1 300px;
 }
 
 .FooterRight img{
- width: 20%;
+    width: 20%;
+    min-width: 120px;
 }
 
 .FooterRight h5{
- font-size: 12px;
- font-weight: 300;
+    font-size: 12px;
+    font-weight: 300;
+    line-height: 1.5;
 }
 
 .FooterRight .icons{
-    margin: 20px;
-    width: 50px;
+    margin: 20px 20px 0 0;
+    width: 30px;
     height: 25px;
+    cursor: pointer;
 }
 
 .FooterLeft{
     width: 100%;
+    flex: 1 1 300px;
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-around;
+    gap: 20px;
 }
 
+.QuickLinks {
+    min-width: 140px;
+}
 
 .QuickLinks h3{
     font-size: 15px;
@@ -46,37 +59,27 @@
     cursor: pointer;
 }
 
-.BusinessHour{
-    width: 30%;
+.Information {
+    min-width: 200px;
 }
-
-.BusinessHour h3{
-    font-size: 15px;
-}
-
-.BusinessHourList{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px;
-}
-
-.BusinessHour h6{
-    font-size: 12px;
-}
-
 
 .Information h3{
- margin-bottom: 5px;
- margin-top: -6px;
- font-size: 15px;
+    margin-bottom: 5px;
+    margin-top: -6px;
+    font-size: 15px;
 }
 
 .InfoList{
     padding: 5px;
     display: flex;
+    align-items: center;
     gap: 10px;
     cursor: pointer;
+}
+
+.InfoList h6 {
+    font-size: 12px;
+    word-break: break-word;
 }
 
 .Footer hr{
@@ -88,10 +91,134 @@
     align-items: center;
     justify-content: space-between;
     padding: 0px 50px 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+    text-align: center;
+}
+
+.FooterBottomB {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.FooterBottomB b{
+    padding: 20px;
+    cursor: pointer;
+    white-space: nowrap;
 }
 
 
+/* ==================================================
+   TABLET
+================================================== */
+@media (max-width: 1000px) {
 
-.FooterBottomB b{
-  padding: 20px;
+    .FooterTop {
+        padding: 25px;
+        gap: 20px;
+    }
+
+    .FooterRight img {
+        width: 25%;
+        min-width: 100px;
+    }
+
+    .FooterRight .icons {
+        width: 26px;
+        height: 22px;
+        margin: 15px 15px 0 0;
+    }
+
+    .QuickLinks li,
+    .Information h6 {
+        font-size: 13px;
+    }
+}
+
+
+/* ==================================================
+   SMALL TABLET / STACK COLUMNS
+================================================== */
+@media (max-width: 768px) {
+
+    .FooterTop {
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .FooterRight,
+    .FooterLeft {
+        width: 100%;
+        flex: 1 1 auto;
+    }
+
+    .FooterRight img {
+        width: 35%;
+        min-width: 90px;
+    }
+
+    .FooterLeft {
+        justify-content: space-between;
+    }
+
+    .FooterBottom {
+        padding: 0 20px 15px;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .FooterBottomB b {
+        padding: 10px;
+    }
+}
+
+
+/* ==================================================
+   MOBILE
+================================================== */
+@media (max-width: 600px) {
+
+    .FooterTop {
+        padding: 15px;
+        gap: 15px;
+    }
+
+    .FooterRight img {
+        width: 45%;
+        min-width: 80px;
+    }
+
+    .FooterRight h5 {
+        font-size: 11px;
+    }
+
+    .FooterRight .icons {
+        width: 24px;
+        height: 20px;
+        margin: 10px 12px 0 0;
+    }
+
+    .FooterLeft {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .QuickLinks,
+    .Information {
+        min-width: 0;
+    }
+
+    .Footer hr {
+        margin: 15px;
+    }
+
+    .FooterBottom {
+        padding: 0 15px 15px;
+        font-size: 13px;
+    }
+
+    .FooterBottomB b {
+        padding: 8px;
+        font-size: 12px;
+    }
 }

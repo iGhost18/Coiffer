@@ -1,208 +1,340 @@
-.CheckoutWrapper{
-    width: 100%;
-    min-height: 100vh;
-    display: flex;
-    align-items: flex-start;
+.CheckoutWrapper {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 0 16px 40px;
+  box-sizing: border-box;
 }
 
-.CheckoutLeft{
-    width: 100%;
-    height: auto;
-    flex: 5;
-    margin: 10px;
-    padding: 40px;
-    background-color: rgba(240, 248, 255, 0.188);
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+/* ===== LEFT — form ===== */
+
+.CheckoutLeft {
+  flex: 5;
+  min-width: 0;
 }
 
-
-.DetailsHeader, .LocationHeader{
-  margin: 10px;
+.FormSection {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #ececec;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.InputWrapper{
-    margin: 10px;
+.FormSectionTitle {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
 }
 
-.InputWrapper label{
-    font-size: 15px;
-    font-weight: bold;
+.FormSectionHint {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #888;
+}
+
+.InputWrapper {
+  margin-bottom: 14px;
+}
+
+.InputWrapper:last-child {
+  margin-bottom: 0;
+}
+
+.InputWrapper label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #333;
 }
 
 .InputWrapper input,
-.InputWrapper textarea{
-    margin: 10px 0 10px 20px;
-    width: 80%;
-    padding: 10px;
-    cursor: pointer;
-    background-color: rgba(110, 110, 110, 0.034);
-    border: 0px;
-    border-radius: 5px;
-    resize: none;
+.InputWrapper textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: rgba(110, 110, 110, 0.05);
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  resize: none;
 }
 
-.Date{
-    display: flex;
-    gap: 50px;
+.InputWrapper input:focus,
+.InputWrapper textarea:focus {
+  outline: none;
+  border-color: #111;
 }
 
-
-.Location{
-    margin-top: 10%;
-    padding: 10px;
+.InputWrapper textarea {
+  min-height: 80px;
 }
 
-
-
-.CheckoutRight{
-    width: 100%;
-    height: auto;
-    flex: 5;
-    margin: 2px;
-    padding: 8px;
-    border-radius: 10px;
+.FormGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
-.SummaryCard{
-    border: 3px inset rgba(38, 37, 37, 0.614);
-    border-radius: 6px;
-    padding: 10px;
-    background-color: rgb(227, 227, 227);
-    color: rgba(0, 0, 0, 0.851);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+.FormGrid2 .InputWrapper {
+  margin-bottom: 0;
 }
 
-.SelectBarber {
+@media (max-width: 500px) {
+  .FormGrid2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== RIGHT — summary + payment ===== */
+
+.CheckoutRight {
+  flex: 5;
+  min-width: 0;
+}
+
+.SummaryCard {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #ececec;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  margin-bottom: 16px;
+}
+
+.SummarySectionTitle {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.SummaryEmpty {
+  font-size: 13px;
+  color: #888;
+}
+
+.SummaryLineItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.SummaryLineItem:last-of-type {
+  border-bottom: none;
+}
+
+.SummaryLineName {
+  margin: 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.SummaryLineMeta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #888;
+}
+
+.SummaryLinePrice {
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  margin: 8px;
-}
-.SelectBarber img{
-    border: 3px solid rgba(31, 31, 31, 0.673);
-    width: 55px;
-    height: 55px;
-    border-radius: 50%;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.CartItem{
-    border: 2px solid white;
-    border-radius: 10px;
+.SummaryDivider {
+  border-top: 1px solid #f0f0f0;
+  margin: 12px 0;
 }
 
-.ServiceName{
- font-size: 20px;
- margin-bottom: 3px;
- font-weight: 600;
+.SummarySubRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: #555;
+  margin: 8px 0;
 }
 
-.Desc{
- font-weight: 500;
- margin-top: 20px;
+.SummarySubRow span:last-child {
+  color: #111;
+  font-weight: 500;
+  text-align: right;
+  max-width: 60%;
 }
 
-.SummaryCard p{
-    font-weight: 500;
-}
-.SummaryName{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px;
-}
-
-.SummaryTime{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px;
+.SummaryTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid #ccc;
 }
 
-.City{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.SummaryTotalRow span:first-child {
+  font-weight: 600;
+  font-size: 15px;
 }
 
-.Description{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.SummaryTotalValue {
+  display: flex;
+  align-items: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #be0505;
 }
 
-.TransportFee{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+/* ===== Payment method ===== */
+
+.PaymentMethod {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #ececec;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.BackBtn{
-    border:none;
-    background:none;
-    cursor:pointer;
-    font-size:16px;
-    margin:20px;
+.PaymentCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  border: 2px solid #e5e5e5;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  margin-bottom: 16px;
 }
 
-.SummarySection{
-    padding:18px 0;
-    border-bottom:1px solid #ececec;
+.PaymentCard--selected {
+  border-color: #111;
+  background: #f7f6ff;
 }
 
-.SummaryItem{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin:12px 0;
+.PaymentCardInfo {
+  flex: 1;
+  min-width: 0;
 }
 
-.SummaryRow{
-    display:flex;
-    justify-content:space-between;
-    margin:10px 0;
+.PaymentCardName {
+  margin: 0;
+  font-weight: 600;
+  font-size: 14px;
 }
 
-.TotalCost{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-top:20px;
-    font-weight:bold;
+.PaymentCardDesc {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #888;
 }
 
-.PaymentMethod{
-    margin-top:20px;
-    padding:20px;
-    border-radius:12px;
-    background:#fff;
+.PaymentCardCheck {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  flex-shrink: 0;
+  position: relative;
 }
 
-.PaymentOption{
-    display:flex;
-    gap:10px;
-    margin:15px 0;
-    cursor:pointer;
+.PaymentCardCheck--on {
+  border-color: #111;
+  background: #111;
 }
 
-.CheckoutBtn{
-    width:100%;
-    margin-top:20px;
+.PaymentCardCheck--on::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
 }
 
-.checkOutbtn{
-    width:45px;
-    height:45px;
-    border:none;
-    border-radius:50%;
-    background:#f5f5f5;
-    cursor:pointer;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    transition:.25s;
+.CheckoutBtn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  background: #111;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
 }
 
-.checkOutbtn:hover{
-    background:#ececec;
+.CheckoutBtn:hover {
+  opacity: 0.85;
+}
+
+.CheckoutBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Back button ===== */
+
+.checkOutbtn {
+  width: 45px;
+  height: 45px;
+  border: none;
+  border-radius: 50%;
+  background: #f5f5f5;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: 0.25s;
+  margin: 16px;
+}
+
+.checkOutbtn:hover {
+  background: #ececec;
+}
+
+/* ===== Responsive ===== */
+
+@media (max-width: 900px) {
+  .CheckoutWrapper {
+    flex-direction: column;
+  }
+
+  .CheckoutLeft,
+  .CheckoutRight {
+    flex: none;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .CheckoutWrapper {
+    padding: 0 12px 32px;
+  }
+
+  .FormSection,
+  .SummaryCard,
+  .PaymentMethod {
+    padding: 16px;
+  }
+
+  .SummaryTotalValue {
+    font-size: 20px;
+  }
 }

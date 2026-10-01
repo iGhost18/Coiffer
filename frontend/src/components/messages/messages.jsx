@@ -2,38 +2,18 @@ import "./messages.css";
 import { format } from "timeago.js";
 import api from "../../api";
 import { useEffect, useState } from "react";
-
-// Combines the booking's date + time string ("08:00 AM") into a real
-// Date object so we can compare it against the current time. Mirrors
-// applyTimeString on the backend so both sides parse it the same way.
-function getAppointmentDateTime(booking) {
-  if (!booking?.appointmentDate) return null;
-
-  const date = new Date(booking.appointmentDate);
-  const match = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(
-    (booking.appointmentTime || "").trim()
-  );
-
-  if (!match) return date;
-
-  let [, hours, minutes, meridiem] = match;
-  hours = parseInt(hours, 10);
-  minutes = parseInt(minutes, 10);
-
-  if (/pm/i.test(meridiem) && hours !== 12) hours += 12;
-  if (/am/i.test(meridiem) && hours === 12) hours = 0;
-
-  date.setHours(hours, minutes, 0, 0);
-  return date;
-}
+import { formatTo12Hour } from "../../utils/time";
+import { getAppointmentEndDateTime } from "../../utils/bookingtime";
+import PayoutActions from "../payout/PayoutActions";
 
 export default function Messages({ messages, own, isStaff, onBookingUpdate, senderPicture }) {
   const [updating, setUpdating] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const PF = process.env.REACT_APP_PUBLIC_FOLDER;
 
-  // Ticks every minute so "Mark Complete" pops up on its own once the
-  // appointment time passes, without needing a page refresh
+  // Ticks every minute so time-dependent buttons appear on their own once
+  // the appointment has finished, without needing a page refresh.
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 60000);
     return () => clearInterval(interval);
@@ -57,14 +37,18 @@ export default function Messages({ messages, own, isStaff, onBookingUpdate, send
         onBookingUpdate?.(messages._id, newStatus);
       } catch (err) {
         console.error(err);
-        alert("Couldn't update that booking. Try again.");
+        alert(err.response?.data?.message || "Couldn't update that booking. Try again.");
       } finally {
         setUpdating(false);
       }
     };
 
-    const appointmentDateTime = getAppointmentDateTime(booking);
-    const appointmentHasPassed = appointmentDateTime ? now >= appointmentDateTime.getTime() : false;
+    const appointmentEndDateTime = getAppointmentEndDateTime(booking);
+    const appointmentHasPassed = appointmentEndDateTime ? now >= appointmentEndDateTime.getTime() : false;
+
+    // Bookings paid through Flutterwave use the escrow confirm/dispute flow.
+    // Only unpaid (direct) bookings keep the old "Mark Complete" button.
+    const hasEscrow = booking?.payoutStatus && booking.payoutStatus !== "none";
 
     const counterparty = isStaff ? booking?.customerId : booking?.staffId;
     const hasCustomerAddress =
@@ -85,7 +69,6 @@ export default function Messages({ messages, own, isStaff, onBookingUpdate, send
           .filter(Boolean)
           .join(", ")
       : null;
-
 
     return (
       <div className={own ? "message own" : "message"}>
@@ -115,7 +98,7 @@ export default function Messages({ messages, own, isStaff, onBookingUpdate, send
                   month: "short",
                   day: "numeric",
                 })}{" "}
-                · {booking.appointmentTime}
+                · {formatTo12Hour(booking.appointmentTime)}
               </p>
 
               {booking.services?.length > 0 && (
@@ -168,7 +151,8 @@ export default function Messages({ messages, own, isStaff, onBookingUpdate, send
             </div>
           )}
 
-          {isStaff && status === "confirmed" && appointmentHasPassed && (
+          {/* Unpaid/direct bookings only */}
+          {isStaff && !hasEscrow && status === "confirmed" && appointmentHasPassed && (
             <div className="bookingCardActions">
               <button
                 className="bookingCardBtn bookingCardBtn--accept"
@@ -179,6 +163,15 @@ export default function Messages({ messages, own, isStaff, onBookingUpdate, send
               </button>
             </div>
           )}
+
+          {/* Paid bookings: confirm job done / report a problem */}
+          {booking && status !== "cancelled" && (
+            <PayoutActions
+              booking={booking}
+              role={isStaff ? "staff" : "customer"}
+              bookingStatus={status}
+            />
+          )}
         </div>
         <div className="messageBottom">{format(messages.createdAt)}</div>
       </div>
@@ -188,10 +181,51 @@ export default function Messages({ messages, own, isStaff, onBookingUpdate, send
   return (
     <div className={own ? "message own" : "message"}>
       <div className="messageTop">
+        <div className="messageBubble">
+          {messages.media?.url && (
+            <div
+              className="messageMediaWrapper"
+              onClick={() => messages.media.type === "image" && setLightboxOpen(true)}
+            >
+              {messages.media.type === "video" ? (
+                <video
+                  src={messages.media.url}
+                  className="messageMedia"
+                  controls
+                  playsInline
+                />
+              ) : (
+                <img
+                  src={messages.media.url}
+                  alt=""
+                  className="messageMedia messageMedia--clickable"
+                />
+              )}
+            </div>
+          )}
+          {messages.text && <p className="messageText">{messages.text}</p>}
+        </div>
         <img src={getImage(senderPicture)} alt="" className="messageImg" />
-        <p className="messageText">{messages.text}</p>
       </div>
       <div className="messageBottom">{format(messages.createdAt)}</div>
+
+      {lightboxOpen && messages.media?.type === "image" && (
+        <div className="mediaLightboxOverlay" onClick={() => setLightboxOpen(false)}>
+          <button
+            className="mediaLightboxClose"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+          <img
+            src={messages.media.url}
+            alt=""
+            className="mediaLightboxImg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

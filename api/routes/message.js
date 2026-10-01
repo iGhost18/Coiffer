@@ -1,5 +1,6 @@
 const { authenticate } = require("../middleware/auth");
 const router = require("express").Router();
+const mongoose = require("mongoose");
 const Message = require("../models/message");
 const Conversation = require("../models/conversation");
 const Notification = require("../models/notification");
@@ -15,29 +16,54 @@ router.post("/", authenticate, async (req, res) => {
     if (!conversation || !conversation.members.map(String).includes(req.auth.id)) {
       return res.status(403).json({ message: "You are not a member of this conversation." });
     }
-    if (typeof req.body.text !== "string" || req.body.text.trim().length === 0 || req.body.text.length > 10000) {
-      return res.status(400).json({ message: "Message text is required and must be <= 10,000 characters." });
+
+    const rawText = typeof req.body.text === "string" ? req.body.text.trim() : "";
+    const media = req.body.media;
+
+    const hasValidMedia =
+      media &&
+      typeof media.url === "string" &&
+      media.url.trim() !== "" &&
+      ["image", "video"].includes(media.type);
+
+    if (!rawText && !hasValidMedia) {
+      return res.status(400).json({ message: "A message needs text, media, or both." });
     }
+
+    if (rawText.length > 10000) {
+      return res.status(400).json({ message: "Message text must be <= 10,000 characters." });
+    }
+
+    // Only take exactly what a plain chat message needs from the client.
+    // Fields like `type`, `bookingId`, and `status` are set by the server
+    // elsewhere (e.g. booking.js, payment.js) when a message represents a
+    // booking event — a user-authored message can never claim to be one of
+    // those, so we never spread req.body into the document.
     const newMessage = new Message({
-      ...req.body,
       sender: req.auth.id,
       conversationId: conversation._id,
+      text: rawText,
+      media: hasValidMedia
+        ? { url: media.url.trim(), type: media.type }
+        : undefined,
+      type: "text",
     });
     const savedMessage = await newMessage.save();
 
+    
     // Find the receiver from the already-authorized conversation.
     if (conversation) {
       // Find receiver
       const receiverId = conversation.members.find(
-        (id) => id.toString() !== req.body.sender.toString()
+        (id) => id.toString() !== req.auth.id
       );
 
       // Determine sender model
-      let sender = await User.findById(req.body.sender);
+      let sender = await User.findById(req.auth.id);
       let senderModel = "User";
 
       if (!sender) {
-        sender = await Staff.findById(req.body.sender);
+        sender = await Staff.findById(req.auth.id);
         senderModel = "Staff";
       }
 
@@ -80,7 +106,8 @@ router.post("/", authenticate, async (req, res) => {
 
     res.status(200).json(savedMessage);
   } catch (err) {
-    res.status(500).json(err);
+    console.error("POST /message failed:", err);
+    res.status(500).json({ message: "Failed to send message." });
   }
 });
 
@@ -105,7 +132,8 @@ router.put("/read/:userId", authenticate, async (req, res) => {
 
     res.status(200).json("Messages marked as read.");
   } catch (err) {
-    res.status(500).json(err);
+    console.error("PUT /message/read failed:", err);
+    res.status(500).json({ message: "Failed to mark messages as read." });
   }
 });
 
@@ -138,7 +166,59 @@ router.get("/:conversationId", authenticate, async (req, res) => {
 
     res.status(200).json(messages.reverse());
   } catch (err) {
-    res.status(500).json(err);
+    console.error("GET /message/:conversationId failed:", err);
+    res.status(500).json({ message: "Failed to fetch messages." });
+  }
+});
+
+// Mark messages read for ONE conversation (used when that conversation is opened)
+router.put("/conversation/:conversationId/read", authenticate, async (req, res) => {
+  try {
+    const conversation = await Conversation.findById(req.params.conversationId);
+    if (!conversation || !conversation.members.map(String).includes(req.auth.id)) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    await Message.updateMany(
+      {
+        conversationId: req.params.conversationId,
+        sender: { $ne: req.auth.id },
+        read: false,
+      },
+      { $set: { read: true } }
+    );
+
+    res.status(200).json("Messages marked as read.");
+  } catch (err) {
+    console.error("PUT /message/conversation/:conversationId/read failed:", err);
+    res.status(500).json({ message: "Failed to mark conversation as read." });
+  }
+});
+
+// Total unread message count across ALL the user's conversations —
+// independent of Notification.isRead. This is the mail icon's source of
+// truth; it changes only when messages are actually read (per-conversation),
+// never when a notification is marked read on the notifications page.
+router.get("/unread/:userId", authenticate, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.userId)) {
+      return res.status(400).json({ message: "Invalid user id." });
+    }
+    if (req.auth.id !== String(req.params.userId)) return res.status(403).json({ message: "Access denied." });
+
+    const conversations = await Conversation.find({ members: req.params.userId }).select("_id");
+    const conversationIds = conversations.map((c) => c._id.toString());
+
+    const count = await Message.countDocuments({
+      conversationId: { $in: conversationIds },
+      sender: { $ne: req.params.userId },
+      read: false,
+    });
+
+    res.status(200).json({ count });
+  } catch (err) {
+    console.error("GET /message/unread/:userId failed:", err);
+    res.status(500).json({ message: "Failed to fetch unread message count." });
   }
 });
 

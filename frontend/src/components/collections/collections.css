@@ -43,7 +43,7 @@
 
 .CollectionGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 10px;
   padding: 0 16px 16px;
   overflow-y: auto;
@@ -109,6 +109,31 @@
     background:#ececec;
 }
 
+.CollectionItem {
+  position: relative; /* required so the delete button can anchor to this item */
+}
+
+.CollectionDeleteBtn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 5;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  padding: 0;
+}
+
+.CollectionDeleteBtn:hover {
+  background: rgba(200, 0, 0, 0.8);
+}
 .btnAndText{
     display: flex;
     align-items: center;
@@ -116,4 +141,30 @@
 
 .btnAndText h4{
     margin-left: 10px;
+}
+
+@media (max-width: 900px) {
+  .CollectionGrid {
+    grid-template-columns: repeat(3, minmax(100px, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .CollectionGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 0 10px 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .CollectionGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .CollectionHeader {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }

@@ -1,14 +1,10 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: "142.250.102.109",
+  host: "smtp.gmail.com",
   port: 465,
   secure: true,
   family: 4,
-
-  tls: {
-    servername: "smtp.gmail.com",
-  },
 
   auth: {
     user: process.env.EMAIL_USER,
@@ -16,11 +12,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendEmail = async ({ to, subject, html }) => {
+const sendEmail = async ({ to, subject, html, text, replyTo }) => {
   return transporter.sendMail({
-    from: `"GhostCutApp" <${process.env.EMAIL_USER}>`,
+    from: `"Coiffer" <${process.env.EMAIL_USER}>`,
+    replyTo: replyTo || process.env.EMAIL_USER,
     to,
     subject,
+    text: text || undefined,
     html,
   });
 };

@@ -2,6 +2,7 @@ import axios from "axios";
 import { createContext, useReducer, useEffect } from "react";
 import AuthReducer from "./AuthReducer";
 import { reconnectSocket } from "../../socket";
+import { subscribeToPush } from "../../push"; 
 
 axios.defaults.baseURL = process.env.REACT_APP_API_URL || "";
 
@@ -32,6 +33,24 @@ export const AuthContextProvider = ({ children }) => {
                 `Bearer ${state.user.accessToken}`;
 
             reconnectSocket();
+        } else if (
+            !JSON.parse(localStorage.getItem("staff") || "null")?.accessToken
+        ) {
+            delete axios.defaults.headers.common.Authorization;
+        }
+    }, [state.user]);
+
+    useEffect(() => {
+        if (state.user?.accessToken) {
+            axios.defaults.headers.common.Authorization =
+                `Bearer ${state.user.accessToken}`;
+
+            reconnectSocket();
+
+            subscribeToPush().catch((err) =>
+                console.error("Push subscription failed:", err)
+            );
+
         } else if (
             !JSON.parse(localStorage.getItem("staff") || "null")?.accessToken
         ) {

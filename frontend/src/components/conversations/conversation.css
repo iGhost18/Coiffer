@@ -6,6 +6,7 @@
     cursor: pointer;
     border-radius: 10px;
     margin-top: 10px;
+    gap: 10px;
 }
 
 .conversation:hover{
@@ -23,6 +24,7 @@
     position: relative;
     width: 40px;
     height: 40px;
+    flex-shrink: 0;
 }
 
 .onlineDot {
@@ -39,11 +41,62 @@
 .conversationRight{
     display: flex;
     align-items: center;
+    min-width: 0;
+    flex: 1;
+}
+
+.conversationMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.conversationUnreadBadge {
+  background: rgb(199, 54, 54);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
 }
 
 .conversationName{
     margin-left: 10px;
     font-weight: 500;
+    overflow: hidden;            
+    text-overflow: ellipsis;     
+    white-space: nowrap;      
+    min-width: 0; 
+}
+
+.conversationTime{
+    flex-shrink: 0;    
+    margin-left: 10px;
 }
 
 
+@media (max-width: 400px) {
+  .conversation {
+    padding: 8px;
+  }
+
+  .conversationImg,
+  .conversationImgWrapper {
+    width: 34px;
+    height: 34px;
+  }
+
+  .conversationName {
+    font-size: 14px;
+  }
+
+  .conversationTime {
+    font-size: 11px;
+  }
+}

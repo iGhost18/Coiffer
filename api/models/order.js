@@ -31,6 +31,12 @@ const OrderSchema = new mongoose.Schema(
     },
 
     paymentMethod: { type: String, required: true },
+    paymentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payment",
+      default: null,
+    },
+    
     total: { type: Number, required: true },
 
     status: {
@@ -38,6 +44,39 @@ const OrderSchema = new mongoose.Schema(
       enum: ["pending", "fulfilled", "cancelled"],
       default: "pending",
     },
+    estimatedDeliveryStart: {
+      type: Date,
+    },
+
+    estimatedDeliveryEnd: {
+      type: Date,
+    },
+
+    deliveryStatus: {
+      type: String,
+      enum: [
+        "processing",
+        "shipped",
+        "out_for_delivery",
+        "delivered",
+      ],
+      default: "processing",
+    },
+
+    shippedAt: {
+      type: Date,
+      default: null,
+    },
+
+    outForDeliveryAt: {
+      type: Date,
+      default: null,
+    },
+
+    deliveredAt: {
+      type: Date,
+      default: null,
+  },
   },
   { timestamps: true }
 );

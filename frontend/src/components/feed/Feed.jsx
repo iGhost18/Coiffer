@@ -1,6 +1,7 @@
 import './feed.css';
 import Post from "../post/Post";
 import Topbar from "../topbar/Topbar";
+import StoryBar from "../../components/story/StoryBar";
 import { useState, useEffect, useContext } from 'react';
 import api from '../../api';
 import { AuthContext } from '../context/AuthContext';
@@ -28,12 +29,14 @@ export default function Feed({username}) {
           res = await api.get(`/api/post/following/${currentUser._id}`);
         }
 
-        await api.put(
-          "/api/notification/read-posts/" +
-          currentUser._id
-        );
-        
-        setPosts(Array.isArray(res.data) ? res.data : []);
+        if (currentUser?._id) {
+          await api.put(
+            "/api/notification/read-posts/" +
+            currentUser._id
+          );
+        }
+
+        setPosts(Array.isArray(res?.data) ? res.data : []);
 
       } catch (err) {
         console.log(err);
@@ -41,12 +44,23 @@ export default function Feed({username}) {
     };
 
     fetchPosts();
-  }, [activeTab, currentUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, currentUser?._id]);
+
+  const handlePostDeleted = (postId) => {
+    setPosts((prev) => prev.filter((p) => p._id !== postId));
+  };
+
+  const handlePostUpdated = (postId, changes) => {
+    setPosts((prev) =>
+      prev.map((p) => (p._id === postId ? { ...p, ...changes } : p))
+    );
+  };
 
   return (
     <div className='Feed'>
       <Topbar />
-
+     
       <div className="FeedWrapper">
 
         <div className="StickyTab">
@@ -70,10 +84,17 @@ export default function Feed({username}) {
 
           </div>
         </div>
+
+        <StoryBar />
         
         <div className="FeedPosts">
           {posts.map((post)=>(
-            <Post key={post._id} post={post}/>
+            <Post
+              key={post._id}
+              post={post}
+              onPostDeleted={handlePostDeleted}
+              onPostUpdated={handlePostUpdated}
+            />
           ))}
         </div>
       </div>

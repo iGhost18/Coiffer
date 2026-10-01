@@ -46,3 +46,27 @@
     border-radius:20px;
     font-size:12px;
 }
+
+.PostGridPlayIcon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 32px !important;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+  pointer-events: none;
+}
+
+@media (max-width: 600px) {
+  .PostGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+  }
+}
+
+@media (max-width: 380px) {
+  .PostGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

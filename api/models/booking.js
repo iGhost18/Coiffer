@@ -44,6 +44,11 @@ const BookingSchema = new mongoose.Schema(
     },
 
     paymentMethod: { type: String, required: true },
+    paymentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payment",
+      default: null,
+    },
     total: { type: Number, required: true },
 
     // CHANGED: lowercase to match Schedule.status and Message.status —
@@ -58,6 +63,37 @@ const BookingSchema = new mongoose.Schema(
 
     isReadByStaff: { type: Boolean, default: false },
     isReadByUser: { type: Boolean, default: false },
+    customerConfirmedAt: { type: Date, default: null },
+    staffConfirmedAt: { type: Date, default: null },
+
+    payoutStatus: {
+      type: String,
+      enum: ["none", "held", "releasing", "released", "payout_failed", "disputed", "refunding", "refunded"],
+      default: "none",
+      index: true,
+    },
+
+    payoutAttempts: { type: Number, default: 0 },
+    staffPayoutAmount: { type: Number, default: 0 },
+    autoReleaseAt: { type: Date, default: null, index: true },
+    transferReference: { type: String, default: null, index: true },
+
+    staffPayoutAmount: { type: Number, required: true }, // snapshot at booking creation, from Payment.staffPayouts
+
+    dispute: {
+      raisedBy: { type: mongoose.Schema.Types.ObjectId, default: null },
+      raisedByModel: { type: String, enum: ["User", "Staff"], default: null },
+      reason: { type: String, default: null },
+      raisedAt: { type: Date, default: null },
+      resolvedBy: { type: mongoose.Schema.Types.ObjectId, default: null }, // admin id
+      resolution: { type: String, enum: ["released", "refunded"], default: null },
+      resolvedAt: { type: Date, default: null },
+      adminNote: { type: String, default: null },
+    },
+    
+    autoReleaseAt: { type: Date, default: null, index: true },
+
+    transferReference: { type: String, default: null },
   },
   { timestamps: true }
 );

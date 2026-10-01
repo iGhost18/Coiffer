@@ -2,9 +2,9 @@ import './post.css';
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { BiComment } from "react-icons/bi";
 import { MdRoom, MdLabel } from "react-icons/md";
-import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
+import { BsBookmark, BsBookmarkFill, BsThreeDots } from "react-icons/bs";
 import { useContext, useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../api';
 import { format } from "timeago.js"
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -15,7 +15,7 @@ import "swiper/css";
 import "swiper/css/pagination";
 
 
-export default function Post({ post }) {
+export default function Post({ post, onPostDeleted, onPostUpdated }) {
 
     const [postStaff, setPostStaff] = useState({});
     const [liked, setLiked] = useState(false);
@@ -29,6 +29,14 @@ export default function Post({ post }) {
 
     const currentUser = user || currentStaff;
 
+    // ---- Edit / delete ----
+    const isOwner = currentStaff && String(post.staffId) === String(currentStaff._id);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editDesc, setEditDesc] = useState(post.desc || "");
+    const [saving, setSaving] = useState(false);
+
     // ---- Comments ----
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState(
@@ -40,7 +48,9 @@ export default function Post({ post }) {
     const [openReplyFor, setOpenReplyFor] = useState(null); // commentId or null
     const [replyDrafts, setReplyDrafts] = useState({}); // commentId -> text
 
-    const images = ( Array.isArray(post.img) ? post.img : post.img ? [post.img] : []).filter(img => img && img.trim() !=="");
+    const images = (Array.isArray(post.img) ? post.img : post.img ? [post.img] : [])
+    .map((item) => (typeof item === "string" ? { url: item, type: "image" } : item))
+    .filter((item) => item && typeof item.url === "string" && item.url.trim() !== "");
 
     useEffect(() => {
         if (currentUser?._id) {
@@ -55,7 +65,7 @@ export default function Post({ post }) {
 
         const fetchPostStaff = async () => {
             try {
-                const res = await axios.get(`/api/staff/${post.staffId}`);
+                const res = await api.get(`/api/staff/${post.staffId}`);
                 setPostStaff(res.data);
             } catch (err) {
                 if(err.response?.status === 404) {
@@ -91,7 +101,7 @@ export default function Post({ post }) {
             try {
                 const results = await Promise.all(
                     idsToResolve.map((id) =>
-                        axios
+                        api
                             .get(`/api/conversation/member?id=${id}`)
                             .then((res) => [id, res.data])
                             .catch(() => [id, { username: "Unknown", profilePicture: null }])
@@ -114,7 +124,6 @@ export default function Post({ post }) {
     }, [showComments, comments, commenterInfo]);
 
 
-
     const handleLike = async () => {
         if (liking) return;
         setLiking(true);
@@ -124,7 +133,7 @@ export default function Post({ post }) {
         setLikeCount(prev => wasLiked ? prev - 1 : prev + 1);
 
         try {
-            await axios.put(`/api/post/${post._id}/like`, {
+            await api.put(`/api/post/${post._id}/like`, {
                 userId: currentUser._id,
                 postOwnerId: post.staffId,
             });
@@ -145,13 +154,69 @@ export default function Post({ post }) {
         setSaved((prev) => !prev);
 
         try {
-            await axios.put(`/api/post/${post._id}/save`, {
+            await api.put(`/api/post/${post._id}/save`, {
                 userId: currentUser._id,
             });
         } catch (err) {
             console.log(err);
             setSaved((prev) => !prev); // revert on failure
         }
+    };
+
+    const handleDelete = async () => {
+        if (deleting) return;
+        if (!window.confirm("Delete this post? This can't be undone.")) return;
+
+        setDeleting(true);
+        setMenuOpen(false); // close the menu immediately so it can't be clicked again
+
+        try {
+            await api.delete(`/api/post/${post._id}`);
+            onPostDeleted?.(post._id);
+        } catch (err) {
+            console.log(err);
+            if (err.response?.status === 404) {
+                // Already gone server-side — treat it as a successful delete
+                // from the UI's perspective instead of showing a scary error
+                // for something the user already achieved.
+                onPostDeleted?.(post._id);
+            } else {
+                alert("Couldn't delete the post. Try again.");
+            }
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    const handleEditSave = async () => {
+        const text = editDesc.trim();
+        if (!text || saving || deleting) return;
+
+        setSaving(true);
+        try {
+            await api.put(`/api/post/${post._id}`, { desc: text });
+            onPostUpdated?.(post._id, { desc: text });
+            setIsEditing(false);
+        } catch (err) {
+            console.log(err);
+            if (err.response?.status === 404) {
+                // The post is gone (e.g. deleted from another tab/click) —
+                // reflect that instead of implying the edit failed for some
+                // other reason.
+                alert("This post no longer exists.");
+                onPostDeleted?.(post._id);
+                setIsEditing(false);
+            } else {
+                alert("Couldn't update the post. Try again.");
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleEditCancel = () => {
+        setEditDesc(post.desc || "");
+        setIsEditing(false);
     };
 
     const handleAddComment = async (e) => {
@@ -163,7 +228,7 @@ export default function Post({ post }) {
         setSubmitting(true);
 
         try {
-            const res = await axios.post(`/api/post/${post._id}/comment`, {
+            const res = await api.post(`/api/post/${post._id}/comment`, {
                 userId: currentUser._id,
                 text,
             });
@@ -208,7 +273,7 @@ export default function Post({ post }) {
         );
 
         try {
-            await axios.put(`/api/post/${post._id}/comment/${commentId}/like`, {
+            await api.put(`/api/post/${post._id}/comment/${commentId}/like`, {
                 userId: currentUser._id,
             });
         } catch (err) {
@@ -221,7 +286,7 @@ export default function Post({ post }) {
         if (!text || !currentUser) return;
 
         try {
-            const res = await axios.post(
+            const res = await api.post(
                 `/api/post/${post._id}/comment/${commentId}/reply`,
                 { userId: currentUser._id, text }
             );
@@ -271,6 +336,37 @@ export default function Post({ post }) {
                     <span className="PostUsername">{postStaff.username}</span>
                     <span className="PostDate">{new Date(post.createdAt).toDateString()}</span>
                 </div>
+
+                {isOwner && (
+                    <div className="PostTopRight" style={{ position: "relative" }}>
+                        <span
+                            className="PostActionIcon"
+                            onClick={() => setMenuOpen((prev) => !prev)}
+                        >
+                            <BsThreeDots />
+                        </span>
+
+                        {menuOpen && (
+                            <div className="PostMenu">
+                                <div
+                                    className="PostMenuItem"
+                                    onClick={() => {
+                                        setIsEditing(true);
+                                        setMenuOpen(false);
+                                    }}
+                                >
+                                    Edit
+                                </div>
+                                <div
+                                    className="PostMenuItem PostMenuItemDanger"
+                                    onClick={handleDelete}
+                                >
+                                    Delete
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
             {(post.feeling || post.location) && (
                 <div className="PostMeta">
@@ -285,7 +381,27 @@ export default function Post({ post }) {
                 </div>
             )}
             <div className="PostCenter">
-                <span className="PostText">{post.desc}</span>
+                {isEditing ? (
+                    <div className="PostEditForm">
+                        <input
+                            type="text"
+                            className="PostEditInput"
+                            value={editDesc}
+                            onChange={(e) => setEditDesc(e.target.value)}
+                            autoFocus
+                        />
+                        <div className="PostEditActions">
+                            <button type="button" onClick={handleEditSave} disabled={saving}>
+                                {saving ? "Saving…" : "Save"}
+                            </button>
+                            <button type="button" onClick={handleEditCancel} disabled={saving}>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <span className="PostText">{post.desc}</span>
+                )}
                 {post.tags?.length > 0 && (
                     <div className="PostTags">
                         <MdLabel className="PostMetaIcon" />
@@ -313,7 +429,11 @@ export default function Post({ post }) {
                <div className="PostImgWrapper">
                     {images.length === 1 ? (
                         <div className="PostImgSlide">
-                            <img src={getImage(images[0])} alt="" className="PostImg" />
+                            {images[0].type === "video" ? (
+                                <video src={getImage(images[0].url)} className="PostImg" controls playsInline preload="metadata" />
+                            ) : (
+                                <img src={getImage(images[0].url)} alt="" className="PostImg" />
+                            )}
                         </div>
                     ) : (
                         <>
@@ -323,9 +443,19 @@ export default function Post({ post }) {
                                 loop={false}
                                 onSlideChange={(swiper) => setActiveSlide(swiper.activeIndex)}
                             >
-                                {images.map((url, i) => (
+                                {images.map((item, i) => (
                                     <SwiperSlide key={i}>
-                                    <img src={getImage(url)} alt="" className="PostImg" />
+                                        {item.type === "video" ? (
+                                            <video
+                                                src={getImage(item.url)}
+                                                className="PostImg"
+                                                controls
+                                                playsInline
+                                                preload="metadata"
+                                            />
+                                        ) : (
+                                            <img src={getImage(item.url)} alt="" className="PostImg" />
+                                        )}
                                     </SwiperSlide>
                                 ))}
                             </Swiper>

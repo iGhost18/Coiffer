@@ -24,9 +24,11 @@ import Saves from "./components/saves/Saves";
 import StaffSettings from "./pages/staffSettings/StaffSettings";
 import ForgotPassword from "./pages/login/Forgetpassword";
 import ResetPassword from "./pages/login/Resetpassword";
+import PaymentCallback from "./pages/paymentCallback/PaymentCallback";
 import { ProductsProvider } from "./components/context/ProductsContext";
 import Invite from "./pages/invite/Invite";
 import StaffMap from "./components/map/Staffsnapmap";
+import RequireAuth from "./components/auth/RequireAuth";
 import { useEffect } from "react"; // add useEffect to your existing React import
 import socket from "./socket"; // adjust path to match where your socket.js actually lives
 import { getAuthToken } from "./socket";
@@ -70,31 +72,37 @@ function App() {
     <ProductsProvider>
       <CartProvider>
         <Routes>
-          <Route exact path="/" element={user || staff ? <Home/> : <LoginReg />} />
-          <Route exact path="/messenger" element={user || staff ?  <Messenger /> : <Navigate to="/login"/>} />
-          <Route path="/login" element={user || staff ? <Navigate to="/" /> : <LoginReg />} />
-          <Route path="/notification" element={<Notification/>} />
-          <Route path="/stafflogin" element={<StaffLogin/>} />
-          <Route path="/staffregister/:token" element={<StaffReg />} />
+          {/* ───────── PUBLIC — browsable without logging in ───────── */}
+          <Route exact path="/" element={<Home />} />
+          <Route path="/feed" element={<Feed/>} />
+          <Route path="/store" element={<Store />} />
+          <Route path="/map" element={<StaffMap />} />
           <Route path="/userprofile/:username" element={<Userprofile />} />
           <Route path="/staffprofile/:id" element={<Staffprofile />} />
-          <Route path="/servicedetail/:serviceId" element={<ServiceDetail />} />
-          <Route path="/friends" element={<FriendList />} />
-          <Route path="/schedule" element={<Schedule />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/collections" element={<CollectionsPage />} />
-          <Route path="/store" element={<Store />} />
-          <Route path="/feed" element={<Feed/>} />
-          <Route path="/checkout" element={<Checkout/>} />
-          <Route path="/dashboard" element={<Dashboard/>} />
-          <Route path="/saves" element={<Saves />} />
-          <Route path="/staffsettings/:id" element={<StaffSettings />} />
-          <Route path="/invite" element={<Invite/>} />
+
+          {/* ───────── AUTH / REGISTRATION — always public ───────── */}
+          <Route path="/login" element={user || staff ? <Navigate to="/" /> : <LoginReg />} />
+          <Route path="/stafflogin" element={<StaffLogin/>} />
+          <Route path="/invite" element={<Invite />} />
+          <Route path="/staffregister/:token" element={<StaffReg />} />
           <Route path="/forgot-password" element={<ForgotPassword role="user" />} />
           <Route path="/staff/forgot-password" element={<ForgotPassword role="staff" />} />
           <Route path="/reset-password/:token" element={<ResetPassword role="user" />} />
           <Route path="/staff/reset-password/:token" element={<ResetPassword role="staff" />} />
-          <Route path="/map" element={<StaffMap />} />
+
+          {/* ───────── EVERYTHING ELSE — requires an account ───────── */}
+          <Route path="/messenger" element={<RequireAuth><Messenger /></RequireAuth>} />
+          <Route path="/notification" element={<RequireAuth><Notification/></RequireAuth>} />
+          <Route path="/servicedetail/:serviceId" element={<RequireAuth><ServiceDetail /></RequireAuth>} />
+          <Route path="/friends" element={<RequireAuth><FriendList /></RequireAuth>} />
+          <Route path="/schedule" element={<RequireAuth><Schedule /></RequireAuth>} />
+          <Route path="/cart" element={<RequireAuth><Cart /></RequireAuth>} />
+          <Route path="/collections" element={<RequireAuth><CollectionsPage /></RequireAuth>} />
+          <Route path="/checkout" element={<RequireAuth><Checkout/></RequireAuth>} />
+          <Route path="/dashboard" element={<RequireAuth><Dashboard/></RequireAuth>} />
+          <Route path="/saves" element={<RequireAuth><Saves /></RequireAuth>} />
+          <Route path="/staffsettings/:id" element={<RequireAuth><StaffSettings /></RequireAuth>} />
+          <Route path="/payment/flutterwave/callback" element={<RequireAuth><PaymentCallback /></RequireAuth>} />
         </Routes>
       </CartProvider>
     </ProductsProvider>

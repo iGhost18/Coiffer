@@ -13,7 +13,7 @@ import socket from "../../socket";
 
 // import api from "./api"; // adjust path to your api.js
 
-const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+const LIGHT_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const RADIUS_OPTIONS = [1, 3, 10, 25, 999999];
 const DEFAULT_AVATAR = "/assets/person/noAvatar.png"; // same fallback used in StaffSettings.jsx
 
@@ -47,7 +47,7 @@ function escapeHtml(str = "") {
 }
 
 function staffIcon(person) {
-  const safeName = escapeHtml(person.name);
+  const safeName = escapeHtml(person.username);
   const safePhoto = escapeHtml(person.photoUrl);
   return L.divIcon({
     className: "",
@@ -55,7 +55,6 @@ function staffIcon(person) {
       <div class="staff-pin ${person.online ? "" : "offline"}">
         <div class="ring">
           <img src="${safePhoto}" alt="${safeName}" />
-          <div class="dot"></div>
         </div>
       </div>`,
     iconSize: [52, 52],
@@ -110,6 +109,35 @@ function RecenterOnDemand({ position, trigger }) {
   return null;
 }
 
+
+
+// Leaflet sizes its tile grid once, based on the container's dimensions
+// at mount time. If that container's final size isn't settled yet
+// (common when the map is nested inside another page's layout, as with
+// `embedded`), the map renders at the wrong size and never
+// self-corrects. This watches the actual DOM size and tells Leaflet to
+// recalculate whenever it changes.
+function InvalidateSizeOnResize() {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map.getContainer();
+
+    map.invalidateSize();
+
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [map]);
+
+  return null;
+}
+
+
 /* ---------------------------------------------------------------------
    Live status via WebSocket, backed by a MongoDB change stream server
    side (see src/api/staffApi.js).
@@ -153,7 +181,7 @@ function useLiveStaff(initialStaff) {
 /* ---------------------------------------------------------------------
    Main component
    --------------------------------------------------------------------- */
-export default function StaffSnapMap({ showBackButton = true }) {
+export default function StaffSnapMap({ showBackButton = true, embedded = false ,}) {
   const { position: userPos, accurate, status: gpsStatus } = useGeolocation();
   const [rawStaff, setRawStaff] = useState([]);
   const [staff] = useLiveStaff(rawStaff);
@@ -206,7 +234,7 @@ export default function StaffSnapMap({ showBackButton = true }) {
     const q = query.trim().toLowerCase();
     const matchesCommon = (p) => {
       const matchesQuery = !q ||
-        p.name.toLowerCase().includes(q) ||
+        p.username.toLowerCase().includes(q) ||
         (p.role || "").toLowerCase().includes(q);
       const matchesStatus = !onlineOnly || p.online;
       return matchesQuery && matchesStatus;
@@ -236,7 +264,7 @@ export default function StaffSnapMap({ showBackButton = true }) {
   }
 
   return (
-    <div className="staff-snap-map">
+    <div className={`staff-snap-map ${embedded ? "embedded-map" : "full-map"}`}>
       <div className="app-grid">
         <aside id="sidebar">
           <div className="brand">
@@ -283,7 +311,7 @@ export default function StaffSnapMap({ showBackButton = true }) {
                 value={onlineOnly ? "online" : "all"}
                 onChange={(e) => setOnlineOnly(e.target.value === "online")}
               >
-                <option value="all">All staff</option>
+                <option value="all">All Expert</option>
                 <option value="online">Online only</option>
               </select>
             </div>
@@ -315,7 +343,7 @@ export default function StaffSnapMap({ showBackButton = true }) {
           <div id="list">
             {located.length === 0 && unlocated.length === 0 ? (
               <div className="empty-state">
-                No staff match that search / radius.
+                No Expert match that search / radius.
                 <br />
                 Try widening the radius or clearing the search.
               </div>
@@ -329,11 +357,11 @@ export default function StaffSnapMap({ showBackButton = true }) {
                   >
                     <div className="avatar-wrap">
                       <div className={`status-ring ${p.online ? "" : "offline"}`} />
-                      <img src={p.photoUrl} alt={p.name} onError={handleAvatarError} />
+                      <img src={p.photoUrl} alt={p.username} onError={handleAvatarError} />
                       <div className={`status-dot ${p.online ? "" : "offline"}`} />
                     </div>
                     <div className="staff-info">
-                      <div className="name">{p.name}</div>
+                      <div className="name">{p.username}</div>
                       <div className="service">{p.role}</div>
                       <div className="meta">
                         <span>{p.online ? "🟢 Online" : "⚪ Offline"}</span>
@@ -357,11 +385,11 @@ export default function StaffSnapMap({ showBackButton = true }) {
                       <div key={p._id} className="staff-card unlocated" title="No location on file yet">
                         <div className="avatar-wrap">
                           <div className={`status-ring ${p.online ? "" : "offline"}`} />
-                          <img src={p.photoUrl} alt={p.name} onError={handleAvatarError} />
+                          <img src={p.photoUrl} alt={p.username} onError={handleAvatarError} />
                           <div className={`status-dot ${p.online ? "" : "offline"}`} />
                         </div>
                         <div className="staff-info">
-                          <div className="name">{p.name}</div>
+                          <div className="name">{p.username}</div>
                           <div className="service">{p.role}</div>
                           <div className="meta">
                             <span>{p.online ? "🟢 Online" : "⚪ Offline"}</span>
@@ -380,7 +408,8 @@ export default function StaffSnapMap({ showBackButton = true }) {
 
         <div id="map-wrap">
           <MapContainer center={[userPos.lat, userPos.lng]} zoom={12} zoomControl style={{ width: "100%", height: "100%" }}>
-            <TileLayer url={DARK_TILES} attribution="&copy; OpenStreetMap &copy; CARTO" maxZoom={19} />
+            <TileLayer url={LIGHT_TILES} attribution="&copy; OpenStreetMap contributors" maxZoom={19} />
+            <InvalidateSizeOnResize />
             <RecenterOnFirstFix position={userPos} />
             <RecenterOnDemand position={userPos} trigger={recenterTick} />
             <FlyToActive activeStaff={activeStaff} />
@@ -396,11 +425,11 @@ export default function StaffSnapMap({ showBackButton = true }) {
                   click: () => setActiveId(p._id),
                 }}
               >
-                <Popup>
+                <Popup minWidth={220} maxWidth={260}>
                   <div className="popup-head">
-                    <img src={p.photoUrl} alt={p.name} onError={handleAvatarError} />
+                    <img src={p.photoUrl} alt={p.username} onError={handleAvatarError} />
                     <div>
-                      <div className="name">{p.name}</div>
+                      <div className="name">{p.username}</div>
                       <div className="service">{p.role}</div>
                     </div>
                   </div>

@@ -39,18 +39,47 @@ export default function Share({ onPostCreated }) {
         setActivePanel(prev => (prev === panel ? null : panel));
     };
 
+    const MAX_VIDEO_MB = 100;
+    const MAX_MEDIA_ITEMS = 10;
+
     const handleFileChange = (e) => {
         const selected = Array.from(e.target.files);
-        setFile(prev => (prev ? [...prev, ...selected] : selected));
-        setPreviews(prev => [...prev, ...selected.map(f => URL.createObjectURL(f))]);
-        e.target.value = ""; // lets you reopen the picker and add more without it being "empty"
+
+        const accepted = [];
+        for (const f of selected) {
+            const isVideo = f.type.startsWith("video/");
+            if (isVideo && f.size > MAX_VIDEO_MB * 1024 * 1024) {
+                alert(`${f.name} is over ${MAX_VIDEO_MB}MB — pick a smaller clip.`);
+                continue;
+            }
+            accepted.push(f);
+        }
+
+        setFile(prev => {
+            const next = prev ? [...prev, ...accepted] : accepted;
+            if (next.length > MAX_MEDIA_ITEMS) {
+                alert(`You can attach up to ${MAX_MEDIA_ITEMS} items per post.`);
+                return next.slice(0, MAX_MEDIA_ITEMS);
+            }
+            return next;
+        });
+
+        setPreviews(prev => [
+            ...prev,
+            ...accepted.map(f => ({
+                url: URL.createObjectURL(f),
+                type: f.type.startsWith("video/") ? "video" : "image",
+            })),
+        ].slice(0, MAX_MEDIA_ITEMS));
+
+        e.target.value = "";
     };
 
    const removeImageAt = (index) => {
         setFile(prev => prev.filter((_, i) => i !== index));
         setPreviews(prev => {
-        URL.revokeObjectURL(prev[index]);
-        return prev.filter((_, i) => i !== index);
+            URL.revokeObjectURL(prev[index].url);
+            return prev.filter((_, i) => i !== index);
         });
     };
 
@@ -79,7 +108,7 @@ export default function Share({ onPostCreated }) {
 
     const resetForm = () => {
         desc.current.value = "";
-        previews.forEach((url) => URL.revokeObjectURL(url));
+        previews.forEach((p) => URL.revokeObjectURL(p.url));
         setFile(null);
         setPreviews([]);
         setTags([]);
@@ -94,30 +123,23 @@ export default function Share({ onPostCreated }) {
         setSubmitting(true);
 
         try {
-            let imgUrls = [];
+            let media = [];
             if (file && file.length > 0) {
                 for (const f of file) {
+                    const isVideo = f.type.startsWith("video/");
                     const formData = new FormData();
                     formData.append("file", f);
-
-                    const res = await fetch("/api/upload", {
-                        method: "POST",
-                        body: formData,
-                    });
-
-                    if (!res.ok) {
-                        throw new Error(`Upload failed with status ${res.status}`);
-                    }
-
-                    const data = await res.json();
-                    if (data.url) imgUrls.push(data.url);
+                    formData.append("resourceType", isVideo ? "video" : "image");
+                    const res = await api.post("/api/upload", formData);
+                    const data = res.data;
+                    if (data.url) media.push({ url: data.url, type: isVideo ? "video" : "image" });
                 }
             }
 
             const newPost = {
                 staffId: staff._id,
                 desc: desc.current.value,
-                img: imgUrls,
+                img: media,
                 tags,
                 location,
                 feeling: feeling ? feeling.label : null,
@@ -135,7 +157,7 @@ export default function Share({ onPostCreated }) {
     };
 
     useEffect(() => {
-        return () => previews.forEach((url) => URL.revokeObjectURL(url));
+        return () => previews.forEach((p) => URL.revokeObjectURL(p.url));
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
@@ -206,14 +228,18 @@ export default function Share({ onPostCreated }) {
 
                     {previews.length > 0 && (
                         <div className="SharePreviewGrid">
-                            {previews.map((src, index) => (
+                            {previews.map((p, index) => (
                                 <div className="SharePreviewItem" key={index}>
-                                    <img src={src} alt="preview" className="SharePreviewImg" />
+                                    {p.type === "video" ? (
+                                        <video src={p.url} className="SharePreviewImg" muted playsInline />
+                                    ) : (
+                                        <img src={p.url} alt="preview" className="SharePreviewImg" />
+                                    )}
                                     <button
                                         type="button"
                                         className="SharePreviewRemove"
                                         onClick={() => removeImageAt(index)}
-                                        aria-label="Remove image"
+                                        aria-label="Remove media"
                                     >
                                         <MdClose />
                                     </button>
@@ -228,7 +254,14 @@ export default function Share({ onPostCreated }) {
                         <label htmlFor='file' className="shareOption">
                             <MdPermMedia className='ShareIcon' />
                             <span className="ShareOptiontext">Photo & Video</span>
-                            <input style={{ display: "none" }} type="file" id='file' multiple accept='.png,.jpeg,.jpg' onChange={handleFileChange} />
+                            <input
+                                style={{ display: "none" }}
+                                type="file"
+                                id='file'
+                                multiple
+                                accept='.png,.jpeg,.jpg,.mp4,.webm,.mov,image/png,image/jpeg,video/mp4,video/webm,video/quicktime'
+                                onChange={handleFileChange}
+                            />
                         </label>
 
                         <div
