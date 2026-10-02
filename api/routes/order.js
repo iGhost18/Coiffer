@@ -10,7 +10,7 @@ const {
 
 const {
   sendNotification,
-} = require("../../socket");
+} = require("../socket");
 
 const {
   createNotification,

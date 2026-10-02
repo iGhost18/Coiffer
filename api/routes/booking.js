@@ -23,7 +23,7 @@ const {
   sendNotification,
   sendMessage,
   sendMessageUpdate,
-} = require("../../socket/index");
+} = require("../socket/index");
 
 /*
 ========================================================

@@ -6,7 +6,7 @@ const Conversation = require("../models/conversation");
 const Notification = require("../models/notification");
 const User = require("../models/user");
 const Staff = require("../models/staff");
-const { sendNotification, sendMessage } = require("../../socket/index");
+const { sendNotification, sendMessage } = require("../socket/index");
 
 // Add Message
 router.post("/", authenticate, async (req, res) => {

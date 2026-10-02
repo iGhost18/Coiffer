@@ -1,7 +1,7 @@
 import axios from "axios";
 import { createContext, useReducer, useEffect } from "react";
 import AuthReducer from "./AuthReducer";
-import { reconnectSocket } from "../../socket";
+import { reconnectSocket } from "../socket";
 import { subscribeToPush } from "../../push"; 
 
 axios.defaults.baseURL = process.env.REACT_APP_API_URL || "";

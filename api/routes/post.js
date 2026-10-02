@@ -5,7 +5,7 @@ const Post = require("../models/post");
 const User = require("../models/user");
 const Staff = require("../models/staff");
 const Notification = require("../models/notification");
-const { sendNotification } = require("../../socket/index");
+const { sendNotification } = require("../socket/index");
 
 const MAX_DESC_LENGTH = 5000;
 const MAX_COMMENT_LENGTH = 2000;

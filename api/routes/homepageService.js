@@ -2,7 +2,7 @@ const { authenticate, requireAdmin } = require("../middleware/auth");
 const router = require("express").Router();
 const mongoose = require("mongoose");
 const HomepageService = require("../models/homepageService");
-const { sendHomepageServiceUpdate } = require("../../socket/index");
+const { sendHomepageServiceUpdate } = require("../socket/index");
 
 router.get("/", async (req, res) => {
   try {

@@ -26,7 +26,7 @@ const {
   bookingConfirmationEmail,
   newBookingNotificationEmail,
 } = require("../utils/emailTemplates");
-const { sendNotification, sendMessage } = require("../../socket/index");
+const { sendNotification, sendMessage } = require("../socket/index");
 const sendPushToOwner = require("../utils/sendPush");
 const { durationToMinutes } = require("../utils/duration");
 

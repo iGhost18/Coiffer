@@ -1,5 +1,5 @@
 import axios from "axios";
-import { reconnectSocket } from "../../socket";
+import { reconnectSocket } from "../socket";
 import { createContext, useReducer, useEffect } from "react";
 import { subscribeToPush } from "../../push"
 
