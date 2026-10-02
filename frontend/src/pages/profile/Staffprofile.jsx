@@ -12,7 +12,7 @@ import Services from "../../components/services/Services";
 import Collection from "../../components/collections/Collections";
 import RatingWidget from "../../components/rating/RatingWidget";
 import RatingsList from "../../components/rating/RatingsList";
-import { requireAuthAction } from "../../utils/requireAuthAction";
+
 
 
 
@@ -27,7 +27,7 @@ export default function StaffProfile() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [isGroomer, setIsGroomer] = useState(false);
   const [activeDay, setActiveDay] = useState("Monday");
-  const { staff, dispatch: staffDispatch } = useContext(StaffAuthContext);
+  const { staff } = useContext(StaffAuthContext);
   const { user, dispatch: userDispatch } = useContext(AuthContext);
 
   const currentUser = user || staff;

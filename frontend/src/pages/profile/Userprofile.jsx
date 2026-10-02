@@ -717,10 +717,13 @@ export default function Userprofile() {
             </div>
           </div>
 
-          {isOwnProfile && (
-            <button className="SaveBtn" onClick={handleSave}>
-              {saved ? "✓ Saved" : "Save Changes"}
-            </button>
+         {isOwnProfile && (
+            <>
+              {saveError && <p className="SaveError">Couldn't save changes. Try again.</p>}
+              <button className="SaveBtn" onClick={handleSave}>
+                {saved ? "✓ Saved" : "Save Changes"}
+              </button>
+            </>
           )}
         </div>
       )}

@@ -411,6 +411,7 @@ export default function StaffSettings() {
         </button>
       </div>
       <h2 className="ss-title">Edit Profile</h2>
+      {error && <p className="ss-error">{error}</p>}
  
 
      
