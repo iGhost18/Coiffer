@@ -105,7 +105,7 @@ export default function Schedule() {
     };
 
     fetchSchedule();
-  }, [user, staff]);
+  }, [user, staff]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (currentUser) {

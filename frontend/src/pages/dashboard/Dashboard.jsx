@@ -289,6 +289,7 @@ export default function DispatchAdmin() {
     if (!stillValid) {
       setInvRole(homepageServices[0].name);
     }
+   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [homepageServices]);
 
   function logActivity(event, detail) {

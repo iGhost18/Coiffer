@@ -37,6 +37,7 @@ export default function PaymentCallback() {
     };
 
     verify();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const txRef = searchParams.get("tx_ref");
