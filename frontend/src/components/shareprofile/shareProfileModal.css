@@ -1,0 +1,170 @@
+/* All classes use the "spm-" prefix so they can't collide with other
+   pages' CSS (React bundles every stylesheet globally). */
+
+.spm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 10000; /* above PostModalOverlay (9999) */
+}
+
+.spm-card {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 26px 20px 20px;
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+}
+
+.spm-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: #f5f5f5;
+  color: #333;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.spm-close:hover {
+  background: #ececec;
+}
+
+.spm-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+}
+
+.spm-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #777;
+  word-break: break-word;
+}
+
+.spm-qr {
+  display: inline-block;
+  margin: 18px 0 8px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #eee;
+  border-radius: 14px;
+}
+
+.spm-hint {
+  margin: 0 0 18px;
+  font-size: 12px;
+  color: #999;
+}
+
+.spm-linkrow {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.spm-link {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fafafa;
+  color: #333;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.spm-copy {
+  flex-shrink: 0;
+  min-width: 78px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  background: #111;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.spm-copy:hover {
+  opacity: 0.85;
+}
+
+.spm-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.spm-btn {
+  flex: 1;
+  padding: 11px 12px;
+  border: 1.5px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.spm-btn:hover {
+  background: #f3f3f3;
+}
+
+.spm-btn--primary {
+  background: #be0505;
+  border-color: #be0505;
+  color: #fff;
+}
+
+.spm-btn--primary:hover {
+  background: #a50404;
+}
+
+/* iOS zooms into inputs under 16px, so bump it on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .spm-link {
+    font-size: 16px;
+  }
+}
+
+/* Phones: slide up from the bottom like a sheet */
+@media (max-width: 500px) {
+  .spm-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .spm-card {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+}

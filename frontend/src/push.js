@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "./api";
 
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -24,7 +24,7 @@ export async function subscribeToPush() {
 
   const registration = await navigator.serviceWorker.register("/service-worker.js");
 
-  const { data } = await axios.get("/push/vapid-public-key");
+  const { data } = await api.get("/api/push/vapid-public-key");
   const { key } = data;
 
   let subscription = await registration.pushManager.getSubscription();
@@ -35,7 +35,7 @@ export async function subscribeToPush() {
     });
   }
 
-  await axios.post("/push/subscribe", subscription.toJSON());
+  await api.post("/api/push/subscribe", subscription.toJSON());
 
   return true;
 }
@@ -47,7 +47,7 @@ export async function unsubscribeFromPush() {
   const subscription = await registration?.pushManager.getSubscription();
 
   if (subscription) {
-    await axios.post("/push/unsubscribe", { endpoint: subscription.endpoint });
+    await api.post("/api/push/unsubscribe", { endpoint: subscription.endpoint });
     await subscription.unsubscribe();
   }
 }

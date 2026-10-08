@@ -844,3 +844,243 @@
         padding: 9px 6px !important;
     }
 }
+
+/* =========================================================
+   MOBILE MAP (<= 760px): full-screen map, floating search +
+   chips, swipeable bottom sheet.
+   APPEND to the END of staffsnapmap.css.
+   ========================================================= */
+
+.staff-snap-map.mobile {
+  position: relative;
+  isolation: isolate;
+}
+
+.staff-snap-map.mobile.embedded-map {
+  height: min(720px, 82dvh);
+  min-height: 480px;
+}
+
+/* Map fills everything; its own stacking context keeps Leaflet's
+   internal z-indexes from covering the overlays. */
+.staff-snap-map.mobile #map-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* ---------- Top: search + chips ---------- */
+.staff-snap-map.mobile .m-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 500;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 0;
+  pointer-events: none;
+}
+.staff-snap-map.mobile .m-top > * {
+  pointer-events: auto;
+}
+
+.m-search-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.m-icon-btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.m-search {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.m-search svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.6;
+  color: var(--text);
+}
+.m-search input {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px 0 40px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 16px; /* 16px stops iOS zooming the page on focus */
+  outline: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  -webkit-appearance: none;
+}
+.m-search input:focus {
+  border-color: var(--zap);
+}
+
+.m-chips {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.m-chips::-webkit-scrollbar {
+  display: none;
+}
+.m-chip {
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+.m-chip.on {
+  background: var(--zap);
+  border-color: var(--zap);
+  color: var(--zap-ink);
+  font-weight: 800;
+}
+
+/* ---------- Bottom sheet ---------- */
+.m-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.45);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  transition: height 0.25s ease;
+}
+.m-sheet.peek {
+  height: 112px;
+}
+.m-sheet.peek.has-active {
+  height: 214px;
+}
+.m-sheet.open {
+  height: 70%;
+}
+
+.m-locate {
+  position: absolute;
+  right: 12px;
+  top: -56px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.m-handle {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 6px;
+  cursor: pointer;
+  touch-action: none; /* lets us read the swipe instead of scrolling */
+}
+.m-handle span {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--offline);
+}
+
+.m-sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.m-sheet-head b {
+  color: var(--text);
+}
+.m-attrib {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.m-sheet-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.m-sheet-body #list {
+  overscroll-behavior: contain;
+}
+
+.m-hint {
+  margin: 0;
+  padding: 2px 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.m-preview {
+  position: relative;
+  padding: 0 12px 12px;
+}
+.m-preview .staff-card {
+  cursor: default;
+  padding-right: 36px; /* room for the close button */
+}
+.m-preview .popup-actions {
+  margin-top: 6px;
+}
+.m-preview-close {
+  position: absolute;
+  top: 6px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--panel-2);
+  color: var(--text-dim);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Comfortable tap targets for the sheet's action buttons */
+.staff-snap-map.mobile .popup-actions a,
+.staff-snap-map.mobile .popup-actions button {
+  min-height: 44px;
+  font-size: 13px !important;
+}

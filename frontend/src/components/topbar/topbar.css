@@ -279,21 +279,27 @@
         margin: 5px;
     }
 
+    .TopbarCenter {
+        justify-content: center;   /* new: centers the icon group */
+    }
+
+
     .TopbarCenterWrapper {
-        margin-left: 0;
-        margin-top: 0;
+        margin: 0;
+        position: absolute;
+        bottom: 8px;
     }
 
     .TopbarIcons {
-        gap: 10px;
+        gap: 30px;
     }
 
     .TopbarIconItem {
-        padding: 0 4px;
+        padding: 8px 3px;
     }
 
     .TopbarIconItem svg {
-        font-size: 22px;
+        font-size: 16px;
     }
 
     .TopbarRight {
@@ -314,7 +320,7 @@
         width: 14px;
         height: 14px;
 
-        right: 5px;
+        right: 0;
 
         font-size: 9px;
     }
@@ -344,7 +350,7 @@
     }
 
     .TopbarIcons {
-        gap: 3px;
+        gap: 15px;
     }
 
     .TopbarIconItem {
@@ -352,7 +358,7 @@
     }
 
     .TopbarIconItem svg {
-        font-size: 20px;
+        font-size: 14px;
     }
 
     .TopbarImg {
@@ -369,7 +375,7 @@
         width: 13px;
         height: 13px;
 
-        right: 3px;
+        right: 0;
 
         font-size: 8px;
     }

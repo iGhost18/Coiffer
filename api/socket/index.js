@@ -20,7 +20,7 @@ const removeUser = (userId, socketId) => {
 };
 
 const onlineUsers = () =>
-  Array.from(users, ([userId, sockets]) => ({ userId, socketIds: Array.from(sockets) }));
+  Array.from(users.keys()).map((userId) => ({ userId }));
 
 const emitToUser = (userId, event, payload) => {
   if (!io) return;

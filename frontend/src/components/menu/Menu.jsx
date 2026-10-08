@@ -33,6 +33,10 @@ export default function Menu() {
     const location = useLocation();
 
     useEffect(() => {
+        setIsOpen(false);
+    }, [location.pathname]);
+
+    useEffect(() => {
         if (!currentUser?._id) return;
 
         const fetchCounts = async () => {
@@ -85,7 +89,7 @@ export default function Menu() {
             <h2 className='MenuHeader'>Menu</h2>
             <ul>
                 <li>
-                    <Link to='/collections' onClick={() => setIsOpen(false)}>
+                    <Link to='/gallery' onClick={() => setIsOpen(false)}>
                         <CollectionsTwoToneIcon />
                         <span className='MenuListItem'>Collections</span>
                     </Link>
@@ -136,7 +140,7 @@ export default function Menu() {
                     <button
                         type="button"
                         className="MenuSignOutBtn"
-                        onClick={() => setShowSignOut(true)}
+                        onClick={() => { setShowSignOut(true); setIsOpen(false);}}
                     >
                         <LogoutTwoToneIcon />
                         <span className='MenuListItem'>Sign out</span>

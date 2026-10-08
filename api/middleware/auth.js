@@ -16,6 +16,20 @@ const getToken = (req) => {
   return token || null;
 };
 
+const loadAdminFlag = async (req, res, next) => {
+  try {
+    req.auth.isAdmin = false;
+    if (req.auth?.type === "Staff") {
+      const Staff = require("../models/staff");
+      const s = await Staff.findById(req.auth.id).select("isAdmin").lean();
+      req.auth.isAdmin = s?.isAdmin === true;
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
 const authenticate = (req, res, next) => {
   const token = getToken(req);
 

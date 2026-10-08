@@ -25,6 +25,7 @@ export default function ServiceDetail() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null); 
+  const [saveError, setSaveError] = useState("");
 
   const [newDetail, setNewDetail] = useState({
     name: "",
@@ -43,16 +44,25 @@ export default function ServiceDetail() {
   };
 
   useEffect(() => {
-    fetch(`/api/servicedetail/service/${serviceId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setServiceDetails(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const res = await api.get(`/api/servicedetail/service/${serviceId}`);
+        if (!cancelled) {
+          setServiceDetails(Array.isArray(res.data) ? res.data : []);
+        }
+      } catch (err) {
+        console.error("Failed to load service details:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [serviceId]);
 
   const handleChange = (e) => {
@@ -80,6 +90,7 @@ export default function ServiceDetail() {
 
   const handleAddServiceDetail = async (e) => {
     e.preventDefault();
+    setSaveError("");
 
     try {
       let url = newDetail.img;
@@ -130,6 +141,12 @@ export default function ServiceDetail() {
       });
     } catch (err) {
       console.error(err);
+      const data = err.response?.data;
+      setSaveError(
+        (typeof data === "string" && data) ||
+          data?.message ||
+          "Couldn't save. Please try again."
+      );
     }
   };
 
@@ -317,7 +334,7 @@ export default function ServiceDetail() {
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
-                  required
+                  required={!editingId}
                 />
               </label>
 
@@ -327,6 +344,12 @@ export default function ServiceDetail() {
                   alt="Preview"
                   className="imagePreview"
                 />
+              )}
+
+              {saveError && (
+                <p style={{ color: "#c0392b", fontSize: 13, margin: "8px 0" }}>
+                  {saveError}
+                </p>
               )}
 
               <div className="modalActions">

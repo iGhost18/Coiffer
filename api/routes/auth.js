@@ -12,10 +12,14 @@ const crypto = require("crypto");
 
 const sendEmail = require("../utils/sendEmail");
 const geocodeAddress = require("../utils/geocode");
+const { passwordResetEmail } = require("../utils/passwordResetEmail");
+const { normalizePhone, phoneVariants, buildIdentifierQuery } = require("../utils/identifier");
 
 const { authenticate, requireAdmin } = require("../middleware/auth");
 const validate = require("../middleware/validate");
 const rateLimit = require("../middleware/rateLimit");
+
+
 
 const {
   registerSchema,
@@ -133,8 +137,8 @@ router.post(
       const existingStaff = await Staff.findOne({
         $or: [
           { email: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i") },
-          { username },
-          { phone },
+          { username: new RegExp(`^${escapeRegex(username)}$`, "i") },
+          { phone: { $in: phoneVariants(phone) } },
         ],
       }).lean();
 
@@ -191,7 +195,7 @@ router.post(
 
         firstName,
         lastName,
-        phone,
+        phone: normalizePhone(phone),
 
         desc: bio,
 
@@ -268,8 +272,9 @@ router.post(
 );
 
 
-// USER REGISTER
-
+// ─────────────────────────────────────────
+//  USER REGISTER
+// ─────────────────────────────────────────
 router.post(
   "/register",
   validate(registerSchema),
@@ -289,12 +294,13 @@ router.post(
 
       // Normalize once — this is what fixes the case-sensitivity bug at its source
       const normalizedEmail = email.toLowerCase().trim();
+      const normalizedPhone = phone ? normalizePhone(phone) : undefined;
 
       const existingUser = await User.findOne({
         $or: [
           { email: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i") },
-          { username },
-          ...(phone ? [{ phone }] : []),
+          { username: new RegExp(`^${escapeRegex(username)}$`, "i") },
+          ...(normalizedPhone ? [{ phone: { $in: phoneVariants(phone) } }] : []),
         ],
       }).lean();
 
@@ -309,7 +315,8 @@ router.post(
       const newUser = await User.create({
         username,
         email: normalizedEmail,
-        phone: phone || "",
+        // Omit phone entirely when blank: "" would collide under the unique index
+        ...(normalizedPhone && { phone: normalizedPhone }),
         password: hashedPassword,
         firstName: firstName || "",
         lastName: lastName || "",
@@ -331,6 +338,12 @@ router.post(
     } catch (err) {
       console.error("User registration error:", err);
 
+      if (err.code === 11000) {
+        return res.status(409).json({
+          message: "An account with those details already exists.",
+        });
+      }
+
       return res.status(500).json({
         message: "Unable to complete registration.",
       });
@@ -338,49 +351,79 @@ router.post(
   }
 );
 
-// LOGIN
+// ─────────────────────────────────────────
+//  USER LOGIN
+// ─────────────────────────────────────────
 router.post(
-  "/login", loginLimiter,
+  "/login",
+  loginLimiter,
   validate(loginSchema),
   async (req, res) => {
     try {
       const { identifier, password } = req.validated.body;
 
-      const safeIdentifier = identifier.trim();
+      const safeIdentifier = String(identifier || "").trim();
 
-      // Case-insensitive email match — fixes accounts registered with mixed-case
-      // emails being unable to log in with a differently-cased version
-      const user = await User.findOne({
-        $or: [
-          { email: new RegExp(`^${escapeRegex(safeIdentifier)}$`, "i") },
-          { username: safeIdentifier },
-          { phone: safeIdentifier },
-        ],
-      });
+      if (!safeIdentifier || !password) {
+        return res.status(400).json({
+          message: "Identifier and password are required.",
+        });
+      }
+
+      // Find user by email, username, or phone
+      const user = await User.findOne(buildIdentifierQuery(safeIdentifier));
 
       if (!user) {
+        console.log("LOGIN FAILED: USER NOT FOUND");
+
         return res.status(401).json({
           message: "Invalid credentials.",
+        });
+      }
+
+      if (!user.password) {
+        console.error(
+          "LOGIN FAILED: USER HAS NO PASSWORD HASH",
+          user._id
+        );
+
+        return res.status(500).json({
+          message: "Account password is not configured.",
         });
       }
 
       const validPassword = await bcrypt.compare(
-        password,
+        String(password),
         user.password
       );
 
       if (!validPassword) {
+        console.log("LOGIN FAILED: PASSWORD DOES NOT MATCH");
+
         return res.status(401).json({
           message: "Invalid credentials.",
         });
       }
 
-      // Now issues a refresh token + cookie too, same as staff login,
-      // instead of a bare 1h token with no way to renew it
-      const accessToken = signAccessToken(user._id.toString(), "User");
-      const { rawToken, expiresAt } = await issueRefreshToken(user._id, "User");
-      setRefreshCookie(res, rawToken, expiresAt);
+      // Create access token
+      const accessToken = signAccessToken(
+        user._id.toString(),
+        "User"
+      );
 
+      // Create refresh token
+      const { rawToken, expiresAt } = await issueRefreshToken(
+        user._id,
+        "User"
+      );
+
+      setRefreshCookie(
+        res,
+        rawToken,
+        expiresAt
+      );
+
+      // Never send password to frontend
       const safeUser = user.toObject();
 
       delete safeUser.password;
@@ -391,8 +434,9 @@ router.post(
         user: safeUser,
         accessToken,
       });
+
     } catch (err) {
-      console.error("Login error:", err);
+      console.error("LOGIN ERROR:", err);
 
       return res.status(500).json({
         message: "Unable to login.",
@@ -402,7 +446,7 @@ router.post(
 );
 
 // ─────────────────────────────────────────
-// STAFF LOGIN
+//  STAFF LOGIN
 // ─────────────────────────────────────────
 router.post(
   "/staff/login",
@@ -414,14 +458,7 @@ router.post(
 
       const safeIdentifier = identifier.trim();
 
-      const staff = await Staff.findOne({
-        $or: [
-          { email: new RegExp(`^${escapeRegex(safeIdentifier)}$`, "i") },
-          { username: safeIdentifier },
-          { phone: safeIdentifier },
-        ],
-      });
-
+      const staff = await Staff.findOne(buildIdentifierQuery(safeIdentifier));
 
       // Don't reveal whether the account exists
       if (!staff) {
@@ -487,11 +524,16 @@ router.post("/forgot-password", loginLimiter, validate(forgotPasswordSchema), as
 
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
-    await sendEmail({
-      to: user.email,
-      subject: "Reset your password",
-      html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 1 hour.</p><p>If you didn't request this, you can ignore this email.</p>`,
+    const { subject, html, text } = passwordResetEmail({
+      name: user.firstName || user.username,
+      resetUrl,
     });
+
+    try {
+      await sendEmail({ to: user.email, subject, html, text });
+    } catch (emailErr) {
+      console.error("Password reset email failed:", emailErr);
+    }
 
     res.status(200).json("If that email exists, a reset link has been sent.");
   } catch (err) {
@@ -536,6 +578,7 @@ router.post("/staff/forgot-password", loginLimiter,
   try {
     const { email } = req.validated.body;
     const staff = await Staff.findOne({ email: new RegExp(`^${escapeRegex(email)}$`, "i") });
+    
 
     if (!staff) {
       return res.status(200).json("If that email exists, a reset link has been sent.");
@@ -548,11 +591,16 @@ router.post("/staff/forgot-password", loginLimiter,
 
     const resetUrl = `${process.env.CLIENT_URL}/staff/reset-password/${resetToken}`;
 
-    await sendEmail({
-      to: staff.email,
-      subject: "Reset your password",
-      html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 1 hour.</p><p>If you didn't request this, you can ignore this email.</p>`,
+    const { subject, html, text } = passwordResetEmail({
+      name: staff.displayName || staff.firstName || staff.username,
+      resetUrl,
     });
+
+    try {
+      await sendEmail({ to: staff.email, subject, html, text });
+    } catch (emailErr) {
+      console.error("Password reset email failed:", emailErr);
+    }
 
     res.status(200).json("If that email exists, a reset link has been sent.");
   } catch (err) {

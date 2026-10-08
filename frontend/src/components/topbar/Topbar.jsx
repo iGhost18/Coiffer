@@ -151,7 +151,7 @@ export default function Topbar() {
         <div className='TopbarCenter'>
             <div className="TopbarCenterWrapper">
                 <div className='TopbarIcons'>
-                    <Link to="/">
+                    <Link to="/home">
                         <div className='TopbarIconItem'>
                             <HomeFilledIcon/>
                         </div>

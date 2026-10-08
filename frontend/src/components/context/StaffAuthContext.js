@@ -78,7 +78,7 @@ export const StaffAuthContextProvider = ({ children }) => {
 
             delete axios.defaults.headers.common.Authorization;
         }
-    }, [state.staff]);
+    }, [state.staff?.accessToken]);
 
     return (
         <StaffAuthContext.Provider

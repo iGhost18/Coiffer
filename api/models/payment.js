@@ -21,6 +21,13 @@ const PaymentSchema = new mongoose.Schema(
       index: true,
     },
 
+    refundStatus: {
+      type: String,
+      enum: ["none", "processing", "refunded", "failed"],
+      default: "none",
+    },
+    flutterwaveRefundId: { type: String, default: "" },
+
     amount: {
       type: Number,
       required: true,

@@ -138,16 +138,15 @@ function isValidDateString(dateStr) {
   );
 }
 
+
+
 /*
 Payout states in which a paid booking must NOT be cancelled directly.
 (held is handled separately: cancelling a held booking refunds the customer.)
 */
 const LOCKED_PAYOUT_STATES = [
-  "releasing",
-  "released",
-  "disputed",
-  "refunding",
-  "payout_failed",
+  "releasing", "released", "disputed", "refunding", "payout_failed",
+  "payout_uncertain", "refund_uncertain",
 ];
 
 /*
@@ -267,6 +266,7 @@ router.get("/available-slots", async (req, res) => {
 
     const exactMinutes = computeExactNextAvailable(start, end, duration, bookings, maxBookings);
 
+
     return res.json({
       slots,
       exactNextAvailable: exactMinutes !== null ? minutesToTime(exactMinutes) : null,
@@ -311,6 +311,24 @@ router.post("/", authenticate, async (req, res) => {
 
     if (!isValidDateString(body.appointmentDate)) {
       return res.status(400).json({ message: "Invalid appointment date." });
+    }
+
+    const { dayEnd: requestedDayEnd } = getDayBoundaries(body.appointmentDate);
+    if (requestedDayEnd < new Date()) {
+      return res.status(400).json({ message: "Appointment date is in the past." });
+    }
+    if (requestedDayEnd > new Date(Date.now() + 120 * 24 * 60 * 60 * 1000)) {
+      return res.status(400).json({ message: "Appointment date is too far ahead." });
+    }
+
+    const openRequests = await Booking.countDocuments({
+      customerId: req.auth.id,
+      status: "pending",
+    });
+    if (openRequests >= 5) {
+      return res.status(429).json({
+        message: "You have too many pending requests. Wait for a response or cancel one.",
+      });
     }
 
     const requestedTime = timeToMinutes(body.appointmentTime);
@@ -640,6 +658,18 @@ router.put("/:id/status", authenticate, async (req, res) => {
     const requestedStatus = String(req.body.status || "").toLowerCase();
 
     const allowedStatuses = ["pending", "confirmed", "completed", "cancelled"];
+    const ALLOWED_TRANSITIONS = {
+      pending: ["confirmed", "cancelled"],
+      confirmed: ["completed", "cancelled"],
+      completed: [],
+      cancelled: [],
+    };
+
+    if (!isAdmin && !(ALLOWED_TRANSITIONS[existing.status] || []).includes(requestedStatus)) {
+      return res.status(400).json({
+        message: `A ${existing.status} booking can't be changed to ${requestedStatus}.`,
+      });
+    }
 
     if (!allowedStatuses.includes(requestedStatus)) {
       return res.status(400).json({ message: "Invalid booking status." });
@@ -830,6 +860,10 @@ router.delete("/:id", authenticate, async (req, res) => {
       "refunding",
       "payout_failed",
     ].includes(existing.payoutStatus);
+
+    if (existing.paymentId && !req.auth.isAdmin) {
+      return res.status(400).json({ message: "Paid bookings can't be deleted. Cancel it instead." });
+    }
 
     if (moneyInEscrow && !req.auth.isAdmin) {
       return res.status(400).json({

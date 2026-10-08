@@ -1,18 +1,28 @@
+/* =========================================================
+   STORE: desktop first, then tablet, then phone (<= 640px)
+   Same class names as before, so Store.jsx needs no changes.
+   ========================================================= */
+
 .store {
   width: 100%;
   min-height: 100vh;
-  border-radius: 12px;
-  background-color: rgba(128, 128, 128, 0.133);
+  min-height: 100dvh;
   margin: 0 auto;
   padding: 0 0 40px;
+  border-radius: 12px;
+  background-color: rgba(128, 128, 128, 0.133);
 }
+
+/* ---------- Header ---------- */
 
 .StoreHeader {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 14px;
-  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px 24px;
 }
 
 .storeHeaderLeft {
@@ -23,15 +33,59 @@
 .Header {
   grid-column: 2;
   justify-self: center;
+  margin: 0;
+  text-align: center;
   font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
     "Lucida Sans", Arial, sans-serif;
   font-size: 32px;
-  margin: 0;
-  text-align: center;
 }
 
+.storeBackbtn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: #f5f5f5;
+  cursor: pointer;
+  transition: background 0.25s;
+}
+
+.storeBackbtn:hover {
+  background: #ececec;
+}
+
+.CartLink {
+  grid-column: 3;
+  justify-self: end;
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Link renders nothing when the cart is empty, so hide the empty shell */
+.CartLink:empty {
+  display: none;
+}
+
+.CartPill {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #1c1815;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- Search + categories ---------- */
 
 .StoreSearchWrap {
+  max-width: 1400px;
+  margin: 0 auto;
   padding: 0 24px 12px;
 }
 
@@ -41,7 +95,8 @@
   padding: 10px 16px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 999px;
-  font-size: 14px;
+  background: #fff;
+  font-size: 16px; /* 16px stops iOS zooming the page on focus */
   outline: none;
   transition: border-color 0.15s ease;
 }
@@ -53,120 +108,76 @@
 .StoreCategoryTabs {
   display: flex;
   gap: 8px;
-  overflow-x: auto;
+  max-width: 1400px;
+  margin: 0 auto;
   padding: 0 24px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.StoreCategoryTabs::-webkit-scrollbar {
+  display: none;
 }
 
 .StoreCategoryTab {
   flex-shrink: 0;
+  min-height: 36px;
+  padding: 8px 16px;
   border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
   background: #fff;
   color: #6b6258;
   font-size: 13px;
   font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 999px;
-  cursor: pointer;
   white-space: nowrap;
+  cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .StoreCategoryTab.active {
   background: #1c1815;
-  color: #fff;
   border-color: #1c1815;
-}
-
-.ProductCategory {
-  display: inline-block;
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: rgb(215, 0, 0);
-  margin-bottom: 4px;
-}
-
-.DiscountBadge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: rgb(215, 0, 0);
   color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 999px;
-  z-index: 2;
 }
 
-.StoreImage {
-  position: relative;
-}
-
-.PriceRow {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.PriceOriginal {
-  text-decoration: line-through;
-  color: #9a9088;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.PriceTag--discount {
-  background: rgb(215, 0, 0);
-}
-
-@media (max-width: 480px) {
-  .StoreSearchWrap {
-    padding: 0 14px 10px;
-  }
-
-  .StoreCategoryTabs {
-    padding: 0 14px 12px;
-  }
-}
-
-.CartLink {
-  grid-column: 3;
-  justify-self: end;
-  text-decoration: none;
-  color: inherit;
-  position: relative;
-}
-
-.CartPill {
-  background: #1c1815;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 14px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
+/* ---------- Product grid ---------- */
 
 .StoreGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 18px;
+  max-width: 1400px;
+  margin: 0 auto;
   padding: 0 24px;
-  justify-content: center;
+}
+
+.EmptyStoreMsg {
+  grid-column: 1 / -1;
+  padding: 40px 0;
+  text-align: center;
+  color: #6b6258;
 }
 
 .StoreCard {
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  padding: 16px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  background: #fff;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+
+/* hover lift only where hover exists (not on touch screens) */
+@media (hover: hover) {
+  .StoreCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  }
+}
+
 .StoreCard.outOfStock {
   opacity: 0.6;
 }
@@ -175,19 +186,15 @@
   filter: grayscale(0.6);
 }
 
-.StoreCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-}
-
 .StoreImage {
-  height: 300px;
-  background: rgba(128, 128, 128, 0.08);
-  border-radius: 8px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 40px;
+  aspect-ratio: 1 / 1;
+  margin-bottom: 14px;
+  border-radius: 4px;
+  background: rgba(128, 128, 128, 0.08);
   overflow: hidden;
 }
 
@@ -202,36 +209,87 @@
   opacity: 0.5;
 }
 
+.DiscountBadge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgb(215, 0, 0);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ProductCategory {
+  display: inline-block;
+  margin-bottom: 4px;
+  color: rgb(215, 0, 0);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 .ProductName {
+  margin: 0 0 4px;
   font-size: 16px;
   font-weight: 700;
-  margin: 0 0 4px;
+  overflow-wrap: anywhere;
 }
 
 .ProductDesc {
-  font-size: 13px;
-  color: #6b6258;
-  margin: 0 0 14px;
-  line-height: 1.4;
   flex: 1;
+  margin: 0 0 14px;
+  color: #6b6258;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
+
+/* ---------- Price + button ---------- */
 
 .StoreCardFooter {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  margin-top: 20px;
+  padding: 14px 14px 14px 14px;
   gap: 10px;
+  margin-top: auto;
+}
+
+.PriceSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.PriceRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.PriceOriginal {
+  color: #9a9088;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: line-through;
 }
 
 .PriceTag {
   position: relative;
+  padding: 3px 12px 3px 16px;
+  border-radius: 3px 8px 8px 3px;
   background: rgb(215, 0, 0);
   color: #fff;
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 700;
-  padding: 5px 12px 5px 16px;
-  border-radius: 3px 8px 8px 3px;
+  white-space: nowrap;
 }
 
 .PriceTag::before {
@@ -239,28 +297,45 @@
   position: absolute;
   left: 5px;
   top: 50%;
-  transform: translateY(-50%);
   width: 4px;
   height: 4px;
-  background: #fff;
   border-radius: 50%;
+  background: #fff;
   opacity: 0.7;
+  transform: translateY(-50%);
+}
+
+.PriceTag--discount {
+  background: rgb(215, 0, 0);
+}
+
+.Availability {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.Availability.available {
+  color: #2c7a4b;
+}
+
+.Availability.unavailable {
+  color: #9a9088;
 }
 
 .BuyBtn {
+  min-width: 64px;
+  padding: 8px 16px;
   border: none;
+  border-radius: 6px;
   background: #1c1815;
   color: #fff;
   font-size: 13px;
   font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 6px;
   cursor: pointer;
-  min-width: 64px;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, opacity 0.15s ease;
 }
 
-.BuyBtn:hover {
+.BuyBtn:hover:not(:disabled) {
   opacity: 0.85;
 }
 
@@ -268,72 +343,169 @@
   background: #2c7a4b;
 }
 
-.storeBackbtn{
-    width:35px;
-    height:35px;
-    border:none;
-    border-radius:50%;
-    background:#f5f5f5;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    transition:.25s;
-
+.BuyBtn:disabled {
+  background: #9a9088;
+  cursor: not-allowed;
 }
 
-.storeBackbtn:hover{
-    background:#ececec;
-}
+/* =========================================================
+   TABLET
+   ========================================================= */
 
-
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .StoreGrid {
-    grid-template-columns: repeat(2, 1fr);
-    padding: 0 16px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    padding: 0 20px;
+  }
+
+  .Header {
+    font-size: 26px;
+  }
+
+  .StoreHeader,
+  .StoreSearchWrap,
+  .StoreCategoryTabs {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 }
 
-@media (max-width: 480px) {
+/* =========================================================
+   PHONE
+   - compact header, full-width search, scrolling category chips
+   - 2-column grid with square images
+   - price on top, full-width Add to Cart under it
+   - cart count becomes a floating bar at the bottom
+   ========================================================= */
 
-  .Header {
-    font-size: 22px;
+@media (max-width: 640px) {
+  .store {
+    border-radius: 0;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); /* room for the floating cart bar */
   }
 
   .StoreHeader {
-    padding: 14px;
-    gap: 8px;
-  }
-  .store {
-    width: 100%;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    padding: 12px 14px;
   }
 
+  .Header {
+    grid-column: 2;
+    justify-self: start;
+    text-align: left;
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .StoreSearchWrap {
+    padding: 0 14px 10px;
+  }
+
+  .StoreSearchInput {
+    max-width: none;
+    padding: 12px 18px;
+  }
+
+  .StoreCategoryTabs {
+    padding: 0 14px 12px;
+  }
+
+  /* Floating cart bar */
+  .CartLink {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 900;
+    grid-column: auto;
+  }
+
+  .CartPill {
+    display: block;
+    padding: 14px 18px;
+    border-radius: 14px;
+    text-align: center;
+    font-size: 15px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .CartPill::after {
+    content: " · View cart";
+    font-weight: 500;
+    opacity: 0.8;
+  }
+
+  /* Grid */
   .StoreGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
     padding: 0 14px;
   }
 
-  .StoreHeader {
-    grid-template-columns: auto 1fr auto; /* let outer columns shrink to content */
+  .StoreCard {
+    padding: 10px;
+    border-radius: 10px;
   }
 
   .StoreImage {
-    height: 160px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
+  }
+
+  .DiscountBadge {
+    top: 6px;
+    left: 6px;
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+
+  .ProductCategory {
+    font-size: 9.5px;
   }
 
   .ProductName {
     font-size: 14px;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .ProductDesc {
-    font-size: 12px;
     margin-bottom: 10px;
+    font-size: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
-  .PriceTag,
+  /* Price on top, full-width button below */
+  .StoreCardFooter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .PriceTag {
+    padding: 3px 10px 4px 14px;
+    font-size: 10px;
+  }
+
+
   .BuyBtn {
-    font-size: 11px;
-    padding: 6px 10px;
+    width: 100%;
+    min-height: 40px; /* comfortable tap target */
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
+
+/* Very narrow phones: one product per row */
+@media (max-width: 340px) {
+  .StoreGrid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

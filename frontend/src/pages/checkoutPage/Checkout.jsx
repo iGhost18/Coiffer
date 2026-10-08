@@ -1,7 +1,7 @@
 import "./checkout.css";
 import Topbar from "../../components/topbar/Topbar";
 import Footer from "../../components/footer/Footer";
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import {
   DatePicker,
   TimeSlots,
@@ -41,6 +41,15 @@ export default function Checkout() {
   const { user } = useContext(AuthContext);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const onPageShow = (e) => {
+      // true when the browser restored this page from the back/forward cache
+      if (e.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   const {
     cartItems,

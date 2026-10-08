@@ -153,6 +153,7 @@ h1,h2,h3,.display{
 .sidebarOverlay{
   display: none;
 }
+.sidebarClose { display: none; }
 
 /* MAIN */
 .main{ flex:1; min-width:0; display:flex; flex-direction:column; margin:0; padding: 0;}
@@ -422,11 +423,28 @@ tr:hover td{ background:#fafbfc; }
 ::-webkit-scrollbar{ width:8px; height:8px; }
 ::-webkit-scrollbar-thumb{ background:#d4d8dd; border-radius:8px; }
 
+/* let grid cards shrink instead of forcing the page wider */
+.stat-card { min-width: 0; }
+.stat-card .val { overflow-wrap: anywhere; }
+
+@media (max-width: 900px) {
+  .stat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat-row.stat-row-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stat-card .val { font-size: 20px; }
+}
+
+@media (max-width: 700px) {
+  .stat-row.stat-row-3 { grid-template-columns: 1fr; }
+
+  /* long names/references in the stacked table cards */
+  td { min-width: 0; overflow-wrap: anywhere; }
+}
+
 /* ==================================================
    TABLET
 ================================================== */
 @media (max-width:900px){
-  .stat-row{ grid-template-columns:repeat(2,1fr); }
+  .stat-row{ grid-template-columns:repeat(2, minmax(0,1fr)); }
   .form-row{ grid-template-columns:1fr; }
 
   /* Sidebar becomes a slide-out drawer */
@@ -459,9 +477,28 @@ tr:hover td{ background:#fafbfc; }
     z-index: 50;
   }
 
+  .sidebarClose {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 12px;
+    left: 194px;         
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 8px;
+    background: #252b35;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    z-index: 70;         
+  }
+
   .sidebar--open{
     transform: translateX(0);
   }
+
 
   .sidebarOverlay{
     display: block;
@@ -470,6 +507,7 @@ tr:hover td{ background:#fafbfc; }
     background: rgba(0,0,0,.4);
     z-index: 40;
   }
+
 
   .main{ width: 100%; }
 
@@ -543,6 +581,6 @@ tr:hover td{ background:#fafbfc; }
 }
 
 @media (max-width: 480px){
-  .stat-row{ grid-template-columns: 1fr; }
+  .stat-row{ grid-template-columns: minmax(0,1fr); }
   .stat-card .val{ font-size: 22px; }
 }

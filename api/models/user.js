@@ -104,7 +104,7 @@ const UserSchema = new mongoose.Schema({
         default:""
     },
 
-    collection:{
+    gallery:{
         type:[String],
         default:[]
     },

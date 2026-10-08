@@ -1,40 +1,54 @@
 import { useState, useRef, useEffect, useContext } from "react";
 import api from "../../api";
-import Collections from "../../components/collections/Collections";
-import { AuthContext } from "../../components/context/AuthContext";
-import { StaffAuthContext } from "../../components/context/StaffAuthContext";
+import Gallery from "../gallery/Gallery";
+import { AuthContext } from "../context/AuthContext";
+import { StaffAuthContext } from "../context/StaffAuthContext";
 
-export default function CollectionsPage() {
+export default function Gallerypage() {
   const { user } = useContext(AuthContext);
   const { staff } = useContext(StaffAuthContext);
   const currentUser = user || staff;
 
-  const [collection, setCollection] = useState([]);
+  const [photos, setPhotos] = useState([]);
   const [featured, setFeatured] = useState([]);
   const fileInputRef = useRef(null);
+
+  const putUrl = staff
+    ? `/api/staff/${currentUser?._id}`
+    : `/api/user/${currentUser?._id}`;
+
+  // Single helper so every save sends the same payload
+  const saveToServer = (newPhotos, newFeatured) =>
+    api.put(putUrl, {
+      gallery: newPhotos, // backend field name unchanged
+      featured: newFeatured,
+      userId: currentUser._id,
+      userid: currentUser._id,
+    });
 
   useEffect(() => {
     if (!currentUser?._id) return;
 
-    const fetchCollection = async () => {
+    const fetchPhotos = async () => {
       try {
         const res = await api.get(
           staff
             ? `/api/staff/${currentUser._id}`
             : `/api/user?username=${currentUser.username}`
         );
-        setCollection(res.data?.collection || []);
+        setPhotos(res.data?.Gallery || []);
         setFeatured(res.data?.featured || []);
       } catch (err) {
         console.log(err);
       }
     };
 
-    fetchCollection();
-  }, [currentUser, staff]);
+    fetchPhotos();
+  }, [currentUser?._id, staff]);
 
   const handleUpload = async (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
 
     try {
       const uploadedUrls = [];
@@ -50,23 +64,30 @@ export default function CollectionsPage() {
         uploadedUrls.push(res.data.url);
       }
 
-      const newCollection = [...collection, ...uploadedUrls];
-      setCollection(newCollection);
+      const newPhotos = [...photos, ...uploadedUrls];
+      setPhotos(newPhotos);
 
-      if (currentUser?._id) {
-        const putUrl = staff
-          ? `/api/staff/${currentUser._id}`
-          : `/api/user/${currentUser._id}`;
-
-        await api.put(putUrl, {
-          collection: newCollection,
-          featured,
-          userId: currentUser._id,
-          userid: currentUser._id,
-        });
-      }
+      if (currentUser?._id) await saveToServer(newPhotos, featured);
     } catch (err) {
       console.log(err);
+    } finally {
+      e.target.value = ""; // lets you re-select the same file
+    }
+  };
+
+  const handleDelete = async (url) => {
+    const newPhotos = photos.filter((u) => u !== url);
+    const newFeatured = featured.filter((u) => u !== url);
+
+    setPhotos(newPhotos);
+    setFeatured(newFeatured);
+
+    if (currentUser?._id) {
+      try {
+        await saveToServer(newPhotos, newFeatured);
+      } catch (err) {
+        console.log(err);
+      }
     }
   };
 
@@ -87,16 +108,7 @@ export default function CollectionsPage() {
 
     if (currentUser?._id) {
       try {
-        const putUrl = staff
-          ? `/api/staff/${currentUser._id}`
-          : `/api/user/${currentUser._id}`;
-
-        await api.put(putUrl, {
-          collection,
-          featured: newFeatured,
-          userId: currentUser._id,
-          userid: currentUser._id,
-        });
+        await saveToServer(photos, newFeatured);
       } catch (err) {
         console.log(err);
       }
@@ -104,12 +116,13 @@ export default function CollectionsPage() {
   };
 
   return (
-    <Collections
-      collection={collection}
+    <Gallery
+      photos={photos}
       featured={featured}
       toggleFeatured={toggleFeatured}
       fileInputRef={fileInputRef}
       handleUpload={handleUpload}
+      handleDelete={handleDelete}
       isOwner={true}
     />
   );

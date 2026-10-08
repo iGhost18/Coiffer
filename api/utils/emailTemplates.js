@@ -31,6 +31,28 @@ function formatDisplayTime(timeStr) {
   return `${hour}:${minute} ${ampm}`;
 }
 
+function detailRow(label, value, { raw = false } = {}) {
+  if (!value) return "";
+  return `
+    <tr>
+      <td style="padding: 4px 0; font-size:13px; color:${TEXT_DIM}; width: 110px; vertical-align:top;">${label}</td>
+      <td style="padding: 4px 0; font-size:13px; color:${INK}; font-weight:600;">${raw ? value : esc(value)}</td>
+    </tr>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s || "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[c]));
+}
+
+const esc = escapeHtml;
+
 /*
 ========================================================
 BASE WRAPPER
@@ -113,7 +135,7 @@ function receiptTable(items, total) {
       (item) => `
       <tr>
         <td style="padding: 10px 0; border-bottom: 1px solid ${LINE}; font-size:13px; color:${INK};">
-          ${item.name}
+          ${esc(item.name)}
           <span style="color:${TEXT_DIM};"> × ${item.quantity}</span>
         </td>
         <td style="padding: 10px 0; border-bottom: 1px solid ${LINE}; font-size:13px; color:${INK}; text-align:right; white-space:nowrap;">
@@ -136,12 +158,12 @@ function receiptTable(items, total) {
   `;
 }
 
-function detailRow(label, value) {
+function detailRow(label, value, { raw = false } = {}) {
   if (!value) return "";
   return `
     <tr>
       <td style="padding: 4px 0; font-size:13px; color:${TEXT_DIM}; width: 110px; vertical-align:top;">${label}</td>
-      <td style="padding: 4px 0; font-size:13px; color:${INK}; font-weight:600;">${value}</td>
+      <td style="padding: 4px 0; font-size:13px; color:${INK}; font-weight:600;">${raw ? value : esc(value)}</td>
     </tr>
   `;
 }
@@ -168,7 +190,7 @@ function bookingConfirmationEmail({
     <p style="margin:0 0 4px 0; font-size:12px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:${BRAND_COLOR};">
       Appointment requested
     </p>
-    <h2 style="margin:0 0 16px 0; font-size:20px; color:${INK};">Hi ${customerName || "there"}, you've booked an appointment.</h2>
+    <h2 style="margin:0 0 16px 0; font-size:20px; color:${INK};">Hi ${esc(customerName) || "there"}, you've booked an appointment.</h2>
     <p style="margin:0 0 16px 0; font-size:13px; color:${TEXT_DIM};">
       ${staffName || "Your professional"} will confirm your appointment shortly. We'll email you as soon as it's confirmed.
     </p>
@@ -193,7 +215,7 @@ function bookingConfirmationEmail({
   return {
     subject: `Appointment booked — ${displayDate || "pending confirmation"}`,
     text:
-      `Hi ${customerName || "there"},\n\n` +
+      `Hi ${esc(customerName) || "there"},\n\n` +
       `You've booked an appointment${staffName ? ` with ${staffName}` : ""}. ${staffName || "Your professional"} will confirm it shortly.\n` +
       `Date: ${displayDate}\nTime: ${displayTime}\n` +
       (reference ? `Reference: #${reference}\n` : "") +
@@ -227,7 +249,7 @@ function bookingStatusEmail({ customerName, status, staffName }) {
     <p style="margin:0 0 4px 0; font-size:12px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:${statusMeta.color};">
       Booking update
     </p>
-    <h2 style="margin:0 0 12px 0; font-size:20px; color:${INK};">Hi ${customerName || "there"},</h2>
+    <h2 style="margin:0 0 12px 0; font-size:20px; color:${INK};">Hi ${esc(customerName) || "there"},</h2>
     <p style="margin:0; font-size:14px; color:${INK};">
       Your appointment${staffName ? ` with <strong>${staffName}</strong>` : ""} has been
       <strong style="color:${statusMeta.color};">${statusMeta.text}</strong>.
@@ -236,7 +258,7 @@ function bookingStatusEmail({ customerName, status, staffName }) {
 
   return {
     subject: `Appointment ${statusMeta.text}`,
-    text: `Hi ${customerName || "there"},\n\nYour appointment${staffName ? ` with ${staffName}` : ""} has been ${statusMeta.text}.\n\n— Coiffer`,
+    text: `Hi ${esc(customerName) || "there"},\n\nYour appointment${staffName ? ` with ${staffName}` : ""} has been ${statusMeta.text}.\n\n— Coiffer`,
     html: wrapEmail({
       preheader: `Your appointment has been ${statusMeta.text}.`,
       bodyHtml: body,
@@ -255,7 +277,7 @@ function paymentReceiptEmail({ customerName, txRef, total, items }) {
     <p style="margin:0 0 4px 0; font-size:12px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:${BRAND_COLOR};">
       Payment received
     </p>
-    <h2 style="margin:0 0 16px 0; font-size:20px; color:${INK};">Thanks for your order, ${customerName || "there"}.</h2>
+    <h2 style="margin:0 0 16px 0; font-size:20px; color:${INK};">Thanks for your order, ${esc(customerName) || "there"}.</h2>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${BRAND_COLOR_SOFT}; border-radius:8px; padding: 16px 18px; margin-bottom: 8px;">
       ${detailRow("Reference", txRef)}
@@ -270,7 +292,7 @@ function paymentReceiptEmail({ customerName, txRef, total, items }) {
   return {
     subject: "Payment receipt",
     text:
-      `Hi ${customerName || "there"},\n\nThanks for your payment.\nReference: ${txRef}\n\n` +
+      `Hi ${esc(customerName) || "there"},\n\nThanks for your payment.\nReference: ${txRef}\n\n` +
       (items || []).map((i) => `- ${i.name} x${i.quantity}: ${currency(i.price * i.quantity)}`).join("\n") +
       `\n\nTotal paid: ${currency(total)}\n\n— Coiffer`,
     html: wrapEmail({
@@ -297,14 +319,14 @@ function deliveryUpdateEmail({ customerName, message, orderItems }) {
     <p style="margin:0 0 4px 0; font-size:12px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:${BRAND_COLOR};">
       Delivery update
     </p>
-    <h2 style="margin:0 0 12px 0; font-size:20px; color:${INK};">Hi ${customerName || "there"},</h2>
+    <h2 style="margin:0 0 12px 0; font-size:20px; color:${INK};">Hi ${esc(customerName) || "there"},</h2>
     <p style="margin:0 0 12px 0; font-size:14px; color:${INK};">${message}</p>
     ${rows ? `<ul style="margin:0; padding-left:18px; font-size:13px; color:${INK};">${rows}</ul>` : ""}
   `;
 
   return {
     subject: "Order delivery update",
-    text: `Hi ${customerName || "there"},\n\n${message}\n\n— Coiffer`,
+    text: `Hi ${esc(customerName) || "there"},\n\n${message}\n\n— Coiffer`,
     html: wrapEmail({
       preheader: message,
       bodyHtml: body,
@@ -357,15 +379,6 @@ function newBookingNotificationEmail({ staffName, customerName, services, appoin
 }
 
 
-function escapeHtml(s) {
-  return String(s || "").replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  }[c]));
-}
 
 /*
 ========================================================

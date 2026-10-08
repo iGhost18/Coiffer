@@ -124,7 +124,7 @@ const StaffSchema = new mongoose.Schema({
 
     savedPosts: [{ type: String }],
 
-    collection: [{ type: String }],
+    gallery: [{ type: String }],
     featured: [{ type: String }],
     rating: {
         type: Number,
@@ -177,24 +177,16 @@ const StaffSchema = new mongoose.Schema({
         Sunday:String
     },
 
-    flutterwave: {
-        subaccountId: {
-            type: String,
-            default: null,
-        },
 
+    flutterwave: {
+        subaccountId: { type: String, default: null },
         subaccountStatus: {
             type: String,
             enum: ["not_connected", "pending", "active", "disabled"],
             default: "not_connected",
         },
-    },
-
-    flutterwave: {
-        subaccountId: String,          // keep whatever you already have
-        subaccountStatus: String,
         bankAccount: {
-            account_bank: { type: String, default: null },   // bank code, e.g. "058"
+            account_bank: { type: String, default: null },
             account_number: { type: String, default: null },
             account_name: { type: String, default: null },
         },

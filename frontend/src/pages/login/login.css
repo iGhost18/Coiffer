@@ -1,7 +1,6 @@
-/* styles.css */
+/* login.css */
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
-
 
 * {
   margin: 0;
@@ -9,45 +8,89 @@
   box-sizing: border-box;
 }
 
-html, body {
-  height: 100%;
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
 }
 
 body {
   font-family: "Inter", sans-serif;
   color: #111;
-  position: relative;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
-.bg-video{
-  position: absolute;
-  top: 0;
-  left: 0;
+/* =========================================================
+   APP / BACKGROUND
+   ========================================================= */
+
+.app {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Video stays behind the entire page while the form scrolls */
+.bg-video {
+  position: fixed;
+  inset: 0;
+
+  width: 100vw;
+  height: 100vh;
+
+  object-fit: cover;
+  object-position: center;
+
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Dark layer over video so text stays readable */
+.overlay {
+  position: fixed;
+  inset: 0;
+
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  z-index: -2;
+
+  background: rgba(0, 0, 0, 0.45);
+
+  z-index: 1;
+  pointer-events: none;
 }
 
+/* =========================================================
+   CONTENT
+   ========================================================= */
 
-/* CONTENT */
 .content {
-  flex: 1;
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  min-height: 100vh;
+
   display: flex;
   justify-content: center;
-  align-items: center; /* center the form vertically too, if that's the look you want */
-  min-height: 100vh;
+  align-items: flex-start;
+
+  padding: 70px 40px 80px;
 }
+
+/* =========================================================
+   AUTH CONTAINER
+   ========================================================= */
 
 .auth-container {
   width: 100%;
-  max-width: 80%;
+  max-width: 1100px;
 }
 
-/* TABS */
+/* =========================================================
+   TABS
+   ========================================================= */
 
 .tabs {
   display: flex;
@@ -58,30 +101,40 @@ body {
 .tab {
   border: none;
   background: transparent;
+
   font-size: 28px;
   cursor: pointer;
+
   padding-bottom: 10px;
-  color: #666;
-  transition: 0.2s;
+
+  color: #aaa;
+
+  transition: color 0.2s, border-color 0.2s;
 }
 
 .tab.active {
-  color: #fcfbfb;
-  border-bottom: 3px solid #111;
+  color: #fff;
+  border-bottom: 3px solid #fff;
 }
 
-/* FORM */
+/* =========================================================
+   FORM
+   ========================================================= */
 
 .form-wrapper h2 {
   font-size: 54px;
+  line-height: 1.1;
+
   margin-bottom: 14px;
+
   letter-spacing: -2px;
-  color: whitesmoke;
+  color: #fff;
 }
 
 .subtitle {
   font-size: 22px;
-  color: #fcfafab7;
+  color: rgba(255, 255, 255, 0.72);
+
   margin-bottom: 48px;
 }
 
@@ -89,6 +142,7 @@ body {
   width: 100%;
 }
 
+/* First name / Last name */
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -101,102 +155,172 @@ body {
 
 .field label {
   display: block;
+
   font-size: 14px;
   font-weight: 700;
+
   text-transform: uppercase;
   letter-spacing: 1px;
+
   margin-bottom: 16px;
+
+  color: rgba(255, 255, 255, 0.8);
 }
- 
+
 .field input {
   width: 100%;
+
   border: none;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+
   background: transparent;
-  border-bottom: 2px solid #595958;
+
   padding: 12px 0;
+
+  font-family: inherit;
   font-size: 28px;
-  color: white !important; 
+
+  color: #fff !important;
+
   outline: none;
+
   transition: border-color 0.2s;
 }
 
 .field input:focus {
-  border-color: white;
+  border-bottom-color: #fff;
 }
 
 .field input::placeholder {
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.55);
 }
 
-/* BUTTON */
+.field-hint {
+  margin-top: 8px;
+
+  color: rgba(255, 255, 255, 0.55);
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   BUTTON
+   ========================================================= */
 
 .primary-btn {
   width: 100%;
   height: 72px;
-  background: #fdfeff;
-  color: rgb(13, 13, 13);
+
+  background: #fff;
+  color: #0d0d0d;
+
   border: none;
   border-radius: 55px;
+
   font-size: 28px;
   font-weight: 500;
+
   cursor: pointer;
+
   margin-top: 16px;
-  transition: opacity 0.2s;
+
+  transition: opacity 0.2s, transform 0.2s;
 }
 
 .primary-btn:hover {
   opacity: 0.92;
+  transform: translateY(-1px);
 }
 
-/* BOTTOM LINK */
+.primary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* =========================================================
+   BOTTOM LINK
+   ========================================================= */
 
 .barber-link {
   text-align: center;
+
   margin-top: 42px;
+
   font-size: 22px;
+
+  color: #fff;
 }
+
 .barber-link span {
- background-color: #9a99997b;
- color: rgba(255, 255, 255, 0.84);
- border-radius: 50px;
- padding: 20px;
- margin-right: 10px;
+  display: inline-block;
+
+  background: rgba(154, 153, 153, 0.48);
+
+  color: rgba(255, 255, 255, 0.84);
+
+  border-radius: 50px;
+
+  padding: 20px;
+
+  margin-right: 10px;
 }
 
 .barber-link a {
   color: #d5d4d6;
-  text-decoration: none;
-  font-weight: 500;
-}
-/* FORGOT / RESET PASSWORD */
 
+  text-decoration: none;
+
+  font-weight: 500;
+
+  transition: color 0.2s;
+}
+
+.barber-link a:hover {
+  color: #fff;
+}
+
+/* =========================================================
+   FORGOT PASSWORD
+   ========================================================= */
 
 .forgot-link {
   text-align: right;
+
   margin-top: 3px;
   margin-bottom: 20px;
+
   font-size: 16px;
 }
 
 .forgot-link a {
-  color: #9ca3af;
+  color: #c0c0c0;
+
   text-decoration: none;
+
   transition: color 0.2s;
 }
 
 .forgot-link a:hover {
-  color: white;
+  color: #fff;
   text-decoration: underline;
 }
 
+/* =========================================================
+   FORM MESSAGE
+   ========================================================= */
+
 .form-message {
   text-align: center;
+
   margin-top: 24px;
+
   font-size: 18px;
+
   padding: 14px;
+
   border-radius: 12px;
 }
-
 
 .form-message.success {
   background: rgba(52, 199, 89, 0.12);
@@ -210,20 +334,56 @@ body {
   border: 1px solid rgba(255, 69, 58, 0.3);
 }
 
-/* RESPONSIVE */
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
 
 @media (max-width: 700px) {
-  .auth-container { max-width: 100%; padding: 0 20px; }
-  .form-wrapper h2 { font-size: 36px; }
-  .subtitle { font-size: 16px; margin-bottom: 32px; }
-  .row { grid-template-columns: 1fr; gap: 0; }
-  .field input { font-size: 20px; }
-  .primary-btn { height: 56px; font-size: 20px; }
-  .tab { font-size: 20px; }
-  .barber-link { font-size: 16px; }
+  .content {
+    padding: 40px 20px 60px;
+  }
+
+  .auth-container {
+    max-width: 100%;
+  }
+
+  .form-wrapper h2 {
+    font-size: 36px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    margin-bottom: 32px;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .field input {
+    font-size: 20px;
+  }
+
+  .primary-btn {
+    height: 56px;
+    font-size: 20px;
+  }
+
+  .tab {
+    font-size: 20px;
+  }
+
+  .barber-link {
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 420px) {
+  .content {
+    padding: 30px 20px 50px;
+  }
+
   .form-wrapper h2 {
     font-size: 28px;
   }

@@ -1,6 +1,8 @@
 const { authenticate, requireAdmin } = require("../middleware/auth");
 const router = require("express").Router();
 const crypto = require("crypto");
+const sendEmail = require("../utils/sendEmail");  
+const { inviteTokenEmail } = require("../utils/emailTemplates");
 
 const Invite = require("../models/invite");
 
@@ -27,11 +29,34 @@ router.post("/create", authenticate, requireAdmin, async (req, res) => {
 
         const inviteLink = `${process.env.CLIENT_URL || "http://localhost:3000"}/staffRegister/${token}`;
 
+        let emailSent = true;
+        try {
+            const { subject, text, html } = inviteTokenEmail({
+                name: "",                 // no name on the invite; template falls back to "there"
+                token,
+                registerUrl: inviteLink,
+            });
+
+            await sendEmail({
+                to: invite.email,
+                subject,
+                text,
+                html,
+            });
+        } catch (mailErr) {
+            emailSent = false;
+            console.error("Invite email failed:", mailErr);
+        }
+
         res.status(201).json({
-            message: "Invite created",
+            message: emailSent
+                ? "Invite created and emailed."
+                : "Invite created, but the email could not be sent. Share the link manually.",
+            emailSent,
             inviteLink,
             invite,
         });
+
     } catch (err) {
         console.error("POST /invite/create failed:", err);
         res.status(500).json({ message: "Failed to create invite." });

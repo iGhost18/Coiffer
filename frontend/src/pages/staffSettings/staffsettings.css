@@ -72,6 +72,23 @@
   margin: 4px 0 12px;
 }
 
+/* ===== STAFF LOCATION ===== */
+
+.ss-location-field {
+  width: 100%;
+}
+
+.ss-location-field input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ss-location-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* ===== FIELDS ===== */
 .ss-field {
   margin-bottom: 18px;

@@ -41,7 +41,7 @@ export default function Footer() {
                     </div>
                     <div className="InfoList">
                     <EmailIcon/>
-                    <h6>Ghosthebarber@gmail.com</h6>
+                    <h6>coifferng@gmail.com</h6>
                     </div>
                     <div className="InfoList">
                     <PhoneIcon/>

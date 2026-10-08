@@ -15,7 +15,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import FriendList from "./components/friends/Friend";
 import Schedule from "./components/schedule/Schedule";
 import Cart from "./components/cart/Cart";
-import CollectionsPage from "./components/collectionpage/Collectionpage";
+import GalleryPage from "./components/gallerypage/Gallerypage";
 import Store from "./components/store/Store"
 import ServiceDetail from "./pages/servicedetail/Servicedetail";
 import Notification from "./pages/notification/Notification";
@@ -73,15 +73,16 @@ function App() {
       <CartProvider>
         <Routes>
           {/* ───────── PUBLIC — browsable without logging in ───────── */}
-          <Route exact path="/" element={<Home />} />
-          <Route path="/feed" element={<Feed/>} />
+          <Route path="/" element={<Navigate to="/feed" replace />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/feed" element={<Feed />} />
           <Route path="/store" element={<Store />} />
           <Route path="/map" element={<StaffMap />} />
           <Route path="/userprofile/:username" element={<Userprofile />} />
           <Route path="/staffprofile/:id" element={<Staffprofile />} />
 
           {/* ───────── AUTH / REGISTRATION — always public ───────── */}
-          <Route path="/login" element={user || staff ? <Navigate to="/" /> : <LoginReg />} />
+          <Route path="/login" element={user || staff ? <Navigate to="/Feed" replace /> : <LoginReg />} />
           <Route path="/stafflogin" element={<StaffLogin/>} />
           <Route path="/invite" element={<Invite />} />
           <Route path="/staffregister/:token" element={<StaffReg />} />
@@ -97,7 +98,7 @@ function App() {
           <Route path="/friends" element={<RequireAuth><FriendList /></RequireAuth>} />
           <Route path="/schedule" element={<RequireAuth><Schedule /></RequireAuth>} />
           <Route path="/cart" element={<RequireAuth><Cart /></RequireAuth>} />
-          <Route path="/collections" element={<RequireAuth><CollectionsPage /></RequireAuth>} />
+          <Route path="/gallery" element={<RequireAuth><GalleryPage /></RequireAuth>} />
           <Route path="/checkout" element={<RequireAuth><Checkout/></RequireAuth>} />
           <Route path="/dashboard" element={<RequireAuth><Dashboard/></RequireAuth>} />
           <Route path="/saves" element={<RequireAuth><Saves /></RequireAuth>} />

@@ -5,7 +5,7 @@ import { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api"; 
 import 'swiper/css';
-import Collection from "../../components/collections/Collections";
+import Gallery from "../../components/gallery/Gallery";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChangePasswordModal from "../../components/changepassword/Changepasswordmodal";
 import DeleteAccountModal from "../../components/deleteaccount/Deleteaccountmodal";
@@ -17,18 +17,18 @@ export default function Userprofile() {
   const { user: authUser, dispatch: userDispatch } = useContext(AuthContext);
   const { staff, dispatch: staffDispatch } = useContext(StaffAuthContext);
   const currentUser = authUser || staff;
-  const username = useParams().username || currentUser?.username;
+  const routeUsername = useParams().username;
   const navigate = useNavigate();
 
   const PF = process.env.REACT_APP_PUBLIC_FOLDER;
   
   const [saved, setSaved] = useState(false);
   const [isLike, setIsLike] = useState(false);
-  const [collection, setCollection] = useState([]);
+  const [photos, setPhotos] = useState([]);
   const [featured, setFeatured] = useState([]);
   const [user, setUser] = useState({});
   const [isClient, setIsClient] = useState(false);
-  const [saveError, setSaveError] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const fileInputRef = useRef(null);
   const profilePicRef = useRef(null);
 
@@ -37,6 +37,7 @@ export default function Userprofile() {
   const [bookingHistory, setBookingHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [historyError, setHistoryError] = useState("");
 
   // Personal Note (inline expandable panel, same pattern as History)
   const [noteOpen, setNoteOpen] = useState(false);
@@ -53,36 +54,45 @@ export default function Userprofile() {
     if (img.startsWith("http")) return img;
     return PF + img;
   };
-
   useEffect(() => {
+    const isOwnRoute =
+      !routeUsername || routeUsername === authUser?.username;
 
-    if (!username) return;
+    const url =
+      isOwnRoute && authUser?._id
+        ? `/api/user?userId=${authUser._id}`
+        : routeUsername
+          ? `/api/user?username=${encodeURIComponent(routeUsername)}`
+          : null;
+
+    if (!url) return;
 
     const fetchUser = async () => {
       try {
-
-        const res = await api.get(
-          `/api/user?username=${username}`
-        );
-
+        const res = await api.get(url);
         setUser(res.data || {});
+        setPhotos(res.data?.gallery || []);
+        setFeatured(res.data?.featured || []);
 
-        setCollection(
-          res.data?.collection || []
-        );
-
-        setFeatured(
-          res.data?.featured || []
-        );
-
+        // Self-heal a stale username in AuthContext / the URL
+        if (isOwnRoute && res.data?.username && authUser) {
+          if (res.data.username !== authUser.username) {
+            userDispatch({
+              type: "UPDATE_USER",
+              payload: { username: res.data.username },
+            });
+          }
+          if (routeUsername && routeUsername !== res.data.username) {
+            navigate(`/userprofile/${res.data.username}`, { replace: true });
+          }
+        }
       } catch (err) {
         console.log(err);
       }
     };
 
     fetchUser();
-
-  }, [username]);
+  }, [routeUsername, authUser?._id, authUser?.username]);
 
   useEffect(() => {
     if (staff && user) {
@@ -99,41 +109,77 @@ export default function Userprofile() {
   }, [user, currentUser]);
 
   const handleLike = async () => {
-    if (!currentUser?._id) {
-      navigate("/login", { state: { from: window.location.pathname } });
-      return;
-    }
-    if (!user?._id) return;
-
-    try {
-      if (isLike) {
-        await api.put(`/api/user/${user._id}/unlike`, { likerId: currentUser._id });
-      } else {
-        await api.put(`/api/user/${user._id}/like`, { likerId: currentUser._id });
+      if (!currentUser?._id) {
+        navigate("/login", { state: { from: window.location.pathname } });
+        return;
       }
+      if (!user?._id) return;
 
-      setIsLike((prev) => !prev);
+      try {
+        if (isLike) {
+          await api.put(`/api/user/${user._id}/unlike`, { likerId: currentUser._id });
+        } else {
+          await api.put(`/api/user/${user._id}/like`, { likerId: currentUser._id });
+        }
 
-      setUser((prev) => ({
-        ...prev,
-        likes: isLike
-          ? prev.likes.filter((l) => l !== currentUser._id)
-          : [...(prev.likes || []), currentUser._id],
-      }));
-      setIsLike((prev) => !prev);
-    } catch (err) {
-      console.error(err);
-    }
-};
+        setIsLike((prev) => !prev);
+
+        setUser((prev) => ({
+          ...prev,
+          likes: isLike
+            ? prev.likes.filter((l) => l !== currentUser._id)
+            : [...(prev.likes || []), currentUser._id],
+        }));
+  
+      } catch (err) {
+        console.error(err);
+      }
+  };
   
 
   const handleSave = async () => {
     try {
+      const profileData = {
+        username: user.username || "",
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        birthMonth: user.birthMonth || "",
+        birthDay: user.birthDay || "",
+        state: user.state || "",
+        city: user.city || "",
+        country: user.country || "",
+        gender: user.gender || "",
+        hairType: user.hairType || "",
+        hairColor: user.hairColor || "",
+        hairStyle: user.hairStyle || "",
+        bio: user.bio || "",
+        personalNote: user.personalNote || "",
+      };
 
       await api.put(
         `/api/user/${user._id}`,
-        { ...user, collection, featured, userId: currentUser._id }
+        profileData
       );
+
+      // Keep AuthContext in sync so the old username isn't used anymore
+      if (authUser) {
+        userDispatch({
+          type: "UPDATE_USER",
+          payload: {
+            username: profileData.username,
+            firstName: profileData.firstName,
+            lastName: profileData.lastName,
+            email: profileData.email,
+          },
+        });
+      }
+
+      // If the URL contains the old username, move to the new one
+      if (routeUsername && routeUsername !== profileData.username) {
+        navigate(`/userprofile/${profileData.username}`, { replace: true });
+      }
 
       setSaved(true);
 
@@ -142,9 +188,17 @@ export default function Userprofile() {
       }, 2500);
 
     } catch (err) {
-      console.log(err);
-      setSaveError(true);
-      setTimeout(() => setSaveError(false), 3000);
+      console.error(
+        "PROFILE UPDATE ERROR:",
+        JSON.stringify(err.response?.data, null, 2)
+      );
+
+      const msg =
+        err.response?.data?.errors?.map((e) => e.message).join(", ") ||
+        err.response?.data?.message ||
+        "Couldn't save changes. Try again.";
+      setSaveError(msg);
+      setTimeout(() => setSaveError(""), 4000);
     }
   };
 
@@ -165,13 +219,13 @@ export default function Userprofile() {
           uploadedUrls.push(res.data.url);
         }
 
-        const updatedCollection = [...collection, ...uploadedUrls];
-        setCollection(updatedCollection);
+        const updatedPhotos = [...photos, ...uploadedUrls];
+        setPhotos(updatedPhotos);   
 
-        // Persist immediately — collection uploads no longer wait for
+        // Persist immediately — Gallery uploads no longer wait for
         // "Save Changes" the way other profile fields do.
         await api.put(`/api/user/${user._id}`, {
-          collection: updatedCollection,
+          gallery: updatedPhotos,
         });
 
       } catch (err) {
@@ -179,16 +233,16 @@ export default function Userprofile() {
       }
   };
 
-  const handleDeleteCollectionItem = async (url) => {
-      const updatedCollection = collection.filter((u) => u !== url);
+  const handleDeleteGalleryItem = async (url) => {
+      const updatedPhotos = photos.filter((u) => u !== url);
       const updatedFeatured = featured.filter((u) => u !== url);
 
-      setCollection(updatedCollection);
+      setPhotos(updatedPhotos);
       setFeatured(updatedFeatured);
 
       try {
         await api.put(`/api/user/${user._id}`, {
-          collection: updatedCollection,
+          gallery: updatedPhotos,
           featured: updatedFeatured,
         });
       } catch (err) {
@@ -360,12 +414,24 @@ export default function Userprofile() {
 
     if (opening && !historyLoaded) {
       setHistoryLoading(true);
+      setHistoryError("");
       try {
         const res = await api.get(`/api/booking/user/${user._id}`);
-        setBookingHistory(Array.isArray(res.data) ? res.data : []);
+        const list = Array.isArray(res.data) ? res.data : res.data?.bookings || [];
+
+        setBookingHistory(
+          [...list].sort(
+            (a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate)
+          )
+        );
         setHistoryLoaded(true);
       } catch (err) {
-        console.log(err);
+        console.error("History load failed:", err.response?.status, err.response?.data);
+        setHistoryError(
+          (typeof err.response?.data === "string" && err.response.data) ||
+            err.response?.data?.message ||
+            "Couldn't load your history."
+        );
       } finally {
         setHistoryLoading(false);
       }
@@ -418,7 +484,7 @@ export default function Userprofile() {
               <span className="StatLabel">Followings</span>
             </div>
             <div className="StatItem">
-              <span className="StatNum">{user?.cuts?.length ?? '0'}</span>
+              <span className="StatNum">{user?.appointmentCount ?? user?.cuts?.length ?? '0'}</span>
               <span className="StatLabel">Appointments</span>
             </div>
             <div className="StatItem">
@@ -497,19 +563,19 @@ export default function Userprofile() {
               ))}
             </Swiper>
           ) : (
-            <p className="NoFeatured">No featured photos yet.<br />Select from your collection →</p>
+            <p className="NoFeatured">No featured photos yet.<br />Select from your Gallery →</p>
           )}
         </div>
       </div>
 
-      {/* CENTER — Collection */}
-      <Collection
-        collection={collection}
+      {/* CENTER — Gallery */}
+      <Gallery
+        photos={photos}
         featured={featured}
         toggleFeatured={toggleFeatured}
         fileInputRef={fileInputRef}
         handleUpload={handleUpload}
-        handleDelete={handleDeleteCollectionItem}
+        handleDelete={handleDeleteGalleryItem}
         showBackButton={false}
         isOwner={isOwnProfile}
       />
@@ -607,17 +673,19 @@ export default function Userprofile() {
 
             <div className="Field">
               <label>Gender</label>
-              <select value={user.gender} onChange={update('gender')}>
+              <select
+                value={user.gender || ""}
+                onChange={update("gender")}
+              >
                 <option value="">Select</option>
-                <option>Male</option>
-                <option>Female</option>
-                <option>Non-binary</option>
-                <option>Prefer not to say</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
               </select>
             </div>
             <div className="Field">
               <label>Hair Type</label>
-              <select value={user.hairType} onChange={update('hairType')}>
+              <select value={user.hairType || ""} onChange={update('hairType')}>
                 <option value="">Select</option>
                 <option>Type 1 - Straight</option>
                 <option>Type 2 - Wavy</option>
@@ -629,7 +697,7 @@ export default function Userprofile() {
             </div>
             <div className="Field">
               <label>Hair Color</label>
-              <select value={user.hairColor} onChange={update('hairColor')}>
+              <select value={user.hairColor || ""} onChange={update('hairColor')}>
                 <option value="">Select</option>
                 <option>Black</option>
                 <option>Dark Brown</option>
@@ -643,7 +711,7 @@ export default function Userprofile() {
             </div>
             <div className="Field">
               <label>Current Hairstyle</label>
-              <select value={user.hairStyle} onChange={update('hairStyle')}>
+              <select value={user.hairStyle || ""} onChange={update('hairStyle')}>
                 <option value="">Select</option>
                 <option>Burst Fade</option>
                 <option>Taper Fade</option>
@@ -668,7 +736,11 @@ export default function Userprofile() {
               <div className="HistoryPanel">
                 {historyLoading && <p className="HistoryEmpty">Loading...</p>}
 
-                {!historyLoading && bookingHistory.length === 0 && (
+                {!historyLoading && historyError && (
+                  <p className="HistoryEmpty">{historyError}</p>
+                )}
+
+                {!historyLoading && !historyError && bookingHistory.length === 0 && (
                   <p className="HistoryEmpty">No bookings yet.</p>
                 )}
 
@@ -719,7 +791,7 @@ export default function Userprofile() {
 
          {isOwnProfile && (
             <>
-              {saveError && <p className="SaveError">Couldn't save changes. Try again.</p>}
+              {saveError && <p className="SaveError">{saveError}</p>}
               <button className="SaveBtn" onClick={handleSave}>
                 {saved ? "✓ Saved" : "Save Changes"}
               </button>

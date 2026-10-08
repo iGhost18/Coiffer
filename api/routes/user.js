@@ -3,11 +3,13 @@ const router = require("express").Router();
 const mongoose = require("mongoose");
 const User = require("../models/user");
 const Staff = require("../models/staff");
+const Booking = require("../models/booking");
 const bcrypt = require("bcrypt");
 const Notification = require("../models/notification");
 const validate = require("../middleware/validate");
 const { updateUserProfileSchema } = require("../validation/profileSchemas");
 const { sendNotification } = require("../socket/index");
+const { normalizePhone } = require("../utils/identifier");
 
 const escapeRegex = (value) =>
   String(value ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -16,7 +18,7 @@ const escapeRegex = (value) =>
 const selfEditableFields = [
     "username", "firstName", "lastName", "phone", "birthMonth", "birthDay",
     "state", "city", "country", "gender", "hairType", "hairColor",
-    "hairStyle", "profilePicture", "bio", "personalNote", "email", "featured", "collection"
+    "hairStyle", "profilePicture", "bio", "personalNote", "email", "featured", "gallery"
 ];
 
 // Fields only an admin can set — these are curation/marketing flags, not
@@ -29,7 +31,9 @@ const adminOnlyFields = [];
 // personalNote, etc. — is private and only returned to the owner or an admin.
 const PUBLIC_PROFILE_FIELDS =
     "username profilePicture bio hairType hairColor hairStyle followers followings likes createdAt " +
-    "gender birthMonth birthDay city state country collection featured";
+    "gender birthMonth birthDay city state country gallery featured";
+
+
 // UPDATE USER
 router.put("/:id", authenticate, validate(updateUserProfileSchema), async (req, res) => {
     if (!(req.auth.isAdmin || (req.auth.type === "User" && req.auth.id === req.params.id))) {
@@ -45,6 +49,8 @@ router.put("/:id", authenticate, validate(updateUserProfileSchema), async (req, 
             Object.entries(req.validated.body).filter(([key]) => allowedFields.includes(key))
         );
 
+        if (updates.phone) updates.phone = normalizePhone(updates.phone);
+
         if (updates.email) {
             updates.email = updates.email.toLowerCase().trim();
 
@@ -58,11 +64,31 @@ router.put("/:id", authenticate, validate(updateUserProfileSchema), async (req, 
             }
         }
 
+        if (updates.username) {
+            const takenUsername = await User.findOne({
+                _id: { $ne: req.params.id },
+                username: new RegExp(`^${escapeRegex(updates.username)}$`, "i"),
+            }).select("_id");
+
+            if (takenUsername) {
+                return res.status(409).json({ message: "That username is already taken." });
+            }
+        }
+
+        // ⬇️ NEW CODE STARTS HERE
+        const mongoUpdate = {};
+        if (updates.phone === "") {
+            delete updates.phone;
+            mongoUpdate.$unset = { phone: 1 };
+        }
+        if (Object.keys(updates).length) mongoUpdate.$set = updates;
+
         const user = await User.findByIdAndUpdate(
             req.params.id,
-            { $set: updates },
+            mongoUpdate,
             { new: true, runValidators: true }
         );
+        // ⬆️ NEW CODE ENDS HERE
 
         if (!user) {
             return res.status(404).json("User not found");
@@ -159,6 +185,10 @@ router.get("/", async (req, res) => {
             return res.status(400).json("Invalid user id");
         }
 
+        if (username !== undefined && typeof username !== "string") {
+            return res.status(400).json("Invalid username");
+        }
+
         const query = userId
             ? User.findById(userId)
             : User.findOne({ username });
@@ -179,7 +209,10 @@ router.get("/", async (req, res) => {
                 const jwt = require("jsonwebtoken");
                 const decoded = jwt.verify(authHeader.slice(7), process.env.JWT_SECRET);
                 viewerId = decoded?.id || null;
-                viewerIsAdmin = Boolean(decoded?.isAdmin);
+                if (decoded?.type === "Staff" && viewerId) {
+                    const viewerDoc = await Staff.findById(viewerId).select("isAdmin").lean();
+                    viewerIsAdmin = viewerDoc?.isAdmin === true;
+                }
             } catch (_) {
                 // invalid/expired token on a public route just means "treat as anonymous"
             }
@@ -187,14 +220,22 @@ router.get("/", async (req, res) => {
 
         const isOwnerOrAdmin = viewerIsAdmin || (viewerId && viewerId === String(user._id));
 
+        const appointmentCount = await Booking.countDocuments({
+            customerId: user._id,
+            status: { $nin: ["cancelled"] },
+        });
+
         if (isOwnerOrAdmin) {
             const { password, resetPasswordToken, resetPasswordExpires, updatedAt, ...safeUser } = user._doc;
-            return res.status(200).json(safeUser);
+            return res.status(200).json({ ...safeUser, appointmentCount });
         }
 
-        // Anonymous / non-owner: only the safe public subset.
-        const publicUser = await User.findById(user._id).select(PUBLIC_PROFILE_FIELDS);
-        return res.status(200).json(publicUser);
+        // Anonymous / non-owner: only the safe public subset, plus a COUNT
+        // of appointments (never the booking ids themselves).
+        const publicUser = await User.findById(user._id)
+            .select(PUBLIC_PROFILE_FIELDS)
+            .lean();
+        return res.status(200).json({ ...publicUser, appointmentCount });
     } catch (err) {
         console.error("GET /user failed:", err);
         return res.status(500).json({ message: "Failed to fetch user." });
@@ -266,7 +307,10 @@ router.get("/:id/groomers", authenticate, async (req, res) => {
             return res.status(403).json({ message: "Access denied." });
         }
 
-        const user = await User.findById(req.params.id).populate("groomers");
+        const user = await User.findById(req.params.id).populate(
+            "groomers",
+            "username firstName lastName displayName profilePicture roles workType rating ratingCount"
+        );
 
         if (!user) {
             return res.status(404).json("User not found");

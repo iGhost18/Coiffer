@@ -612,17 +612,29 @@ export default function DispatchAdmin() {
 
   return (
     <div className="dispatch-admin">
-      {/* Mobile hamburger trigger — hidden above 900px via CSS */}
-      <button
-        className="mobileMenuBtn"
-        onClick={() => setSidebarOpen(true)}
-        aria-label="Open menu"
-      >
-        ☰
-      </button>
+      {!sidebarOpen && (
+        <button
+          type="button"
+          className="mobileMenuBtn"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
+        >
+          ☰
+        </button>
+      )}
 
       {sidebarOpen && (
-        <div className="sidebarOverlay" onClick={() => setSidebarOpen(false)} />
+        <>
+          <div className="sidebarOverlay" onClick={() => setSidebarOpen(false)} />
+          <button
+            type="button"
+            className="sidebarClose"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+        </>
       )}
 
       {/* SIDEBAR */}
@@ -682,7 +694,7 @@ export default function DispatchAdmin() {
         </div>
 
         <div className="sidebar-foot">
-          Signed in as <strong style={{ color: "#c9cfd8" }}>coiffer@gmail.com</strong>
+          Signed in as <strong style={{ color: "#c9cfd8" }}>coifferng@gmail.com</strong>
         </div>
       </div>
 

@@ -7,31 +7,63 @@
   padding: 20px;
   font-family: 'DM Sans', sans-serif;
   position: relative; /* anchors the back button */
+  overflow: visible;
 }
 
-.StaffBackBtn {
+/* ===== TOP BAR / BACK BUTTON ===== */
+
+.StaffProfile {
+  position: relative;
+}
+
+.StaffTopBar {
   position: absolute;
   top: 20px;
   left: 20px;
-  z-index: 10;
+  right: 20px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  z-index: 1000;
+  pointer-events: none;
 }
 
-.header-btn{
-    width:35px;
-    height:35px;
-    border:none;
-    border-radius:50%;
-    background:#f5f5f5;
-    display: grid;
-    place-items: center;
-    cursor:pointer;
-    transition:.25s;
+.StaffTopBar .header-btn {
+  pointer-events: auto;
+
+  width: 35px;
+  height: 35px;
+  min-width: 35px;
+  min-height: 35px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+
+  display: grid;
+  place-items: center;
+
+  cursor: pointer;
+
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+
+  position: relative;
+  z-index: 1001;
 }
 
-.header-btn:hover{
-  background:#ececec;
+.StaffTopBar .header-btn svg {
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
+.StaffTopBar .header-btn:hover {
+  background: #f0f0f0;
+}
 
 /* ===== GALLERY ===== */
 .StaffGallery {
@@ -103,17 +135,29 @@
   color: gray;
 }
 
-.HeaderButtons {
-  margin-left: auto;
+/* ===== PROFILE ACTION BUTTONS ===== */
+
+.StaffProfile .HeaderButtons {
+  margin-left: 0;
+  width: 100%;
   display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  flex-wrap: nowrap;
+  justify-content: end;
+  align-items: center;
+  gap: 10px;
 }
+
+.StaffProfile .HeaderButtons button {
+  flex: 0 0 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+
 .MessageBtn {
   background: black;
   color: white;
   border: none;
-  padding: 12px 30px;
+  padding: 15px 40px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
@@ -124,7 +168,7 @@
   background: #be0505;
   color: white;
   border: none;
-  padding: 12px 30px;
+  padding: 15px 40px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
@@ -477,30 +521,165 @@
     padding: 20px;
   }
 
-  .HeaderButtons {
+  .StaffProfile .HeaderButtons {
     margin-left: 0;
     width: 100%;
-    justify-content: flex-start;
+    justify-content: center;
   }
 }
 
-@media (max-width: 480px) {
-  .LocationRow {
-    flex-direction: column;
+@media (max-width: 600px) {
+
+  .StaffProfile .ProfileText h2 {
+    font-size: 16px;
+    line-height: 1.3;
+    margin: 0 0 2px;
   }
 
-  .TimeSlotRow {
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 12px 14px;
+  .StaffProfile .Verified {
+    font-size: 12px;
+    margin-left: 4px;
   }
-}
 
-@media (max-width: 420px) {
-  .MessageBtn,
-  .FollowBtn {
-    padding: 10px 18px;
+  /* the @username and role lines under it */
+  .StaffProfile .ProfileText p {
+    font-size: 12px;
+    margin: 0 0 2px;
+  }
+
+
+  /* Working schedule pills */
+  .StaffProfile .DayTabs {
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .StaffProfile .DayTab {
+    padding: 5px 11px;
+    font-size: 12px;
+    border-width: 1px;
+  }
+
+  .StaffProfile .TimeSlotRow {
+    padding: 10px 14px;
     font-size: 13px;
   }
+
+  /* Service cards */
+  .StaffProfile .ServicesCard {
+    padding: 6px;
+  }
+
+  .StaffProfile .Card {
+    margin: 10px 0;
+    border-radius: 12px;
+  }
+
+  /* On a phone, hover-scaling makes a tapped card jump bigger and stay that way */
+  .StaffProfile .Card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .StaffProfile .Card:hover .Picture img {
+    transform: none;
+  }
+
+  .StaffProfile .Picture img {
+    height: 130px;
+  }
+
+  .StaffProfile .Picture h6 {
+    margin: 6px;
+    padding: 1px 8px;
+    font-size: 11px;
+  }
+
+  .StaffProfile .Card h5 {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .StaffProfile .Card h5 span {
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
 }
 
+@media (max-width: 600px) {
+  .StaffProfile .serviceBox img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+  }
+
+  .StaffProfile .serviceBox span {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  /* The element right after the LOOKBOOK heading is PostGrid's root */
+  .StaffProfile .Posts > h3 + * {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+  }
+
+  .StaffProfile .Posts > h3 + * > * {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .StaffProfile .Posts > h3 + * img {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+@media (max-width: 500px) {
+  .StaffGallery {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 20px 0 24px;
+  }
+
+  .StaffGallery img,
+  .StaffGallery img:first-child,
+  .StaffGallery img:last-child,
+  .StaffGallery .centerImg {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    height: 140px;
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .StaffGallery .centerImg {
+    order: 0;
+    height: 160px;
+  }
+}
+
+
+
+@media (max-width: 380px) {
+  .StaffProfile .HeaderButtons {
+    gap: 4px;
+  }
+
+  .StaffProfile .HeaderButtons button,
+  .StaffProfile .MessageBtn,
+  .StaffProfile .FollowBtn {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+}

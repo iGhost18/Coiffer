@@ -65,7 +65,9 @@ function Home() {
   
   return (
     <div className='Home'>
-      <Topbar />
+      <div className="HomeTopbar">
+        <Topbar />
+      </div>
 
       <div className='HomeContentTop'>
         <img src="/assets/MainPagePic.png" alt=""  className='HomeImg'/>

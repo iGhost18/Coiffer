@@ -82,7 +82,7 @@ if (process.env.NODE_ENV === "production") {
 SOCKET.IO
 ========================================
 */
-initializeSocket(server);
+const io = initializeSocket(server);
 
 /*
 ========================================
@@ -241,6 +241,7 @@ app.use("/api/story", storyRoute);
 app.use("/api/rating", ratingRoute);
 app.use("/api/booking-payout", bookingPayoutRoutes);
 app.use("/api/invite-request", require("./routes/inviteRequest"));
+app.use("/api/push", require("./routes/push"));
 
 /*
 ========================================

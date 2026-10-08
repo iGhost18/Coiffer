@@ -68,17 +68,17 @@ const BookingSchema = new mongoose.Schema(
 
     payoutStatus: {
       type: String,
-      enum: ["none", "held", "releasing", "released", "payout_failed", "disputed", "refunding", "refunded"],
+      enum: ["none","held","releasing","released","payout_failed","payout_uncertain",
+            "disputed","refunding","refunded","refund_uncertain"],
       default: "none",
       index: true,
     },
-
     payoutAttempts: { type: Number, default: 0 },
-    staffPayoutAmount: { type: Number, default: 0 },
+    staffPayoutAmount: { type: Number, required: true },
     autoReleaseAt: { type: Date, default: null, index: true },
     transferReference: { type: String, default: null, index: true },
 
-    staffPayoutAmount: { type: Number, required: true }, // snapshot at booking creation, from Payment.staffPayouts
+    staffPayoutAmount: { type: Number, required: true }, 
 
     dispute: {
       raisedBy: { type: mongoose.Schema.Types.ObjectId, default: null },
@@ -100,10 +100,6 @@ const BookingSchema = new mongoose.Schema(
 
 // Prevent the same staff member from receiving two bookings for the exact
 // same appointment start time under concurrent requests.
-BookingSchema.index(
-  { staffId: 1, appointmentDate: 1, appointmentTime: 1 },
-  { unique: true, partialFilterExpression: { status: { $ne: "cancelled" } } }
-);
 BookingSchema.index({ staffId: 1, appointmentDate: 1, status: 1 });
 BookingSchema.index({ customerId: 1, appointmentDate: -1 });
 

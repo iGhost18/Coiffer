@@ -19,7 +19,7 @@ export default function LoginReg() {
   const state = useRef();
   const country = useRef();
   const [registerError, setRegisterError] = useState("");
-  const { isFetching, dispatch } = useContext(AuthContext);
+  const { isFetching, error, dispatch } = useContext(AuthContext);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -70,7 +70,7 @@ export default function LoginReg() {
   return (
     <div className="app">
       <video autoPlay muted loop playsInline className="bg-video">
-        <source src="assets/logomotion.mp4" type="video/mp4" />
+        <source src="/assets/logomotion.mp4" type="video/mp4" />
       </video>
 
       <div className="overlay"></div>
@@ -119,6 +119,12 @@ export default function LoginReg() {
                   <input type="password" placeholder="••••••••" ref={password} required />
                 </div>
 
+                {error && (
+                  <p className="form-message error" role="alert">
+                    {error}
+                  </p>
+                )}
+
                 <div className="forgot-link">
                   <a href="/forgot-password">Forgot password?</a>
                 </div>
@@ -141,7 +147,7 @@ export default function LoginReg() {
                     <label>First name</label>
                     <input
                       type="text"
-                      placeholder="Jordan"
+                      placeholder="Enter your first name"
                       ref={firstName}
                       minLength={2}
                       maxLength={60}
@@ -154,7 +160,7 @@ export default function LoginReg() {
                     <label>Last name</label>
                     <input
                       type="text"
-                      placeholder="Smith"
+                      placeholder="Enter your last name"
                       ref={lastName}
                       minLength={2}
                       maxLength={60}
@@ -172,12 +178,12 @@ export default function LoginReg() {
                     ref={username}
                     required
                     minLength={3}
-                    maxLength={30}
-                    pattern="[A-Za-z0-9_.\-]+"
+                    maxLength={20}
+                    pattern="(?=.*[A-Za-z])[A-Za-z0-9_.\-]+"
                     title="Letters, numbers, underscores, dots and hyphens only."
                   />
                   <p className="field-hint">
-                    3–30 characters. Letters, numbers, underscores, dots and hyphens only.
+                    Letters, numbers, underscores, dots and hyphens only.
                   </p>
                 </div>
 
@@ -196,12 +202,12 @@ export default function LoginReg() {
                   <label>Phone Number</label>
                   <input
                     type="tel"
-                    placeholder="08012345678"
+                    placeholder="+234"
                     ref={phone}
                     required
                   />
                   <p className="field-hint">
-                    Nigerian numbers can be entered as 08012345678 — we'll format it automatically.
+                    Enter your personal phone number.
                   </p>
                 </div>
 
@@ -209,14 +215,14 @@ export default function LoginReg() {
                   <label>Password</label>
                   <input
                     type="password"
-                    placeholder="Min. 12 characters"
+                    placeholder="Min. 8 characters"
                     ref={registerPassword}
                     required
                     minLength={12}
                     maxLength={128}
                   />
                   <p className="field-hint">
-                    At least 12 characters, including one uppercase letter, one lowercase letter, and one number.
+                    At least 8 characters, including one uppercase letter, one lowercase letter, and one number.
                   </p>
                 </div>
 

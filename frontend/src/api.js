@@ -69,6 +69,12 @@ api.interceptors.response.use(
           localStorage.setItem("staff", JSON.stringify({ ...staff, accessToken: newToken }));
         }
 
+        window.dispatchEvent(
+          new CustomEvent("token-refreshed", {
+            detail: { token: newToken, kind: user ? "user" : "staff" },
+          })
+        );
+
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);

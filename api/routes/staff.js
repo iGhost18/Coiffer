@@ -21,7 +21,7 @@ require("dotenv").config();
 const PUBLIC_STAFF_FIELDS =
     "username firstName lastName displayName profilePicture coverPicture desc " +
     "roles experience workType specialties workDays schedule followers followings " +
-    "location.city location.state location.country createdAt collection featured " +
+    "location createdAt gallery featured " +
     "rating ratingCount";
     
 router.get("/", async (req, res) => {
@@ -158,18 +158,26 @@ router.get("/:id", async (req, res) => {
 
         const isOwnerOrAdmin = viewerIsAdmin || viewerId === req.params.id;
 
+        const appointmentsDone = await Booking.countDocuments({
+            staffId: req.params.id,
+            status: "completed",
+        });
+
         if (isOwnerOrAdmin) {
             const staff = await Staff.findById(req.params.id).select(
                 "-password -resetPasswordToken -resetPasswordExpires"
             );
             if (!staff) return res.status(404).json("Staff not found");
             const { updatedAt, ...other } = staff._doc;
-            return res.status(200).json(other);
+            return res.status(200).json({ ...other, appointmentsDone });
         }
 
-        const staff = await Staff.findById(req.params.id).select(PUBLIC_STAFF_FIELDS);
+        const staff = await Staff.findById(req.params.id)
+            .select(PUBLIC_STAFF_FIELDS)
+            .lean();
         if (!staff) return res.status(404).json("Staff not found");
-        res.status(200).json(staff);
+        res.status(200).json({ ...staff, appointmentsDone });
+
     } catch (err) {
         console.error("GET /staff/:id failed:", err);
         res.status(500).json({ message: "Failed to fetch staff." });
@@ -213,7 +221,7 @@ router.put("/:id", authenticate, validate(updateStaffProfileSchema), async (req,
             "username", "displayName", "firstName", "lastName", "phone", "desc", "roles",
             "experience", "workType", "location", "specialties", "workDays",
             "profilePicture", "coverPicture", "services", "schedule",
-            "collection", "featured"
+            "gallery", "featured"
         ];
         const updates = Object.fromEntries(
             Object.entries(body).filter(([key]) => allowedFields.includes(key))
@@ -278,6 +286,18 @@ router.delete("/:id", authenticate, async (req, res) => {
 
         if (!isAdmin && !(req.auth.type === "Staff" && req.auth.id === req.params.id)) {
             return res.status(403).json("You can only delete your own account.");
+        }
+        const blocking = await Booking.countDocuments({
+            staffId: req.params.id,
+            $or: [
+            { status: { $in: ["pending", "confirmed"] } },
+            { payoutStatus: { $in: ["held", "releasing", "disputed", "refunding", "payout_failed"] } },
+            ],
+        });
+        if (blocking > 0) {
+            return res.status(409).json({
+            message: "Finish or cancel your open bookings and payouts before deleting your account.",
+            });
         }
 
         const staff = await Staff.findByIdAndDelete(req.params.id);
@@ -394,7 +414,10 @@ router.get("/:id/clients", authenticate, async (req, res) => {
             return res.status(403).json("Access denied.");
         }
 
-        const staff = await Staff.findById(req.params.id).populate("clients");
+        const staff = await Staff.findById(req.params.id).populate(
+            "clients",
+            "username firstName lastName profilePicture"
+        );
 
         if (!staff) {
             return res.status(404).json("Staff not found");

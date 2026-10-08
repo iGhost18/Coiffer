@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const PushSubscriptionSchema = new mongoose.Schema(
   {
-    ownerId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    ownerId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
     ownerModel: { type: String, enum: ["User", "Staff"], required: true },
     endpoint: { type: String, required: true, unique: true },
     keys: {
@@ -12,7 +12,5 @@ const PushSubscriptionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
-PushSubscriptionSchema.index({ ownerId: 1, ownerModel: 1 });
 
 module.exports = mongoose.model("PushSubscription", PushSubscriptionSchema);

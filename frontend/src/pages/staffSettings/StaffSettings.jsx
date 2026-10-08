@@ -134,7 +134,13 @@ export default function StaffSettings() {
           lastName: s.lastName || "",
           phone: s.phone || "",
           desc: s.desc || "",
-          location: s.location?.address || "",
+          location:
+          typeof s.location === "string"
+            ? s.location
+            : s.location?.address ||
+              s.location?.formattedAddress ||
+              s.location?.fullAddress ||
+              "",
           specialties: (s.specialties || []).join(", "),
           roles: s.roles || [],
           workDays: s.workDays || [],
@@ -606,17 +612,22 @@ export default function StaffSettings() {
           <textarea value={form.desc} onChange={(e) => update({ desc: e.target.value })} rows={3} />
         </div>
 
-        {form.workType !== "mobile" && (
-          <div className="ss-field">
-            <label>Location</label>
-            <input
-              value={form.location}
-              onChange={(e) => update({ location: e.target.value })}
-              placeholder="e.g. 14 Bode Thomas St, Surulere, Lagos"
-            />
-            <span className="ss-hint">Your fixed shop address — shown to clients and used to place you on the map</span>
-          </div>
-        )}
+        {/* ── Location ── */}
+        <div className="ss-field">
+          <label>Business / Service Location</label>
+
+          <input
+            type="text"
+            value={form.location}
+            onChange={(e) => update({ location: e.target.value })}
+            placeholder="e.g. 14 Bode Thomas St, Surulere, Lagos"
+          />
+
+          <span className="ss-hint">
+            Enter the address where clients can find you. This location will be
+            displayed on your public staff profile.
+          </span>
+        </div>
 
         <div className="ss-field">
           <label>Specialties</label>

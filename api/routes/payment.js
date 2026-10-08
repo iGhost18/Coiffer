@@ -2,6 +2,10 @@ const express = require("express");
 const router = express.Router();
 const crypto = require("crypto");
 
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt"); // needed for fix 5
+const { checkSlot } = require("../utils/availability");
+
 const Payment = require("../models/payment");
 const Staff = require("../models/staff");
 const Servicedetail = require("../models/servicedetail");
@@ -187,6 +191,8 @@ router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), 
     for (const item of serviceItems) {
       const staffId = item.staffId;
 
+      if (!mongoose.isValidObjectId(staffId)) return res.status(400).json({ message: "Invalid staff member." });
+
       if (!staffId) {
         return res.status(400).json({ message: `Service "${item.name}" has no staff member.` });
       }
@@ -231,6 +237,18 @@ router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), 
       }
     }
 
+    const minutesByStaff = {};
+    for (const i of serviceItems) {
+      minutesByStaff[i.staffId] =
+        (minutesByStaff[i.staffId] || 0) + durationToMinutes(i.duration) * i.quantity;
+    }
+    for (const [sid, minutes] of Object.entries(minutesByStaff)) {
+      const problem = await checkSlot({
+        staffId: sid, dateStr: appointmentDate, timeStr: appointmentTime, durationMinutes: minutes,
+      });
+      if (problem) return res.status(409).json({ message: problem });
+    }
+
     /*
     CREATE PAYMENT RECORD
     */
@@ -257,9 +275,6 @@ router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), 
       },
     });
 
-    /*
-    CREATE FLUTTERWAVE CHECKOUT (no subaccounts — funds stay in escrow)
-    */
 
     const flutterwaveResponse = await fetch("https://api.flutterwave.com/v3/payments", {
       method: "POST",
@@ -278,13 +293,14 @@ router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), 
           phonenumber: contact.phone,
         },
         customizations: {
-          title: "GhostCutApp",
-          description: "GhostCutApp payment",
+          title: "Coiffer",
+          description: "Coiffer payment",
         },
         meta: {
           paymentId: String(payment._id),
           customerId: String(req.auth.id),
         },
+        configuration: { session_duration: 30, max_retry_attempt: 5, },
       }),
     });
 

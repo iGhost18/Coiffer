@@ -9,9 +9,11 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import { StaffAuthContext } from "../../components/context/StaffAuthContext";
 import { AuthContext } from "../../components/context/AuthContext";
 import Services from "../../components/services/Services";
-import Collection from "../../components/collections/Collections";
+import Gallery from "../../components/gallery/Gallery";
 import RatingWidget from "../../components/rating/RatingWidget";
 import RatingsList from "../../components/rating/RatingsList";
+import ShareProfileModal from "../../components/shareprofile/ShareProfileModal";
+import IosShareIcon from "@mui/icons-material/IosShare";
 
 
 
@@ -33,10 +35,19 @@ export default function StaffProfile() {
   const currentUser = user || staff;
   const isOwnProfile = staff?._id === id;
 
-  // Collection state
-  const [collection, setCollection] = useState([]);
+  const siteUrl = (process.env.REACT_APP_SITE_URL || window.location.origin).replace(/\/+$/, "");
+  const profileUrl = `${siteUrl}/staffprofile/${id}`;
+  const profileName =
+    staffData?.displayName ||
+    `${staffData?.firstName || ""} ${staffData?.lastName || ""}`.trim() ||
+    staffData?.username ||
+    "this profile";
+
+  // Gallery state
+  const [photos, setPhotos] = useState([]);
   const [featured, setFeatured] = useState([]);
-  const [collectionSaved, setCollectionSaved] = useState(false);
+  const [photosSaved, setPhotosSaved] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const fileInputRef = useRef(null);
 
   // Rating state — the most recent completed booking this user has with
@@ -52,7 +63,7 @@ export default function StaffProfile() {
         const postsRes = await api.get(`/api/post/profile/${id}`);
 
         setStaffData(res.data || {});
-        setCollection(res.data?.collection || []);
+        setPhotos(res.data?.gallery || []);
         setFeatured(res.data?.featured || []);
         setPosts(Array.isArray(postsRes.data) ? postsRes.data : []);
       } catch (err) {
@@ -189,7 +200,7 @@ export default function StaffProfile() {
     }
   };
 
-  // ---- Collection ----
+  // ---- Gallery ----
   const handleUpload = async (e) => {
     const files = Array.from(e.target.files);
 
@@ -207,33 +218,32 @@ export default function StaffProfile() {
         uploadedUrls.push(res.data.url);
       }
 
-      const updatedCollection = [...collection, ...uploadedUrls];
-      setCollection(updatedCollection);
+      const updatedPhotos = [...photos, ...uploadedUrls];
+      setPhotos(updatedPhotos);
 
       // Persist immediately, same pattern as profile-picture upload —
-      // no separate "Save" step for a staff member's own collection.
+      // no separate "Save" step for a staff member's own Gallery.
       await api.put(`/api/staff/${staffData._id}`, {
-        collection: updatedCollection,
+        gallery: updatedPhotos,
       });
 
-      setCollectionSaved(true);
-      setTimeout(() => setCollectionSaved(false), 2000);
+      setPhotosSaved(true);
+      setTimeout(() => setPhotosSaved(false), 2000);
     } catch (err) {
       console.log(err);
     }
   };
 
-  const handleDeleteCollectionItem = async (url) => {
-      const updatedCollection = collection.filter((u) => u !== url);
+  const handleDeleteGalleryItem = async (url) => {
+      const updatedPhotos = photos.filter((u) => u !== url);
       const updatedFeatured = featured.filter((u) => u !== url);
 
-      setCollection(updatedCollection);
+      setPhotos(updatedPhotos);
       setFeatured(updatedFeatured);
 
       try {
         await api.put(`/api/staff/${staffData._id}`, {
-          collection: updatedCollection,
-          featured: updatedFeatured,
+          gallery: updatedPhotos,
         });
       } catch (err) {
         console.log(err);
@@ -269,6 +279,30 @@ export default function StaffProfile() {
     return img.startsWith("http") ? img : PF + img;
   };
 
+  // Staff location can be returned as an object or a plain string.
+  const getLocationText = (location) => {
+    if (!location) return "Location not specified";
+
+    if (typeof location === "string") {
+      return location;
+    }
+
+    if (typeof location === "object") {
+      return (
+        location.address ||
+        location.formattedAddress ||
+        location.fullAddress ||
+        [location.city, location.state, location.country]
+          .filter(Boolean)
+          .join(", ") ||
+        location.name ||
+        "Location not specified"
+      );
+    }
+
+    return "Location not specified";
+  };
+
   const formatTime = (time) => {
     if (!time) return "";
     const [hourStr, minute] = time.split(":");
@@ -280,9 +314,23 @@ export default function StaffProfile() {
 
   return (
     <div className="StaffProfile">
-      <button className="header-btn StaffBackBtn" onClick={() => navigate(-1)}>
-        <ChevronLeftIcon />
-      </button>
+      <div className="StaffTopBar">
+        <button
+          className="header-btn"
+          onClick={() => navigate(-1)}
+          aria-label="Go back"
+        >
+          <ChevronLeftIcon />
+        </button>
+
+        <button
+          className="header-btn"
+          onClick={() => setShowShare(true)}
+          aria-label="Share profile"
+        >
+          <IosShareIcon fontSize="small" />
+        </button>
+      </div>
 
       {/* ===== GALLERY ===== */}
       <div className="StaffGallery">
@@ -344,7 +392,7 @@ export default function StaffProfile() {
           <p>Followings</p>
         </div>
         <div>
-          <h3>{staffData.cuts?.length || 0}</h3>
+          <h3>{staffData.appointmentsDone ?? staffData.cuts?.length ?? 0}</h3>
           <p>Appointments Done</p>
         </div>
       </div>
@@ -352,9 +400,9 @@ export default function StaffProfile() {
       {/* ===== LOCATION ===== */}
       <div className="LocationRow">
         <p>
-          📍{" "}
-          {staffData.location?.address ? staffData.location.address : "Location not specified"}
+          📍 {getLocationText(staffData?.location)}
         </p>
+
         <p>📅 Joined: May 2026</p>
       </div>
 
@@ -456,16 +504,16 @@ export default function StaffProfile() {
         <Services staffId={id} />
       </div>
 
-      {/* ===== COLLECTION ===== */}
+      {/* ===== Gallery ===== */}
       <div>
-        {collectionSaved && <span className="sr-field-hint">✓ Saved</span>}
-        <Collection
-          collection={collection}
+        {photosSaved && <span className="sr-field-hint">✓ Saved</span>}
+        <Gallery
+          photos={photos}
           featured={featured}
           toggleFeatured={toggleFeatured}
           fileInputRef={fileInputRef}
           handleUpload={handleUpload}
-          handleDelete={handleDeleteCollectionItem}
+          handleDelete={handleDeleteGalleryItem}
           showBackButton={false}
           isOwner={isOwnProfile}
         />
@@ -490,6 +538,13 @@ export default function StaffProfile() {
           />
         )}
       </div>
+      {showShare && (
+        <ShareProfileModal
+          url={profileUrl}
+          name={profileName}
+          onClose={() => setShowShare(false)}
+        />
+      )}
     </div>
   );
 }

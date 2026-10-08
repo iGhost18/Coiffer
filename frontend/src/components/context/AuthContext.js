@@ -26,21 +26,6 @@ export const AuthContextProvider = ({ children }) => {
     }, [state.user]);
 
     useEffect(() => {
-
-
-        if (state.user?.accessToken) {
-            axios.defaults.headers.common.Authorization =
-                `Bearer ${state.user.accessToken}`;
-
-            reconnectSocket();
-        } else if (
-            !JSON.parse(localStorage.getItem("staff") || "null")?.accessToken
-        ) {
-            delete axios.defaults.headers.common.Authorization;
-        }
-    }, [state.user]);
-
-    useEffect(() => {
         if (state.user?.accessToken) {
             axios.defaults.headers.common.Authorization =
                 `Bearer ${state.user.accessToken}`;
@@ -50,13 +35,22 @@ export const AuthContextProvider = ({ children }) => {
             subscribeToPush().catch((err) =>
                 console.error("Push subscription failed:", err)
             );
-
         } else if (
             !JSON.parse(localStorage.getItem("staff") || "null")?.accessToken
         ) {
             delete axios.defaults.headers.common.Authorization;
         }
-    }, [state.user]);
+    }, [state.user?.accessToken]);
+
+    useEffect(() => {
+        const onRefreshed = (e) => {
+            if (e.detail.kind === "user") {
+            dispatch({ type: "UPDATE_USER", payload: { accessToken: e.detail.token } });
+            }
+        };
+        window.addEventListener("token-refreshed", onRefreshed);
+        return () => window.removeEventListener("token-refreshed", onRefreshed);
+    }, []);
 
     return (
         <AuthContext.Provider

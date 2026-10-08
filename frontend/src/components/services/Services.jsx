@@ -10,6 +10,11 @@ import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import api from "../../api"; 
 
+const getErrorText = (err, fallback) => {
+  const data = err.response?.data;
+  return (typeof data === "string" && data) || data?.message || fallback;
+};
+
 export default function Services({ staffId }) {
   const { staff } = useContext(StaffAuthContext);
   const [services, setServices] = useState([])
@@ -17,19 +22,25 @@ export default function Services({ staffId }) {
 
   useEffect(() => {
     if (!staffId) return;
+    let cancelled = false;
 
-    fetch(`/api/services?staffId=${staffId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setServices(data);
-        } else {
-          console.error("Unexpected /api/services response:", data);
-          setServices([]);
+    const load = async () => {
+      try {
+        const res = await api.get("/api/services", { params: { staffId } });
+        if (!cancelled) {
+          setServices(Array.isArray(res.data) ? res.data : []);
         }
-      })
-      .catch((err) => console.error(err));
-  }, [staffId])
+      } catch (err) {
+        console.error("Failed to load services:", err);
+        if (!cancelled) setServices([]);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [staffId]);
 
   const [showForm, setShowForm] = useState(false)
   const [newService, setNewService] = useState({ img: '', label: '' })
@@ -129,10 +140,10 @@ export default function Services({ staffId }) {
         modules={[Navigation, Pagination]}
         spaceBetween={16}
         loop={false}
-        slidesPerView={1.2}    
+        slidesPerView={2.2}
         breakpoints={{
-          500: { slidesPerView: 1.5, spaceBetween: 16 },
-          768: { slidesPerView: 2, spaceBetween: 20 },
+          500: { slidesPerView: 2.5, spaceBetween: 14 },
+          768: { slidesPerView: 3, spaceBetween: 16 },
           1024: { slidesPerView: 3, spaceBetween: 20 },
         }}
       >
@@ -177,7 +188,7 @@ export default function Services({ staffId }) {
       {showForm && (
         <div className="modalOverlay" onClick={() => setShowForm(false)}>
           <div className="modalContent" onClick={(e) => e.stopPropagation()}>
-            <h3>Add New Service</h3>
+            <h3>{editingId ? "Edit Service" : "Add New Service"}</h3>
             <form onSubmit={handleAddService}>
               <label>
                 Service Name
@@ -193,7 +204,7 @@ export default function Services({ staffId }) {
 
               <label>
                 Service Image
-                <input type="file" accept="image/*" onChange={handleImageUpload} required />
+                <input type="file" accept="image/*" onChange={handleImageUpload} required={!editingId} />
               </label>
 
               {newService.img && (

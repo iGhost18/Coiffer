@@ -1,94 +1,172 @@
-.Post{
-    width: 50%;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-    margin: 10px auto;
+/* =========================================================
+   POST CARD
+   ========================================================= */
+
+.Post {
+  width: 50%;
+  margin: 10px auto;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-.PostWrapper{
-    padding: 10px;
+.PostWrapper {
+  padding: 10px;
 }
+
+/* ---------- Top row (avatar, name, date, menu) ---------- */
 
 .PostTop {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  position: relative; /* anchors the dropdown menu below */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
+.PostTopLeft {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.PostProfileImg {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.PostUsername {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.PostDate {
+  font-size: small;
+  white-space: nowrap;
+}
+
+/* ---------- Dropdown menu (edit / delete) ---------- */
+
 .PostMenu {
-    position: absolute;
-    right: 0;
-    top: 100%;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    z-index: 10;
-    min-width: 120px;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  min-width: 120px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
 }
 
 .PostMenuItem {
-    padding: 8px 14px;
-    cursor: pointer;
+  padding: 10px 14px;
+  cursor: pointer;
 }
 
 .PostMenuItem:hover {
-    background: #f5f5f5;
+  background: #f5f5f5;
 }
 
 .PostMenuItemDanger {
-    color: #d9363e;
+  color: #d9363e;
 }
 
+/* ---------- Inline edit form ---------- */
+
 .PostEditForm {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.PostEditForm textarea,
+.PostEditForm input {
+  width: 100%;
+  font-size: 16px; /* stops iOS zooming on focus */
+  font-family: inherit;
 }
 
 .PostEditActions {
-    display: flex;
-    gap: 8px;
-}
-.PostTopLeft{
-    display: flex;
-    align-items: center;
+  display: flex;
+  gap: 8px;
 }
 
-.PostProfileImg{
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
+/* ---------- Body: text, meta, tags ---------- */
+
+.PostCenter {
+  margin: 20px 0;
 }
 
-.PostUsername{
-    font-size: 15px;
-    font-weight: 500;
-    margin: 0 10px;
+.PostText {
+  display: flex;
+  align-items: center;
+  margin: 10px;
+  padding-left: 40px;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
-.PostDate{
-    font-size: small;
+.PostMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+  padding-left: 40px;
+  font-size: 12px;
+  color: #8a8a8a;
 }
 
-.PostCenter{
-    margin-top: 20px 0;
+.PostMetaFeeling {
+  font-weight: 500;
 }
 
-.PostText{
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    padding-left: 40px;
-    margin: 10px;
+.PostMetaLocation {
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
+
+.PostMetaIcon {
+  font-size: 13px;
+}
+
+.PostTags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: -4px 10px 8px;
+  padding-left: 40px;
+  font-size: 13px;
+  color: #5c3fd1;
+}
+
+.PostTagLink {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.PostTagLink:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Images / carousel ---------- */
 
 .PostImgWrapper {
+  position: relative;
   width: 100%;
   height: 400px;
-  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -105,15 +183,6 @@
   justify-content: center;
 }
 
-.PostImg {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  display: block;
-  border-radius: 10px;
-}
-
 .PostImgSlide {
   width: 100%;
   height: 100%;
@@ -122,84 +191,127 @@
   justify-content: center;
 }
 
-
-.PostBottom{
-    margin-top: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.PostImg {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  border-radius: 10px;
 }
 
-.PostBottomLeft{
-    display: flex;
-    align-items: center;
-    margin-left: 30px;
+.PostImgCounter {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
 }
 
-.PostLikeCounter{
-    font-size: 15px;
-    margin-left: -6px;
+.PostImgWrapper .swiper-button-next,
+.PostImgWrapper .swiper-button-prev {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
 }
 
+.PostImgWrapper .swiper-button-next:after,
+.PostImgWrapper .swiper-button-prev:after {
+  font-size: 14px;
+}
 
-/* ── New icon styles ── */
+.PostImgWrapper .swiper-pagination-bullet-active {
+  background: #7b5cff;
+}
+
+/* ---------- Action bar (like, comment, save) ---------- */
+
+.PostBottom {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.PostBottomLeft {
+  display: flex;
+  align-items: center;
+  margin-left: 30px;
+}
+
+.PostBottomRight {
+  display: flex;
+  align-items: center;
+  margin-right: 30px;
+}
 
 .PostActionIcon {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    margin-right: 8px;
-    font-size: 22px;
-    transition: transform 0.15s ease;
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+  font-size: 22px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
 }
 
 .PostActionIcon:hover {
-    transform: scale(1.15);
+  transform: scale(1.15);
 }
 
-.LikeIconOutline {
-    color: #555;
-    transition: color 0.15s ease;
-}
-
-.LikeIconFilled {
-    color: #e0245e;
-    transition: color 0.15s ease;
-}
-
-.CommentIcon {
-    color: #555;
-    margin-left: 12px;
-}
-
-.CommentIcon:hover {
-    color: #1da1f2;
-}
-
-.SaveIcon {
-    color: #555;
-    transition: color 0.15s ease;
-}
-
-.SaveIconFilled {
-    color:  #be0505;
-    transition: color 0.15s ease;
-}
-
-/* Save icon lives on the right, give it left margin */
 .PostBottomRight .PostActionIcon {
-    margin-right: 0;
-    margin-left: 12px;
+  margin-right: 0;
+  margin-left: 12px;
 }
 
-/* Add to your existing post.css — doesn't touch any current rules */
+.PostLikeCounter {
+  margin-left: -6px;
+  font-size: 15px;
+}
 
 .PostCommentCounter {
+  margin-left: -6px;
   font-size: 13px;
   color: #8a8a8a;
   cursor: pointer;
-  margin-left: -6px;
 }
+
+.LikeIconOutline {
+  color: #555;
+  transition: color 0.15s ease;
+}
+
+.LikeIconFilled {
+  color: #e0245e;
+  transition: color 0.15s ease;
+}
+
+.CommentIcon {
+  margin-left: 12px;
+  color: #555;
+}
+
+.CommentIcon:hover {
+  color: #1da1f2;
+}
+
+.SaveIcon {
+  color: #555;
+  transition: color 0.15s ease;
+}
+
+.SaveIconFilled {
+  color: #be0505;
+  transition: color 0.15s ease;
+}
+
+/* ---------- Comments ---------- */
 
 .PostCommentsSection {
   border-top: 1px solid #efefef;
@@ -207,9 +319,9 @@
 }
 
 .PostNoComments {
+  margin: 6px 0;
   font-size: 13px;
   color: #8a8a8a;
-  margin: 6px 0;
 }
 
 .PostCommentsList {
@@ -217,8 +329,8 @@
   flex-direction: column;
   gap: 10px;
   max-height: 260px;
-  overflow-y: auto;
   margin-bottom: 10px;
+  overflow-y: auto;
 }
 
 .PostComment {
@@ -230,21 +342,23 @@
 .PostCommentAvatar {
   width: 28px;
   height: 28px;
+  flex-shrink: 0;
   border-radius: 50%;
   object-fit: cover;
-  flex-shrink: 0;
 }
 
 .PostCommentBody {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   font-size: 13px;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .PostCommentUsername {
-  font-weight: 600;
   margin-right: 6px;
+  font-weight: 600;
 }
 
 .PostCommentText {
@@ -252,41 +366,9 @@
 }
 
 .PostCommentTime {
+  margin-top: 2px;
   font-size: 11px;
   color: #a0a0a0;
-  margin-top: 2px;
-}
-
-.PostCommentForm {
-  display: flex;
-  gap: 8px;
-}
-
-.PostCommentInput {
-  flex: 1;
-  border: 1px solid #e0e0e0;
-  border-radius: 20px;
-  padding: 8px 14px;
-  font-size: 13px;
-}
-
-.PostCommentInput:focus {
-  outline: none;
-  border-color: #b0b0b0;
-}
-
-.PostCommentSubmit {
-  border: none;
-  background: none;
-  color: #0095f6;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.PostCommentSubmit:disabled {
-  color: #b3ddfd;
-  cursor: default;
 }
 
 .PostCommentMeta {
@@ -307,6 +389,46 @@
   color: #ed4956;
 }
 
+.PostCommentForm,
+.PostReplyForm {
+  display: flex;
+  gap: 8px;
+}
+
+.PostReplyForm {
+  margin-top: 8px;
+}
+
+.PostCommentInput {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  font-size: 16px; /* 16px stops iOS zooming on focus */
+}
+
+.PostCommentInput:focus {
+  outline: none;
+  border-color: #b0b0b0;
+}
+
+.PostCommentSubmit {
+  border: none;
+  background: none;
+  color: #0095f6;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.PostCommentSubmit:disabled {
+  color: #b3ddfd;
+  cursor: default;
+}
+
+/* ---------- Replies ---------- */
+
 .PostRepliesList {
   display: flex;
   flex-direction: column;
@@ -322,146 +444,63 @@
   align-items: flex-start;
 }
 
+/* must come after .PostCommentAvatar so it wins */
 .PostReplyAvatar {
   width: 22px;
   height: 22px;
 }
 
-.PostReplyForm {
+/* ---------- Profile grid view ---------- */
+
+.PostGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+}
+
+.PostGridItem {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: #eee;
+  cursor: pointer;
+}
+
+.PostGridImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.PostGridItem:hover .PostGridImg {
+  transform: scale(1.05);
+}
+
+.PostGridCount {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 12px;
+}
+
+.PostGridNoImage {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 15px;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
-.PostMeta{
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 12px;
-    color: #8a8a8a;
-    padding-left: 42px;
-    margin-top: 4px;
-}
-
-.PostMetaFeeling{
-    font-weight: 500;
-}
-
-.PostMetaLocation{
-    display: flex;
-    align-items: center;
-    gap: 3px;
-}
-
-.PostMetaIcon{
-    font-size: 13px;
-}
-
-.PostTags{
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 13px;
-    color: #5c3fd1;
-    padding-left: 40px;
-    margin: -4px 10px 8px;
-}
-.PostTagLink {
-    color: inherit;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.PostTagLink:hover {
-    text-decoration: underline;
-}
-
-.PostImgWrapper{
-    position: relative;
-}
-
-.PostImgCounter{
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(0, 0, 0, 0.55);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 3px 9px;
-    border-radius: 20px;
-    z-index: 5;
-}
-
-.PostImgWrapper .swiper-button-next,
-.PostImgWrapper .swiper-button-prev{
-    color: #fff;
-    background: rgba(0, 0, 0, 0.35);
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-}
-
-.PostImgWrapper .swiper-button-next:after,
-.PostImgWrapper .swiper-button-prev:after{
-    font-size: 14px;
-}
-
-.PostImgWrapper .swiper-pagination-bullet-active{
-    background: #7b5cff;
-}
-
-.PostGrid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:3px;
-}
-
-.PostGridItem{
-    position:relative;
-    aspect-ratio:1/1;
-    overflow:hidden;
-    cursor:pointer;
-    background:#eee;
-}
-
-.PostGridImg{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    transition:.3s;
-}
-
-.PostGridItem:hover .PostGridImg{
-    transform:scale(1.05);
-}
-
-.PostGridCount{
-    position:absolute;
-    top:8px;
-    right:8px;
-    color:white;
-    background:rgba(0,0,0,.6);
-    padding:3px 8px;
-    border-radius:20px;
-    font-size:12px;
-}
-
-.PostGridNoImage{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    height:100%;
-    padding:15px;
-    text-align:center;
-}
-
-.Post{
-    width: 50%;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-    margin: 10px auto;
-}
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
 
 @media (max-width: 900px) {
   .Post {
@@ -473,6 +512,28 @@
   .Post {
     width: 100%;
     margin: 10px 0;
-    border-radius: 0;   
+    border-radius: 0;
+  }
+
+  .PostImgWrapper {
+    height: 320px;
+  }
+
+  .PostText,
+  .PostMeta,
+  .PostTags {
+    padding-left: 12px;
+  }
+
+  .PostBottomLeft {
+    margin-left: 12px;
+  }
+
+  .PostBottomRight {
+    margin-right: 12px;
+  }
+
+  .PostCommentsSection {
+    padding: 10px 12px 12px;
   }
 }

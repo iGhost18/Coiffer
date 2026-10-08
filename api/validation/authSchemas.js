@@ -17,10 +17,9 @@ const usernameSchema = z
   .trim()
   .min(3, "Username must contain at least 3 characters.")
   .max(30, "Username is too long.")
-  .regex(
-    /^[A-Za-z0-9_.-]+$/,
-    "Username may only contain letters, numbers, underscores, dots and hyphens."
-  );
+  .regex(/^[A-Za-z0-9_.-]+$/, "Username may only contain letters, numbers, underscores, dots and hyphens.")
+  .refine((v) => /[A-Za-z]/.test(v), "Username must contain at least one letter.");
+
 
 const emailSchema = z
   .string()
@@ -33,7 +32,7 @@ const emailSchema = z
 
 const passwordSchema = z
   .string()
-  .min(12, "Password must contain at least 12 characters.")
+  .min(8, "Password must contain at least 8 characters.")
   .max(128, "Password is too long.")
   .refine(
     (password) => /[A-Z]/.test(password),

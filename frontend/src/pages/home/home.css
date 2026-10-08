@@ -5,7 +5,7 @@
 .Home{
     width: 100%;
     background-color: white;
-    overflow-x: hidden;
+    overflow-x: clip;
 }
 .Home .leaflet-container img,
 .Home .leaflet-tile,
@@ -21,6 +21,13 @@
     justify-content: center;
     background-color: rgba(0, 0, 0, 0.930);
     border-radius: 0 0 0 10px;
+}
+
+
+.HomeTopbar{
+    position: sticky;
+    top: 0;
+    z-index: 2000;   
 }
 
 .HomeImg{
@@ -57,7 +64,7 @@
 .Map{
     width: 95%;
     height: auto;
-    min-height: 650px;
+    min-height: 550px;
     margin: 40px auto;
     overflow: hidden;
     border-radius: 20px;
