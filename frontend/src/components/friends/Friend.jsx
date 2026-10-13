@@ -15,7 +15,7 @@ export default function Friend() {
   const [friends, setFriends] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const navigate = useNavigate();
-  const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+  const PF = "/assets/";
 
   const getImage = (img) => {
     if (!img) return PF + "person/noAvatar.png";

@@ -10,6 +10,12 @@ const ffmpeg = require("fluent-ffmpeg");
 const Invite = require("../models/invite");
 const rateLimit = require("../middleware/rateLimit");
 
+// ffmpeg and ffprobe are bundled with these packages, so the server does not
+// need them installed separately. Install once with:
+//   npm install @ffmpeg-installer/ffmpeg @ffprobe-installer/ffprobe
+ffmpeg.setFfmpegPath(require("@ffmpeg-installer/ffmpeg").path);
+ffmpeg.setFfprobePath(require("@ffprobe-installer/ffprobe").path);
+
 const router = express.Router();
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;    // 5MB
@@ -92,6 +98,30 @@ function getVideoDurationSeconds(filePath) {
   });
 }
 
+// NEW: copies the video into a new file with the audio track removed.
+// "videoCodec('copy')" means the picture is not re-encoded, so this is fast
+// and the quality stays exactly the same.
+function removeAudioTrack(inputPath, outputPath, realType) {
+  const isWebm = realType === "video/webm";
+
+  return new Promise((resolve, reject) => {
+    const command = ffmpeg(inputPath)
+      .noAudio()
+      .videoCodec("copy")
+      .format(isWebm ? "webm" : "mp4");
+
+    if (!isWebm) {
+      // lets the video start playing before it has fully downloaded
+      command.outputOptions(["-movflags", "+faststart"]);
+    }
+
+    command
+      .on("end", () => resolve())
+      .on("error", reject)
+      .save(outputPath);
+  });
+}
+
 function safeDeleteTempFile(filePath) {
   fs.unlink(filePath, (err) => {
     if (err && err.code !== "ENOENT") {
@@ -110,6 +140,7 @@ router.post("/", uploadLimiter, upload.single("file"), async (req, res) => {
   let authenticated = false;
   let invite = null;
   const tempPath = req.file?.path;
+  let mutedPath = null; // only set when the uploader chose to mute the video
 
   const authHeader = req.headers.authorization || "";
   if (authHeader.startsWith("Bearer ")) {
@@ -185,12 +216,29 @@ router.post("/", uploadLimiter, upload.single("file"), async (req, res) => {
       }
     }
 
+    // NEW: if the uploader chose to mute the video, strip the audio track
+    // before the file is sent to Cloudinary. Muted means no sound at all,
+    // not just a player that starts muted.
+    let uploadPath = tempPath;
+    const wantsMute = req.body?.muteAudio === "true";
+
+    if (isVideo && wantsMute) {
+      mutedPath = `${tempPath}-muted`;
+      try {
+        await removeAudioTrack(tempPath, mutedPath, realType);
+        uploadPath = mutedPath;
+      } catch (muteErr) {
+        console.error("Removing audio failed:", muteErr);
+        return res.status(500).json({ message: "Couldn't remove the audio from this video." });
+      }
+    }
+
     // upload_large streams from disk in chunks — the right call for
     // anything that could be tens or hundreds of MB, versus buffering the
     // whole thing in one request the way the old memory-based flow did.
     const result = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_large(
-        tempPath,
+        uploadPath,
         { folder: "ghostcutapp", resource_type: isVideo ? "video" : "image" },
         (error, uploadResult) => {
           if (uploadResult) resolve(uploadResult);
@@ -209,10 +257,11 @@ router.post("/", uploadLimiter, upload.single("file"), async (req, res) => {
     console.error("POST /upload failed:", err);
     res.status(500).json({ message: "Upload failed." });
   } finally {
-    // Always clean up the temp file, success or failure — this is the
+    // Always clean up the temp files, success or failure — this is the
     // whole point of moving off memoryStorage: nothing should accumulate
     // on disk across requests.
     if (tempPath) safeDeleteTempFile(tempPath);
+    if (mutedPath) safeDeleteTempFile(mutedPath);
   }
 });
 

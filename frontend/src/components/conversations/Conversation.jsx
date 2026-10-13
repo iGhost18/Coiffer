@@ -6,7 +6,7 @@ import api from "../../api";
 export default function Conversation({ conversation, currentUser, onlineUsers }) {
   const [member, setMember] = useState(null);
   const [loaded, setLoaded] = useState(false);
-  const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+  const PF = "/assets/";
 
   useEffect(() => {
     const friendId = conversation.members.find((m) => m !== currentUser._id);

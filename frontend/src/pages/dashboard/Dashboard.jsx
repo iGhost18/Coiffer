@@ -15,6 +15,7 @@ const VIEW_META = {
   orders: ["Product orders", "Orders placed from the store"],
   bookings: ["Bookings", "Service requests from clients"],
   payments: ["Payments", "All money moving through the platform"],
+  disputes: ["Disputes", "Money on hold that needs a decision"],
 };
 
 const naira = (n) => "₦" + (n || 0).toLocaleString();
@@ -74,6 +75,12 @@ export default function DispatchAdmin() {
   // Expandable detail rows
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [expandedBookingId, setExpandedBookingId] = useState(null);
+  
+
+  const [disputes, setDisputes] = useState([]);
+  const [expandedDisputeId, setExpandedDisputeId] = useState(null);
+  const [resolvingId, setResolvingId] = useState(null);
+
 
   const { products, addProduct, updateProduct, deleteProduct } = useProducts();
 
@@ -291,6 +298,60 @@ export default function DispatchAdmin() {
     }
    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [homepageServices]);
+
+
+  useEffect(() => {
+    const fetchDisputes = async () => {
+      try {
+        const res = await api.get("/api/booking-payout/admin/disputes");
+        setDisputes(Array.isArray(res.data?.bookings) ? res.data.bookings : []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchDisputes();
+  }, []);
+
+  async function resolveDispute(b, decision) {
+    const verb = decision === "release" ? "release the payout to the expert" : "refund the customer";
+    if (!window.confirm(`Are you sure you want to ${verb}? This moves real money.`)) return;
+    const note = window.prompt("Short note for the record (optional)");
+    if (note === null) return;
+
+    setResolvingId(b._id);
+    try {
+      await api.post(`/api/booking-payout/admin/${b._id}/resolve`, { decision, note });
+      setDisputes((prev) => prev.filter((x) => x._id !== b._id));
+      logActivity("Dispute resolved", `${b._id.slice(-6).toUpperCase()} → ${decision}`);
+    } catch (err) {
+      alert(err.response?.data?.message || "Couldn't resolve this dispute.");
+    } finally {
+      setResolvingId(null);
+    }
+  }
+
+  async function retryPayout(b) {
+    if (!window.confirm("Check the Flutterwave dashboard first. Has the earlier transfer really not gone through?")) return;
+    setResolvingId(b._id);
+    try {
+      await api.post(`/api/booking-payout/admin/${b._id}/retry-payout`);
+      setDisputes((prev) => prev.filter((x) => x._id !== b._id));
+    } catch (err) {
+      alert(err.response?.data?.message || "Retry failed.");
+    } finally {
+      setResolvingId(null);
+    }
+  }
+
+  async function messageParty(receiverId) {
+    try {
+      const res = await api.post("/api/conversation", { senderId: staff._id, receiverId });
+      navigate("/messenger", { state: { conversationId: res.data._id } });
+    } catch (err) {
+      console.error(err);
+      alert("Couldn't open the conversation.");
+    }
+  }
 
   function logActivity(event, detail) {
     setLiveActivity((prev) =>
@@ -679,6 +740,9 @@ export default function DispatchAdmin() {
           </div>
           <div className={`nav-item ${view === "payments" ? "active" : ""}`} onClick={() => goToView("payments")}>
             <span className="ic">$</span> Payments
+          </div>
+          <div className={`nav-item ${view === "disputes" ? "active" : ""}`} onClick={() => goToView("disputes")}>
+            <span className="ic">⚖</span> Disputes <span className="count">{disputes.length}</span>
           </div>
         </div>
 
@@ -1673,6 +1737,106 @@ export default function DispatchAdmin() {
               </div>
             </div>
           )}
+
+          {/* DISPUTES */}
+          {view === "disputes" && (
+          <div className="view active">
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <h3>Disputes &amp; stuck payouts</h3>
+                  <div className="desc">Money on hold that needs an admin decision</div>
+                </div>
+              </div>
+              <div className="panel-body flush">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Booking</th><th>Raised</th><th>Customer</th><th>Expert</th>
+                      <th>Amount</th><th>Status</th><th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {disputes.length === 0 ? (
+                      <tr><td colSpan={7}><EmptyState title="No open disputes" sub="" /></td></tr>
+                    ) : (
+                      disputes.map((b) => {
+                        const isOpen = expandedDisputeId === b._id;
+                        const busy = resolvingId === b._id;
+                        const raisedByRole = b.dispute?.raisedByModel === "Staff" ? "Expert" : "Customer";
+
+                        return (
+                          <React.Fragment key={b._id}>
+                            <tr onClick={() => setExpandedDisputeId(isOpen ? null : b._id)} style={{ cursor: "pointer" }}>
+                              <td data-label="Booking" className="id">{b._id.slice(-6).toUpperCase()}</td>
+                              <td data-label="Raised">
+                                {b.dispute?.raisedAt ? `${raisedByRole} · ${timeAgo(b.dispute.raisedAt)}` : "—"}
+                              </td>
+                              <td data-label="Customer">{b.contact?.name || b.customerId?.username}</td>
+                              <td data-label="Expert">{b.staffId?.username || "—"}</td>
+                              <td data-label="Amount" className="mono">{naira(b.total)}</td>
+                              <td data-label="Status"><Pill status={b.payoutStatus} /></td>
+                              <td data-label="" style={{ textAlign: "right" }} onClick={(e) => e.stopPropagation()}>
+                                {b.payoutStatus === "disputed" && (
+                                  <>
+                                    <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => resolveDispute(b, "release")}>
+                                      Release to expert
+                                    </button>{" "}
+                                    <button className="btn btn-danger btn-sm" disabled={busy} onClick={() => resolveDispute(b, "refund")}>
+                                      Refund customer
+                                    </button>
+                                  </>
+                                )}
+                                {b.payoutStatus === "payout_failed" && (
+                                  <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => retryPayout(b)}>
+                                    Retry payout
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+
+                            {isOpen && (
+                              <tr>
+                                <td colSpan={7}>
+                                  <div className="detail-panel">
+                                    {b.dispute?.reason && (
+                                      <>
+                                        <div><strong>Type:</strong> {String(b.dispute.category || "other").replace(/_/g, " ")}</div>
+                                        <div><strong>What they said:</strong> {b.dispute.reason}</div>
+                                      </>
+                                    )}
+                                    <div><strong>Services:</strong> {b.services?.map((s) => `${s.name} ×${s.quantity || 1}`).join(", ")}</div>
+                                    <div><strong>Appointment:</strong> {new Date(b.appointmentDate).toLocaleDateString()} · {b.appointmentTime}</div>
+                                    <div><strong>Customer contact:</strong> {b.contact?.name} · {b.contact?.phone} · {b.contact?.email}</div>
+                                    <div><strong>Expert payout:</strong> {naira(b.staffPayoutAmount)}</div>
+                                    {(b.payoutStatus === "payout_uncertain" || b.payoutStatus === "refund_uncertain") && (
+                                      <div>
+                                        <strong>Check the Flutterwave dashboard.</strong> The outcome of this transfer or refund is
+                                        unknown, so settle it by hand. Do not retry blindly.
+                                      </div>
+                                    )}
+                                    <div style={{ marginTop: 8 }}>
+                                      <button className="btn btn-ghost btn-sm" onClick={() => messageParty(b.customerId?._id)}>
+                                        Message customer
+                                      </button>{" "}
+                                      <button className="btn btn-ghost btn-sm" onClick={() => messageParty(b.staffId?._id)}>
+                                        Message expert
+                                      </button>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
         </div>
       </div>
     </div>

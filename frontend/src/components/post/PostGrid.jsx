@@ -2,7 +2,7 @@ import "./postgrid.css";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutlined";
 
 export default function PostGrid({ posts, onSelect }) {
-    const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+    const PF = "/assets/";
 
     // post.img items can be a plain URL string (older posts) or a
     // {url, type} object (posts created after video support was added) —

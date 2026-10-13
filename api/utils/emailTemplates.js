@@ -477,6 +477,44 @@ function inviteTokenEmail({ name, token, registerUrl }) {
   };
 }
 
+function disputeAlertEmail({ reference, role, raisedBy, category, reason, customerName, staffName, total, dashboardUrl }) {
+  const body = `
+    <p style="margin:0 0 4px 0; font-size:12px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:#c4534b;">
+      Dispute raised
+    </p>
+    <h2 style="margin:0 0 16px 0; font-size:20px; color:${INK};">Money is on hold for booking #${escapeHtml(reference)}.</h2>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${BRAND_COLOR_SOFT}; border-radius:8px; padding: 16px 18px; margin-bottom: 8px;">
+      ${detailRow("Raised by", `${escapeHtml(raisedBy)} (${escapeHtml(role)})`)}
+      ${detailRow("Customer", escapeHtml(customerName))}
+      ${detailRow("Expert", escapeHtml(staffName))}
+      ${detailRow("Type", escapeHtml(category))}
+      ${detailRow("Amount", currency(total))}
+    </table>
+
+    <p style="margin: 20px 0 8px 0; font-size:13px; font-weight:700; color:${INK}; text-transform:uppercase; letter-spacing:0.4px;">What they said</p>
+    <div style="background-color:#f7f8fa; border-radius:8px; padding:14px 16px; font-size:13px; line-height:1.6; color:${INK};">
+      ${escapeHtml(reason).replace(/\n/g, "<br/>")}
+    </div>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px auto 0 auto;">
+      <tr>
+        <td style="background-color:${BRAND_COLOR}; border-radius:8px;">
+          <a href="${escapeHtml(dashboardUrl)}" style="display:inline-block; padding:12px 24px; font-size:14px; font-weight:700; color:#ffffff; text-decoration:none;">
+            Review in dashboard
+          </a>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  return {
+    subject: `Dispute on booking #${reference} — ${currency(total)} on hold`,
+    text: `Dispute on booking #${reference}\nRaised by: ${raisedBy} (${role})\nType: ${category}\nAmount: ${currency(total)}\n\n${reason}\n\nReview: ${dashboardUrl}`,
+    html: wrapEmail({ preheader: `Dispute on booking #${reference}. Money is on hold.`, bodyHtml: body }),
+  };
+}
+
 module.exports = {
   bookingConfirmationEmail,
   bookingStatusEmail,
@@ -485,4 +523,5 @@ module.exports = {
   newBookingNotificationEmail,
   inviteRequestEmail,
   inviteTokenEmail,
+  disputeAlertEmail,
 };

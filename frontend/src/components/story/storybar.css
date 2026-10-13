@@ -80,3 +80,85 @@
   font-size: 12px;
   cursor: pointer;
 }
+
+
+.StoryUploadToast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 1500;
+
+  box-sizing: border-box;
+  width: min(92vw, 360px);
+  padding: 12px 14px;
+
+  background: #111;
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  font-size: 13px;
+}
+
+.StoryUploadText {
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.StoryUploadTrack {
+  height: 4px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+}
+
+.StoryUploadFill {
+  height: 100%;
+  background: #d4202a;
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+/* Failed upload */
+.StoryUploadToast--error {
+  border-left: 4px solid #d4202a;
+}
+
+.StoryUploadToast--error .StoryUploadText {
+  margin-bottom: 10px;
+}
+
+.StoryUploadActions {
+  display: flex;
+  gap: 8px;
+}
+
+.StoryUploadBtn {
+  flex: 1;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.StoryUploadBtn--retry {
+  background: #d4202a;
+  border-color: #d4202a;
+}
+
+.StoryUploadBtn:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .StoryUploadFill {
+    transition: none;
+  }
+}

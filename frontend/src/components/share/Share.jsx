@@ -1,5 +1,8 @@
 import './share.css';
-import { MdPermMedia, MdLabel, MdRoom, MdEmojiEmotions, MdClose, MdMyLocation } from "react-icons/md";
+import {
+    MdPermMedia, MdLabel, MdRoom, MdEmojiEmotions, MdClose, MdMyLocation,
+    MdVolumeUp, MdVolumeOff,
+} from "react-icons/md";
 import { useContext, useRef, useState, useEffect } from 'react';
 import { StaffAuthContext } from '.././context/StaffAuthContext';
 import api from '../../api';
@@ -14,12 +17,15 @@ const FEELINGS = [
     { label: "Sad", emoji: "😢" },
 ];
 
+const DEFAULT_AVATAR = "/assets/person/noAvatar.png";
+
 export default function Share({ onPostCreated }) {
     const { staff } = useContext(StaffAuthContext);
-    const PF = process.env.REACT_APP_PUBLIC_FOLDER;
     const desc = useRef();
 
     const [file, setFile] = useState(null);
+    // Each preview: { url, type, muted }. "muted" means the sound is removed
+    // from that video before it is uploaded. Kept in the same order as `file`.
     const [previews, setPreviews] = useState([]);
     const [submitting, setSubmitting] = useState(false);
 
@@ -69,18 +75,26 @@ export default function Share({ onPostCreated }) {
             ...accepted.map(f => ({
                 url: URL.createObjectURL(f),
                 type: f.type.startsWith("video/") ? "video" : "image",
+                muted: false,
             })),
         ].slice(0, MAX_MEDIA_ITEMS));
 
         e.target.value = "";
     };
 
-   const removeImageAt = (index) => {
+    const removeImageAt = (index) => {
         setFile(prev => prev.filter((_, i) => i !== index));
         setPreviews(prev => {
             URL.revokeObjectURL(prev[index].url);
             return prev.filter((_, i) => i !== index);
         });
+    };
+
+    // Turn the sound on/off for one video
+    const toggleMuteAt = (index) => {
+        setPreviews(prev =>
+            prev.map((p, i) => (i === index ? { ...p, muted: !p.muted } : p))
+        );
     };
 
     const addTag = (account) => {
@@ -125,11 +139,14 @@ export default function Share({ onPostCreated }) {
         try {
             let media = [];
             if (file && file.length > 0) {
-                for (const f of file) {
+                for (let i = 0; i < file.length; i++) {
+                    const f = file[i];
                     const isVideo = f.type.startsWith("video/");
                     const formData = new FormData();
                     formData.append("file", f);
                     formData.append("resourceType", isVideo ? "video" : "image");
+                    // true = the server removes the sound before storing the video
+                    formData.append("muteAudio", isVideo && previews[i]?.muted ? "true" : "false");
                     const res = await api.post("/api/upload", formData);
                     const data = res.data;
                     if (data.url) media.push({ url: data.url, type: isVideo ? "video" : "image" });
@@ -195,7 +212,7 @@ export default function Share({ onPostCreated }) {
                     </div>
 
                     <div className="ShareTop">
-                        <img src={staff.profilePicture || `${PF}person/noAvatar.png`} alt="" className="ShareProfileImg" />
+                        <img src={staff.profilePicture || DEFAULT_AVATAR} alt="" className="ShareProfileImg" />
                         <input
                             placeholder={"Show the world your Craft " + staff.username + "?"}
                             className="ShareInput"
@@ -235,6 +252,20 @@ export default function Share({ onPostCreated }) {
                                     ) : (
                                         <img src={p.url} alt="preview" className="SharePreviewImg" />
                                     )}
+
+                                    {p.type === "video" && (
+                                        <button
+                                            type="button"
+                                            className={`SharePreviewMute ${p.muted ? "SharePreviewMute--on" : ""}`}
+                                            onClick={() => toggleMuteAt(index)}
+                                            aria-pressed={p.muted}
+                                            aria-label={p.muted ? "Sound removed. Tap to keep sound" : "Sound on. Tap to remove sound"}
+                                            title={p.muted ? "Sound removed" : "Sound on"}
+                                        >
+                                            {p.muted ? <MdVolumeOff /> : <MdVolumeUp />}
+                                        </button>
+                                    )}
+
                                     <button
                                         type="button"
                                         className="SharePreviewRemove"
@@ -317,7 +348,7 @@ export default function Share({ onPostCreated }) {
                                                     onClick={() => addTag(account)}
                                                 >
                                                     <img
-                                                        src={account.profilePicture || `${PF}person/noAvatar.png`}
+                                                        src={account.profilePicture || DEFAULT_AVATAR}
                                                         alt=""
                                                         className="ShareTagResultImg"
                                                     />

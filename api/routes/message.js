@@ -157,7 +157,7 @@ router.get("/:conversationId", authenticate, async (req, res) => {
       .limit(limit)
       .populate({
         path: "bookingId",
-        select: "services appointmentDate appointmentTime address paymentMethod total contact status customerId staffId",
+        select: "services appointmentDate appointmentTime address paymentMethod total contact status customerId staffId payoutStatus customerConfirmedAt staffConfirmedAt autoReleaseAt dispute",
         populate: [
           { path: "customerId", select: "username profilePicture" },
           { path: "staffId", select: "username profilePicture location workType" },

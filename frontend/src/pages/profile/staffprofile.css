@@ -1,133 +1,197 @@
+/* =========================================================
+   staffprofile.css  (complete rewrite)
+   Replace your whole staffprofile.css with this file.
+   Same class names as before, so StaffProfile.js needs no edits.
+   The top-bar buttons work with either "header-btn" or "StaffHeaderBtn".
+   ========================================================= */
+
+
+/* =========================================================
+   PAGE
+   ========================================================= */
 .StaffProfile {
+  box-sizing: border-box;
+  position: relative;               /* anchors the back / share buttons */
   width: 100%;
-  height: 100%;
-  margin: 20px auto;
+  max-width: 100%;
+  min-height: 100vh;                /* fallback */
+  min-height: 100dvh;               /* correct height on phones */
+  margin: 0 auto;
+  padding: 20px 20px 40px;
   background: #fff;
-  border-radius: 20px;
-  padding: 20px;
+  color: #111;
   font-family: 'DM Sans', sans-serif;
-  position: relative; /* anchors the back button */
   overflow: visible;
+  -webkit-text-size-adjust: 100%;
 }
 
-/* ===== TOP BAR / BACK BUTTON ===== */
-
-.StaffProfile {
-  position: relative;
+.StaffProfile img {
+  max-width: 100%;
 }
 
-.StaffTopBar {
+
+/* =========================================================
+   TOP BAR  (back button left, share button right)
+   ========================================================= */
+.StaffProfile .StaffTopBar {
   position: absolute;
   top: 20px;
   left: 20px;
   right: 20px;
+  z-index: 1000;
 
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   justify-content: space-between;
   align-items: center;
 
-  z-index: 1000;
-  pointer-events: none;
+  pointer-events: none;             /* empty space never blocks taps */
 }
 
-.StaffTopBar .header-btn {
+.StaffTopBar .header-btn,
+.StaffTopBar .StaffHeaderBtn {
   pointer-events: auto;
+
+  /* Stops any other stylesheet's generic .header-btn rule from moving it */
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  z-index: 1001;
+
+  display: grid;
+  place-items: center;
 
   width: 35px;
   height: 35px;
   min-width: 35px;
   min-height: 35px;
+  margin: 10px;
+  padding: 0;
 
   border: none;
   border-radius: 50%;
-
   background: rgba(255, 255, 255, 0.95);
   color: #111;
-
-  display: grid;
-  place-items: center;
-
-  cursor: pointer;
-
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
 
-  position: relative;
-  z-index: 1001;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
-.StaffTopBar .header-btn svg {
+.StaffTopBar .header-btn svg,
+.StaffTopBar .StaffHeaderBtn svg {
   width: 22px;
   height: 22px;
   display: block;
 }
 
-.StaffTopBar .header-btn:hover {
+.StaffTopBar .header-btn:hover,
+.StaffTopBar .StaffHeaderBtn:hover {
   background: #f0f0f0;
 }
 
-/* ===== GALLERY ===== */
-.StaffGallery {
+.StaffTopBar .header-btn:active,
+.StaffTopBar .StaffHeaderBtn:active {
+  transform: scale(0.94);
+}
+
+.StaffTopBar .header-btn:focus-visible,
+.StaffTopBar .StaffHeaderBtn:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   COVER PICTURES  (always one row, scale down with the screen)
+   ========================================================= */
+.StaffProfile .StaffGallery {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   justify-content: center;
   align-items: center;
-  gap: 0;
-  padding: 30px 0 40px;
-  flex-wrap: wrap;
+  gap: clamp(4px, 1vw, 8px);        /* small gap, kept tiny so the pictures can stay full size */
+
+  width: 100%;
+  box-sizing: border-box;
+  padding: 64px 0 60px;             /* top space keeps the buttons clear; bottom space fits the taller middle picture */
 }
 
-.StaffGallery img {
-  width: 380px;
-  height: 320px;
+.StaffProfile .StaffGallery img {
+  flex: 0 1 300px;                  /* width 300px, shrinks only if the row is too narrow */
+  min-width: 0;
+  width: 300px;
+  max-width: 300px;
+  height: auto;
+  aspect-ratio: 300 / 400;          /* size: 270 wide x 400 tall (change both numbers to resize) */
   object-fit: cover;
-  border-radius: 20px;
+  background: #f1f1f1;
+  border-radius: clamp(10px, 3vw, 20px);
   position: relative;
-}
-
-.StaffGallery img:not(.centerImg) {
   z-index: 1;
+  margin: 0;
 }
 
-.StaffGallery img:first-child {
-  margin-right: -30px;
-  transform: rotate(0deg);
-}
-
-.StaffGallery img:last-child {
-  margin-left: -30px;
-  transform: rotate(0deg);
-}
-
-.StaffGallery .centerImg {
-  width: 350px;
-  height: 380px;
-  margin-top: -40px;
-  margin-bottom: -40px;
+/* Middle picture: narrower, taller, on top */
+.StaffProfile .StaffGallery img.centerImg {
+  flex: 0 1 290px;                  /* size: 290 wide x 500 tall, the tallest picture */
+  width: 290px;
+  max-width: 290px;
+  aspect-ratio: 290 / 500;
+  margin: clamp(-40px, -6vw, -12px) 0;
   z-index: 2;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-/* ===== HEADER ===== */
+
+/* =========================================================
+   PROFILE HEADER
+   ========================================================= */
 .ProfileHeader {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  margin-top: 20px;
   gap: 15px;
-  padding: 30px 50px;
+  margin-top: 20px;
+  padding: 30px clamp(16px, 5vw, 50px);
 }
 
 .Avatar {
   width: 70px;
   height: 70px;
+  flex-shrink: 0;
   border-radius: 50%;
+  object-fit: cover;
+  background: #f1f1f1;
+}
+
+.ProfileText {
+  flex: 1 1 200px;
+  min-width: 0;
 }
 
 .ProfileText h2 {
+  margin: 0 0 2px;
   font-size: 20px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.ProfileText p {
+  margin: 0 0 2px;
+  font-size: 14px;
+  color: #444;
 }
 
 .Verified {
-  color: blue;
+  margin-left: 4px;
+  color: #1877f2;
 }
 
 .Role {
@@ -135,14 +199,16 @@
   color: gray;
 }
 
-/* ===== PROFILE ACTION BUTTONS ===== */
 
+/* =========================================================
+   PROFILE ACTION BUTTONS
+   ========================================================= */
 .StaffProfile .HeaderButtons {
-  margin-left: 0;
   width: 100%;
+  margin-left: 0;
   display: flex;
-  flex-wrap: nowrap;
-  justify-content: end;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 10px;
 }
@@ -153,27 +219,29 @@
   white-space: nowrap;
 }
 
-.MessageBtn {
-  background: black;
-  color: white;
+.MessageBtn,
+.FollowBtn {
   border: none;
-  padding: 15px 40px;
   border-radius: 8px;
-  cursor: pointer;
+  padding: 15px 40px;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease,
+              border-color 0.2s ease, transform 0.1s ease;
+}
+
+.MessageBtn {
+  background: #000;
+  color: #fff;
 }
 
 .FollowBtn {
   background: #be0505;
-  color: white;
-  border: none;
-  padding: 15px 40px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  color: #fff;
 }
 
 .FollowBtn.following {
@@ -182,88 +250,204 @@
   border: 1.5px solid #ccc;
 }
 
+.MessageBtn:hover,
 .FollowBtn:hover {
   opacity: 0.85;
 }
 
 .FollowBtn.following:hover {
+  opacity: 1;
   background: #fee2e2;
   border-color: #be0505;
   color: #be0505;
 }
 
-/* ===== STATS ===== */
+.MessageBtn:active,
+.FollowBtn:active {
+  transform: scale(0.97);
+}
+
+.MessageBtn:focus-visible,
+.FollowBtn:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   STATS
+   ========================================================= */
 .Stats {
   display: flex;
-  fex-wrap: wrap;
+  flex-wrap: wrap;                  /* was misspelled "fex-wrap" */
   justify-content: space-around;
+  gap: 16px;
   margin: 20px 0;
+  text-align: center;
 }
 
 .Stats h3 {
+  margin: 0;
   font-size: 18px;
 }
 
-/* ===== LOCATION ===== */
+.Stats p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: gray;
+}
+
+
+/* =========================================================
+   LOCATION
+   ========================================================= */
 .LocationRow {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  align-items: center;
+  gap: 6px 16px;
   font-size: 15px;
   color: gray;
 }
 
-/* ===== INFO CARDS ===== */
+.StaffCity,
+.JoinDate {
+  margin: 0;
+  min-width: 0;
+}
+
+.StaffCity {
+  padding-left: 4px;                /* the old ".StaffCity p" rule never matched anything */
+  overflow-wrap: anywhere;
+}
+
+.JoinDate {
+  padding: 3px 10px;
+  font-size: 12px;
+  color: rgb(81, 81, 81);
+}
+
+
+/* =========================================================
+   INFO CARDS
+   ========================================================= */
 .InfoCards {
   display: flex;
   flex-wrap: wrap;
-  gap: 30px;
-  margin: 15px 0  80px;
+  gap: clamp(12px, 3vw, 30px);
+  margin: 15px 0 clamp(40px, 8vw, 80px);
 }
 
 .InfoCard {
   flex: 1 1 160px;
-  padding: 12px;
+  min-width: 0;
+  padding: 14px 12px;
   background: #f7f7f7;
   border-radius: 10px;
-  place-items: center;
+  text-align: center;               /* replaces place-items, which does nothing on a block */
+}
+
+.InfoCard h2,
+.InfoCard h4 {
+  margin: 0 0 4px;
+}
+
+.InfoCard p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #666;
 }
 
 .highlight {
-  background: black;
-  color: white;
-  text-align: center;
+  background: #000;
+  color: #fff;
 }
 
-/* ===== HOURS ===== */
+.highlight p {
+  color: #ddd;
+}
+
+
+/* =========================================================
+   BIO / SPECIALTIES / REVIEWS CARDS
+   ========================================================= */
+.StaffProfile .BioCard {
+  margin: 16px 0;
+  padding: 16px 18px;
+  background: #f7f7f7;
+  border-radius: 12px;
+}
+
+.StaffProfile .BioCard h4 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.StaffProfile .BioCard > p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #444;
+  overflow-wrap: anywhere;
+}
+
+.StaffProfile .SpecialtyTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.StaffProfile .SpecialtyTag {
+  padding: 6px 12px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.StaffProfile .sr-field-hint {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #1a7f37;
+}
+
+
+/* =========================================================
+   WORKING SCHEDULE
+   ========================================================= */
 .OpeningHours {
-  margin: 20px 0;
-  place-items: center;
-  margin-top: 7%;
+  margin: clamp(32px, 7vw, 60px) 0 20px;
+  text-align: center;               /* centers the heading and the "not available" message */
 }
 
 .OpeningHours h3 {
+  margin: 0 0 15px;
   font-size: 18px;
-  margin-bottom: 15px;
 }
 
-/* Day Tabs */
 .DayTabs {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
+  justify-content: center;          /* centered day pills */
+  gap: 8px;
   margin-bottom: 20px;
 }
 
 .DayTab {
   padding: 8px 16px;
-  border-radius: 999px;
   border: 1.5px solid #ccc;
+  border-radius: 999px;
   font-size: 14px;
   font-weight: 500;
-  cursor: pointer;
   color: #333;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .DayTab:hover {
@@ -272,58 +456,65 @@
 
 .DayTab.active {
   background-color: #111;
-  color: white;
+  color: #fff;
   border-color: #111;
 }
 
-/* Time Slot Rows */
 .TimeSlotList {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
+  max-width: 520px;                 /* keeps the time card a neat size, centered */
+  margin: 0 auto;
 }
 
 .TimeSlotRow {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
-  gap: 16px;
+  gap: 8px 16px;
   padding: 14px 20px;
-  border-radius: 10px;
   background-color: #f9f9f9;
+  border-radius: 10px;
   font-size: 15px;
 }
 
 .SlotLabel {
-  color: #aaa;
-  font-size: 14px;
   width: 35px;
+  font-size: 14px;
+  color: #aaa;
 }
 
 .SlotTime {
+  min-width: 90px;
   font-weight: 500;
   color: #111;
-  min-width: 90px;
 }
 
 .SlotArrow {
-  color: #aaa;
   font-size: 16px;
+  color: #aaa;
 }
 
 .NoSlots {
-  color: #aaa;
-  font-size: 14px;
   padding: 10px 0;
+  font-size: 14px;
+  color: #aaa;
 }
 
 .SlotMeta {
   display: flex;
+  justify-content: center;
   gap: 20px;
   margin-top: 10px;
+  padding: 0 4px;
   font-size: 13px;
   color: #aaa;
-  padding: 0 4px;
 }
+
+/* Schedule editor rows (used by the settings page, kept unchanged) */
 .sr-day-schedule-row {
   display: flex;
   align-items: center;
@@ -348,8 +539,8 @@
 .sr-day-times {
   display: flex;
   align-items: center;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 10px;
 }
 
 .sr-day-times input[type="time"],
@@ -365,190 +556,198 @@
   color: #bbb;
 }
 
-/* ===== SERVICES ===== */
-.Service {
+
+/* =========================================================
+   SERVICES
+   (scoped to .StaffProfile so home.css, which also has .Card and
+    .Picture, can't override them depending on load order)
+   ========================================================= */
+.StaffProfile .Service {
   width: 100%;
   height: auto;
-  padding: 4%;
   display: block;
+  padding: 4% 0;
   border-radius: 10px;
 }
 
-.ServicesCard {
+.StaffProfile .Service h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.StaffProfile .ServicesCard {
   width: 100%;
   padding: 10px;
 }
 
-.Card {
+.StaffProfile .Card {
   width: 100%;
+  margin: 20px 0;
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  margin: 20px 0;
 }
 
-.Card:hover {
-  transform: scale(1.08);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-  z-index: 10;
-}
-
-.Picture {
+.StaffProfile .Picture {
   position: relative;
   width: 100%;
   overflow: hidden;
 }
 
-.Picture img {
-  border-radius: 5px;
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
+.StaffProfile .Picture img {
   display: block;
+  width: 100%;
+  height: clamp(130px, 22vw, 220px);
+  object-fit: cover;
+  border-radius: 5px;
   transition: transform 0.3s ease;
 }
 
-.Card:hover .Picture img {
-  transform: scale(1.05);
-}
-
-.Picture h6 {
+.StaffProfile .Picture h6 {
   position: absolute;
   margin: 10px;
-  background-color: white;
   padding: 2px 10px;
+  background-color: #fff;
   border-radius: 40px;
 }
 
-.Card h5 {
+.StaffProfile .Card h5 {
   margin: 0;
   padding: 16px;
   background: #fff;
   font-size: 13px;
   font-weight: 400;
-  color: #666;
   line-height: 1.6;
+  color: #666;
 }
 
-.Card h5 span {
+.StaffProfile .Card h5 span {
   display: block;
+  margin-bottom: 6px;
   font-size: 15px;
   font-weight: 700;
   color: #111;
-  margin-bottom: 6px;
 }
 
-/* ===== POSTS ===== */
+/* Hover zoom only on devices that really hover. On a phone it made a
+   tapped card jump bigger and stay that way. */
+@media (hover: hover) {
+  .StaffProfile .Card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+  }
+
+  .StaffProfile .Card:hover .Picture img {
+    transform: scale(1.05);
+  }
+}
+
+.Share{
+  width: 80%;
+}
+
+/* =========================================================
+   POSTS / LOOKBOOK
+   ========================================================= */
 .Posts h3 {
-  font-size: 18px;
   margin-top: 50px;
+  font-size: 18px;
+}
+
+.PostModalOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 9999;
+}
+
+.PostModal {
+  position: relative;
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.ClosePostBtn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
 }
 
 
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
 
-.PostModalOverlay{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.75);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    z-index:9999;
-}
-
-.PostModal{
-    width:90%;
-    max-width:900px;
-    max-height:90vh;
-    overflow-y:auto;
-    background:#fff;
-    border-radius:12px;
-    position:relative;
-}
-
-.ClosePostBtn{
-    position:absolute;
-    top:10px;
-    right:15px;
-    font-size:30px;
-    background:none;
-    border:none;
-    cursor:pointer;
-    z-index:10;
-}
-
-
-@media (max-width: 900px) {
-  .StaffGallery img {
-    width: 220px;
-    height: 190px;
-  }
-
-  .StaffGallery .centerImg {
-    width: 200px;
-    height: 220px;
-    margin-top: -20px;
-    margin-bottom: -20px;
-  }
-}
-
-@media (max-width: 500px) {
-  .StaffGallery {
-    flex-direction: column;
-  }
-
-  .StaffGallery img,
-  .StaffGallery img:first-child,
-  .StaffGallery img:last-child {
-    width: 100%;
-    max-width: 320px;
-    height: 220px;
-    margin: 0;
-  }
-
-  .StaffGallery .centerImg {
-    width: 100%;
-    max-width: 320px;
-    height: 240px;
-    margin: 0;
-    order: -1;   /* main photo shows first when stacked */
-  }
-}
-
+/* ---------- 700px and below ---------- */
 @media (max-width: 700px) {
   .ProfileHeader {
     padding: 20px;
   }
 
   .StaffProfile .HeaderButtons {
-    margin-left: 0;
-    width: 100%;
     justify-content: center;
+  }
+
+  .StaffProfile .StaffGallery {
+    padding: 60px 0 44px;
   }
 }
 
+/* ---------- 600px and below ---------- */
 @media (max-width: 600px) {
-
   .StaffProfile .ProfileText h2 {
     font-size: 16px;
-    line-height: 1.3;
-    margin: 0 0 2px;
+  }
+
+  .StaffProfile .ProfileText p {
+    font-size: 12px;
   }
 
   .StaffProfile .Verified {
     font-size: 12px;
-    margin-left: 4px;
   }
 
-  /* the @username and role lines under it */
-  .StaffProfile .ProfileText p {
+  /* All action buttons share one row */
+  .StaffProfile .HeaderButtons {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .StaffProfile .HeaderButtons button {
+    flex: 1 1 0;
+    padding: 12px 6px;
     font-size: 12px;
-    margin: 0 0 2px;
   }
 
+  .StaffCity,
+  .JoinDate {
+    font-size: 11px;
+    padding: 3px 0;
+  }
 
-  /* Working schedule pills */
+  /* Schedule */
   .StaffProfile .DayTabs {
     gap: 6px;
     margin-bottom: 14px;
@@ -565,7 +764,7 @@
     font-size: 13px;
   }
 
-  /* Service cards */
+  /* Services */
   .StaffProfile .ServicesCard {
     padding: 6px;
   }
@@ -573,20 +772,6 @@
   .StaffProfile .Card {
     margin: 10px 0;
     border-radius: 12px;
-  }
-
-  /* On a phone, hover-scaling makes a tapped card jump bigger and stay that way */
-  .StaffProfile .Card:hover {
-    transform: none;
-    box-shadow: none;
-  }
-
-  .StaffProfile .Card:hover .Picture img {
-    transform: none;
-  }
-
-  .StaffProfile .Picture img {
-    height: 130px;
   }
 
   .StaffProfile .Picture h6 {
@@ -601,12 +786,10 @@
   }
 
   .StaffProfile .Card h5 span {
-    font-size: 13px;
     margin-bottom: 4px;
+    font-size: 13px;
   }
-}
 
-@media (max-width: 600px) {
   .StaffProfile .serviceBox img {
     width: 100%;
     height: 120px;
@@ -616,10 +799,8 @@
   .StaffProfile .serviceBox span {
     font-size: 12px;
   }
-}
 
-@media (max-width: 600px) {
-  /* The element right after the LOOKBOOK heading is PostGrid's root */
+  /* LOOKBOOK: the element right after the heading is PostGrid's root */
   .StaffProfile .Posts > h3 + * {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -634,52 +815,44 @@
   }
 
   .StaffProfile .Posts > h3 + * img {
+    display: block;
     width: 100%;
     height: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;
-    display: block;
   }
 }
 
+/* ---------- 500px and below ---------- */
 @media (max-width: 500px) {
-  .StaffGallery {
-    flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 8px;
-    padding: 20px 0 24px;
+  .StaffProfile {
+    padding: 20px 12px 32px;
   }
 
-  .StaffGallery img,
-  .StaffGallery img:first-child,
-  .StaffGallery img:last-child,
-  .StaffGallery .centerImg {
-    flex: 1 1 0;
-    width: auto;
-    min-width: 0;
-    max-width: none;
-    height: 140px;
-    margin: 0;
-    border-radius: 12px;
-  }
-
-  .StaffGallery .centerImg {
-    order: 0;
-    height: 160px;
+  .StaffProfile .StaffTopBar {
+    top: 12px;
+    left: 8px;
+    right: 8px;
   }
 }
 
-
-
+/* ---------- 380px and below ---------- */
 @media (max-width: 380px) {
   .StaffProfile .HeaderButtons {
     gap: 4px;
   }
 
-  .StaffProfile .HeaderButtons button,
-  .StaffProfile .MessageBtn,
-  .StaffProfile .FollowBtn {
-    padding: 6px 8px;
+  .StaffProfile .HeaderButtons button {
+    padding: 10px 4px;
     font-size: 11px;
+  }
+}
+
+/* ---------- Respect reduced-motion settings ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .StaffProfile *,
+  .StaffProfile *::before,
+  .StaffProfile *::after {
+    transition: none !important;
   }
 }

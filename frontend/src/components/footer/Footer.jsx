@@ -29,10 +29,12 @@ export default function Footer() {
 
                 </div>
                 <div className="FooterLeft">
-                <ul className='QuickLinks'>
-                    <h3 className='Header'>Quick Links</h3>
-                    <li>About us</li>
-                </ul>
+                <div className="QuickLinks">
+                    <h3 className="Header">Quick Links</h3>
+                    <ul>
+                        <li>About us</li>
+                    </ul>
+                </div>
                 <div className="Information">
                     <h3>Information</h3>
                     <div className="InfoList">
@@ -40,19 +42,19 @@ export default function Footer() {
                     <h6>Nigeria</h6>
                     </div>
                     <div className="InfoList">
-                    <EmailIcon/>
-                    <h6>coifferng@gmail.com</h6>
-                    </div>
-                    <div className="InfoList">
-                    <PhoneIcon/>
-                    <h6>+234 813 385 5524</h6>
+                        <EmailIcon />
+                        <h6><a href="mailto:coifferng@gmail.com">coifferng@gmail.com</a></h6>
+                        </div>
+                        <div className="InfoList">
+                        <PhoneIcon />
+                        <h6><a href="tel:+2348133855524">+234 813 385 5524</a></h6>
                     </div>
                 </div>
                 </div>
             </div>
             <hr />
             <div className="FooterBottom">
-                <span> <CopyrightIcon/>2026 Ghosthebarber. All right reserved.</span>
+                <span> <CopyrightIcon/>2026 Ghosthebarber. All rights reserved.</span>
                 <div className='FooterBottomB'>
                 <b>Privacy Policy</b>
                 <b>Terms of service</b>

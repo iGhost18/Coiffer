@@ -19,7 +19,7 @@ const DAYS = [
 // the server doesn't check for just misleads people.
 function PasswordStrength({ value }) {
   let score = 0;
-  if (value.length >= 12) score++;
+  if (value.length >= 8) score++;
   if (/[A-Z]/.test(value)) score++;
   if (/[a-z]/.test(value)) score++;
   if (/[0-9]/.test(value)) score++;
@@ -424,15 +424,15 @@ function StaffReg() {
                   <input
                     id="password"
                     type="password"
-                    placeholder="Min. 12 characters"
+                    placeholder="Min. 8 characters"
                     value={form.password}
                     onChange={(e) => update({ password: e.target.value })}
-                    minLength={12}
+                    minLength={8}
                     maxLength={128}
                   />
                   <PasswordStrength value={form.password} />
                   <span className="sr-field-hint">
-                    At least 12 characters, including one uppercase letter, one lowercase letter, and one number.
+                    At least 8 characters, including one uppercase letter, one lowercase letter, and one number.
                   </span>
                 </div>
 

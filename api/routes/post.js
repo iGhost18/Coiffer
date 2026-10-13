@@ -319,6 +319,8 @@ router.get("/timeline", async (req, res) => {
     }
 });
 
+
+
 // following posts
 router.get("/following/:userId", authenticate, async (req, res) => {
     try {
@@ -326,7 +328,14 @@ router.get("/following/:userId", authenticate, async (req, res) => {
             return res.status(400).json({ message: "Invalid user id." });
         }
 
-        const currentUser = await User.findById(req.params.userId);
+        // People can only load their own "Following" feed.
+        if (req.auth.id !== String(req.params.userId)) {
+            return res.status(403).json({ message: "Access denied." });
+        }
+
+        // Look in the right collection for whoever is logged in.
+        const Model = req.auth.type === "Staff" ? Staff : User;
+        const currentUser = await Model.findById(req.params.userId).select("followings");
 
         if (!currentUser || !currentUser.followings?.length) {
             return res.status(200).json([]);
@@ -335,9 +344,6 @@ router.get("/following/:userId", authenticate, async (req, res) => {
         const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
         const page = Math.max(Number(req.query.page) || 1, 1);
 
-        // Single query across every followed staff member instead of one
-        // query per follow — the old version turned a large followings
-        // list into hundreds/thousands of parallel DB calls per request.
         const merged = await Post.find({ staffId: { $in: currentUser.followings } })
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)

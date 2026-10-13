@@ -12,7 +12,7 @@ export default function StoryViewer({ groups, startIndex, currentUserId, onClose
   const videoRef = useRef();
   const rafRef = useRef();
   const startTimeRef = useRef();
-  const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+  const PF = "/assets/";
 
   const author = groups[authorIdx];
   const story = author?.stories[storyIdx];

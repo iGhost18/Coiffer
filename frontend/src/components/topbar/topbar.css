@@ -66,7 +66,7 @@
 .TopbarIcons {
     display: flex;
 
-    gap: 150px;
+    gap: 100px;
 
     /* Important */
     white-space: nowrap;
@@ -299,7 +299,7 @@
     }
 
     .TopbarIconItem svg {
-        font-size: 16px;
+        font-size: 18px;
     }
 
     .TopbarRight {
@@ -358,7 +358,7 @@
     }
 
     .TopbarIconItem svg {
-        font-size: 14px;
+        font-size: 18px;
     }
 
     .TopbarImg {

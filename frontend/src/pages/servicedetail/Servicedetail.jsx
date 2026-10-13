@@ -1,30 +1,29 @@
 import "./servicedetail.css";
 import { useEffect, useState, useContext } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Topbar from "../../components/topbar/Topbar";
 import Footer from "../../components/footer/Footer";
 import Cart from "../../components/cart/Cart";
 import { TbCurrencyNaira } from "react-icons/tb";
 import { useCart } from "../../components/context/CartContext";
 import { StaffAuthContext } from "../../components/context/StaffAuthContext";
-import { useNavigate } from "react-router-dom";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import api from "../../api";  
+import api from "../../api";
 
 
 export default function ServiceDetail() {
   const { serviceId } = useParams();
   const { addToCart } = useCart();
   const { staff } = useContext(StaffAuthContext);
-  
-  // inside the component
+
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [serviceDetails, setServiceDetails] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null); 
+  const [editingId, setEditingId] = useState(null);
   const [saveError, setSaveError] = useState("");
 
   const [newDetail, setNewDetail] = useState({
@@ -35,13 +34,29 @@ export default function ServiceDetail() {
     img: "",
     file: null,
   });
-  const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+  const PF = "/assets/";
 
   const getImage = (img) => {
     if (!img) return PF + "person/noAvatar.png";
     if (img.startsWith("http")) return img;
     return PF + img;
   };
+
+  // ---- Who owns this service? ----
+  // The profile page passes the owner's id when you click a service card.
+  // If the page was opened another way (shared link, refresh), fall back to
+  // the owner of the first service detail that was loaded.
+  const ownerId = String(
+    location.state?.ownerId || serviceDetails[0]?.staffId || ""
+  );
+
+  // Only the logged-in staff member who owns the service can add details.
+  const isServiceOwner =
+    Boolean(staff?._id) && ownerId !== "" && String(staff._id) === ownerId;
+
+  // Edit / Delete are checked on each individual detail.
+  const canManageDetail = (detail) =>
+    Boolean(staff?._id) && String(detail.staffId) === String(staff._id);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +106,12 @@ export default function ServiceDetail() {
   const handleAddServiceDetail = async (e) => {
     e.preventDefault();
     setSaveError("");
+
+    // Safety net: even if the form was somehow opened, only the owner can save.
+    if (!isServiceOwner) {
+      setSaveError("You can only change your own services.");
+      return;
+    }
 
     try {
       let url = newDetail.img;
@@ -151,6 +172,8 @@ export default function ServiceDetail() {
   };
 
   const handleEditClick = (detail) => {
+    if (!canManageDetail(detail)) return;
+
     setEditingId(detail._id);
     setNewDetail({
       name: detail.name,
@@ -163,12 +186,13 @@ export default function ServiceDetail() {
     setShowForm(true);
   };
 
-  const handleDeleteServiceDetail = async (id) => {
+  const handleDeleteServiceDetail = async (detail) => {
+    if (!canManageDetail(detail)) return;
     if (!window.confirm("Delete this service detail?")) return;
 
     try {
-      await api.delete(`/api/servicedetail/${id}`);
-      setServiceDetails((prev) => prev.filter((d) => d._id !== id));
+      await api.delete(`/api/servicedetail/${detail._id}`);
+      setServiceDetails((prev) => prev.filter((d) => d._id !== detail._id));
     } catch (err) {
       console.error(err);
     }
@@ -236,7 +260,8 @@ export default function ServiceDetail() {
                     Schedule
                   </button>
 
-                  {staff && (
+                  {/* Only the staff member who owns this detail sees these */}
+                  {canManageDetail(detail) && (
                     <div className="CutCardStaffActions">
                       <button
                         className="editBtn"
@@ -246,7 +271,7 @@ export default function ServiceDetail() {
                       </button>
                       <button
                         className="deleteBtn"
-                        onClick={() => handleDeleteServiceDetail(detail._id)}
+                        onClick={() => handleDeleteServiceDetail(detail)}
                       >
                         Delete
                       </button>
@@ -257,8 +282,9 @@ export default function ServiceDetail() {
             </div>
           ))
           )}
-            
-          {staff && (
+
+          {/* Only the owner of this service can add a new detail */}
+          {isServiceOwner && (
             <button
               className="addServiceBtn"
               onClick={() => setShowForm(true)}
@@ -271,7 +297,7 @@ export default function ServiceDetail() {
         <Cart  showBackButton={false}/>
       </div>
 
-      {showForm && (
+      {showForm && isServiceOwner && (
         <div
           className="modalOverlay"
           onClick={() => setShowForm(false)}

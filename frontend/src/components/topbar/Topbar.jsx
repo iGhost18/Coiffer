@@ -17,7 +17,7 @@ import { StaffAuthContext } from '../context/StaffAuthContext';
 export default function Topbar() {
     const {user} = useContext(AuthContext);
     const {staff} = useContext(StaffAuthContext);
-    const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+    const PF = "/assets/";
 
     const currentUser = user || staff;   
 

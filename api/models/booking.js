@@ -74,9 +74,9 @@ const BookingSchema = new mongoose.Schema(
       index: true,
     },
     payoutAttempts: { type: Number, default: 0 },
-    staffPayoutAmount: { type: Number, required: true },
-    autoReleaseAt: { type: Date, default: null, index: true },
-    transferReference: { type: String, default: null, index: true },
+    raisedByModel: { type: String, enum: ["User", "Staff"], default: null },
+    category: { type: String, default: null },
+    reason: { type: String, default: null },
 
     staffPayoutAmount: { type: Number, required: true }, 
 

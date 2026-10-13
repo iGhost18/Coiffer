@@ -311,3 +311,38 @@
     padding: 7px 0;
   }
 }
+/* =========================================================
+   Paste this at the very BOTTOM of messages.css.
+   Makes the booking buttons feel instant on phones.
+   ========================================================= */
+
+.bookingCardBtn {
+  min-height: 40px;                 /* comfortable tap target */
+  touch-action: manipulation;       /* removes the mobile tap delay */
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: transform 0.1s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+/* Visible press feedback the moment a finger lands */
+.bookingCardBtn:active:not(:disabled) {
+  transform: scale(0.96);
+  opacity: 0.8;
+}
+
+/* Phones have no real hover, so it gets "stuck" after a tap. Only use it with a mouse. */
+@media (hover: none) {
+  .bookingCardBtn:hover:not(:disabled) {
+    opacity: 1;
+  }
+}
+
+.bookingCardBtn:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
+}
+
+/* Smooth change when the status pill switches (pending -> confirmed, etc.) */
+.bookingStatusPill {
+  transition: background 0.2s ease, color 0.2s ease;
+}

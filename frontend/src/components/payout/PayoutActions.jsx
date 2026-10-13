@@ -23,6 +23,7 @@ export default function PayoutActions({ booking, role, bookingStatus }) {
   const [disputing, setDisputing] = useState(false);
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
+  const [category, setCategory] = useState("");
 
   // Re-sync if the parent hands us fresher booking data.
   useEffect(() => {
@@ -44,6 +45,19 @@ export default function PayoutActions({ booking, role, bookingStatus }) {
 
   const myConfirmed = isStaff ? state.staffConfirmedAt : state.customerConfirmedAt;
   const otherName = isStaff ? "the customer" : "the expert";
+
+  const CATEGORY_OPTIONS = {
+    customer: [
+      ["expert_no_show", "The expert didn't show up"],
+      ["service_not_completed", "The service wasn't completed"],
+      ["poor_quality", "Poor quality of service"],
+      ["other", "Something else"],
+    ],
+    staff: [
+      ["customer_no_show", "The customer didn't show up"],
+      ["other", "Something else"],
+    ],
+  };
 
   const applyResult = (updated) => {
     if (!updated) return;
@@ -70,19 +84,25 @@ export default function PayoutActions({ booking, role, bookingStatus }) {
 
   const submitDispute = async () => {
     if (busy) return;
-    if (!reason.trim()) {
-      setError("Please tell us what went wrong.");
+    if (!category) {
+      setError("Please choose what went wrong.");
+      return;
+    }
+    if (reason.trim().length < 10) {
+      setError("Please describe what went wrong (at least 10 characters).");
       return;
     }
     setBusy(true);
     setError("");
     try {
       const res = await api.post(`/api/booking-payout/${booking._id}/dispute`, {
+        category,
         reason: reason.trim(),
       });
       applyResult(res.data.booking);
       setDisputing(false);
       setReason("");
+      setCategory("");
     } catch (err) {
       setError(err.response?.data?.message || "Couldn't raise the dispute. Try again.");
     } finally {
@@ -148,6 +168,12 @@ export default function PayoutActions({ booking, role, bookingStatus }) {
 
           {disputing && (
             <div className="payoutDisputeForm">
+              <select className="payoutTextarea" value={category} onChange={(e) => setCategory(e.target.value)}>
+                <option value="">What went wrong?</option>
+                {(CATEGORY_OPTIONS[role] || CATEGORY_OPTIONS.customer).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
               <textarea
                 className="payoutTextarea"
                 placeholder="Describe what went wrong…"

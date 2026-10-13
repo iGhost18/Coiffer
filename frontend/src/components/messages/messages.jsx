@@ -1,16 +1,22 @@
 import "./messages.css";
 import { format } from "timeago.js";
 import api from "../../api";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatTo12Hour } from "../../utils/time";
 import { getAppointmentEndDateTime } from "../../utils/bookingtime";
 import PayoutActions from "../payout/PayoutActions";
+
+const DEFAULT_AVATAR = "/assets/person/noAvatar.png";
 
 export default function Messages({ messages, own, isStaff, onBookingUpdate, senderPicture }) {
   const [updating, setUpdating] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+
+  // Shows the new status instantly, before the server has answered.
+  const [optimisticStatus, setOptimisticStatus] = useState(null);
+  // A ref blocks double taps immediately (state updates are asynchronous).
+  const lockRef = useRef(false);
 
   // Ticks every minute so time-dependent buttons appear on their own once
   // the appointment has finished, without needing a page refresh.
@@ -19,26 +25,36 @@ export default function Messages({ messages, own, isStaff, onBookingUpdate, send
     return () => clearInterval(interval);
   }, []);
 
+  // Once the real status arrives from the server or socket, drop the temporary one.
+  useEffect(() => {
+    setOptimisticStatus(null);
+  }, [messages.status]);
+
   const getImage = (img) => {
-    if (!img) return PF + "person/noAvatar.png";
+    if (!img) return DEFAULT_AVATAR;
     if (img.startsWith("http")) return img;
-    return PF + img;
+    return img.startsWith("/") ? img : `/${img}`;
   };
 
   if (messages.type === "booking") {
-    const status = messages.status || "pending";
+    const status = optimisticStatus || messages.status || "pending";
     const booking = messages.bookingId;
 
     const respond = async (newStatus) => {
-      if (updating || !booking?._id) return;
+      if (lockRef.current || !booking?._id) return;
+      lockRef.current = true;
       setUpdating(true);
+      setOptimisticStatus(newStatus); // UI changes right away
+
       try {
         await api.put(`/api/booking/${booking._id}/status`, { status: newStatus });
         onBookingUpdate?.(messages._id, newStatus);
       } catch (err) {
         console.error(err);
+        setOptimisticStatus(null); // roll back if the server refused
         alert(err.response?.data?.message || "Couldn't update that booking. Try again.");
       } finally {
+        lockRef.current = false;
         setUpdating(false);
       }
     };
@@ -135,6 +151,7 @@ export default function Messages({ messages, own, isStaff, onBookingUpdate, send
           {isStaff && status === "pending" && (
             <div className="bookingCardActions">
               <button
+                type="button"
                 className="bookingCardBtn bookingCardBtn--decline"
                 disabled={updating}
                 onClick={() => respond("cancelled")}
@@ -142,6 +159,7 @@ export default function Messages({ messages, own, isStaff, onBookingUpdate, send
                 Decline
               </button>
               <button
+                type="button"
                 className="bookingCardBtn bookingCardBtn--accept"
                 disabled={updating}
                 onClick={() => respond("confirmed")}
@@ -155,6 +173,7 @@ export default function Messages({ messages, own, isStaff, onBookingUpdate, send
           {isStaff && !hasEscrow && status === "confirmed" && appointmentHasPassed && (
             <div className="bookingCardActions">
               <button
+                type="button"
                 className="bookingCardBtn bookingCardBtn--accept"
                 disabled={updating}
                 onClick={() => respond("completed")}
@@ -172,6 +191,7 @@ export default function Messages({ messages, own, isStaff, onBookingUpdate, send
               bookingStatus={status}
             />
           )}
+
         </div>
         <div className="messageBottom">{format(messages.createdAt)}</div>
       </div>
@@ -212,6 +232,7 @@ export default function Messages({ messages, own, isStaff, onBookingUpdate, send
       {lightboxOpen && messages.media?.type === "image" && (
         <div className="mediaLightboxOverlay" onClick={() => setLightboxOpen(false)}>
           <button
+            type="button"
             className="mediaLightboxClose"
             onClick={() => setLightboxOpen(false)}
             aria-label="Close"

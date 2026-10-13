@@ -149,7 +149,7 @@ export default function Services({ staffId }) {
       >
       {services.map((service) => (
         <SwiperSlide key={service._id}>
-          <Link to={`/servicedetail/${service._id}`} className="serviceCard">
+          <Link to={`/servicedetail/${service._id}`} state={{ ownerId: staffId }} className="serviceCard">
             <div className="serviceBox">
               <img src={service.img} alt={service.label} />
               <span>{service.label}</span>

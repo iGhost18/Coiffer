@@ -1,6 +1,7 @@
 import { useRef, useContext, useState } from "react";
 import "./login.css";
 import { loginCall } from "../../apiCalls";
+import { COUNTRIES } from "../../utils/countries";
 import { AuthContext } from "../../components/context/AuthContext";
 import CircularProgress from "@mui/material/CircularProgress";
 import api from "../../api";
@@ -218,7 +219,7 @@ export default function LoginReg() {
                     placeholder="Min. 8 characters"
                     ref={registerPassword}
                     required
-                    minLength={12}
+                    minLength={8}
                     maxLength={128}
                   />
                   <p className="field-hint">
@@ -238,7 +239,12 @@ export default function LoginReg() {
 
                 <div className="field">
                   <label>Country</label>
-                  <input type="text" placeholder="Country" ref={country} maxLength={100} />
+                  <select ref={country} defaultValue="">
+                    <option value="">Select country</option>
+                    {COUNTRIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {registerError && <p className="form-message error">{registerError}</p>}

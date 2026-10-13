@@ -78,24 +78,6 @@
 }
 
 
-.Choose{
-    width: 100%;
-    height: auto;
-    padding: 4%;
-    display: block;
-    place-items: center;
-    margin-top: 6%;
-    border-radius: 10px;
-    background-color: rgba(228, 228, 228, 0.555);
-}
-
-.ChooseLine{
-    margin-top: -30px;
-    margin-bottom: 50px;
-    font-style: oblique;
-    font-family: 'Times New Roman', Times, serif;
-    font-size: clamp(24px, 5vw, 40px);
-}
 .ChooseGrid{
     display: flex;
     flex-wrap: wrap;
@@ -128,18 +110,36 @@
     margin: 20px;
 }
 
+.Choose{
+    width: 100%;
+    height: auto;
+    padding: 4%;
+    display: block;
+    text-align: center;      
+    margin-top: 6%;
+    border-radius: 10px;
+    background-color: rgba(228, 228, 228, 0.555);
+}
+
+.Choose h1,
+.Choose p,
+.ChooseLine{
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .Service{
     width: 100%;
     height: auto;
     padding: 4%;
     display: block;
-    place-items: center;
     border-radius: 10px;
 }
 
-.ServicesCard{
+.Service h3{
+    text-align: center;
     width: 100%;
-    padding: 10px;
 }
 
 .Card{

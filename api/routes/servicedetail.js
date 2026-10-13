@@ -1,6 +1,7 @@
 const { authenticate } = require("../middleware/auth");
 const router = require("express").Router();
 const mongoose = require("mongoose");
+ const Service = require("../models/services");
 const Servicedetail = require("../models/servicedetail");
 
 const ALLOWED_FIELDS = ["name", "desc", "img", "duration", "price", "serviceId"];
@@ -47,36 +48,54 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+
+ 
 // CREATE a servicedetail
 router.post("/", authenticate, async (req, res) => {
   try {
     if (!req.auth.isAdmin && (req.auth.type !== "Staff" || String(req.body.staffId) !== req.auth.id)) {
       return res.status(403).json("Only the owning staff member can create service details.");
     }
-
+ 
+    // NEW: the parent service must exist and belong to the caller.
+    const { serviceId } = req.body;
+    if (!serviceId || !mongoose.isValidObjectId(serviceId)) {
+      return res.status(400).json("A valid service id is required.");
+    }
+ 
+    const parentService = await Service.findById(serviceId).select("staffId");
+    if (!parentService) {
+      return res.status(404).json("Service not found.");
+    }
+ 
+    if (!req.auth.isAdmin && String(parentService.staffId) !== req.auth.id) {
+      return res.status(403).json("You can only add details to your own services.");
+    }
+ 
     const updates = Object.fromEntries(
       Object.entries(req.body).filter(([key]) => ALLOWED_FIELDS.includes(key))
     );
-
+ 
     if (!updates.name || !String(updates.name).trim()) {
       return res.status(400).json("Service name is required.");
     }
-
+ 
     const validatedPrice = validatePrice(updates.price);
     if (validatedPrice === null) {
       return res.status(400).json("Price must be a valid, non-negative number.");
     }
     updates.price = validatedPrice;
-
+ 
     if (!updates.duration || !String(updates.duration).trim()) {
       return res.status(400).json("Duration is required.");
     }
-
+ 
     const newServicedetail = new Servicedetail({
       ...updates,
-      staffId: req.auth.type === "Staff" ? req.auth.id : req.body.staffId,
+      // always the owner of the parent service, never a value from the request body
+      staffId: parentService.staffId,
     });
-
+ 
     const saved = await newServicedetail.save();
     res.status(201).json(saved);
   } catch (err) {
@@ -84,6 +103,48 @@ router.post("/", authenticate, async (req, res) => {
     res.status(500).json({ message: "Failed to create service detail." });
   }
 });
+ 
+// UPDATE a servicedetail
+router.put("/:id", authenticate, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json("Invalid servicedetail id");
+    }
+ 
+    const existing = await Servicedetail.findById(req.params.id);
+    if (!existing) return res.status(404).json("Servicedetail not found");
+    if (!req.auth.isAdmin && (req.auth.type !== "Staff" || String(existing.staffId) !== req.auth.id)) {
+      return res.status(403).json("You can only update your own service details.");
+    }
+ 
+    const updates = Object.fromEntries(
+      Object.entries(req.body).filter(([key]) => ALLOWED_FIELDS.includes(key))
+    );
+ 
+    // NEW: a detail can never be moved to a different service.
+    delete updates.serviceId;
+ 
+    if (updates.price !== undefined) {
+      const validatedPrice = validatePrice(updates.price);
+      if (validatedPrice === null) {
+        return res.status(400).json("Price must be a valid, non-negative number.");
+      }
+      updates.price = validatedPrice;
+    }
+ 
+    const updated = await Servicedetail.findByIdAndUpdate(
+      req.params.id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+ 
+    res.status(200).json(updated);
+  } catch (err) {
+    console.error("PUT /servicedetail/:id failed:", err);
+    res.status(500).json({ message: "Failed to update service detail." });
+  }
+});
+ 
 
 // UPDATE a servicedetail
 router.put("/:id", authenticate, async (req, res) => {

@@ -17,11 +17,15 @@ function flwHeaders() {
   };
 }
 
-async function releaseBookingPayout(booking) {
+async function releaseBookingPayout(booking, { allowDisputed = false } = {}) {
+  const claimable = allowDisputed
+    ? ["held", "disputed", "payout_failed"]
+    : ["held", "payout_failed"];
+
   const prev = await Booking.findOneAndUpdate(
     {
       _id: booking._id,
-      payoutStatus: { $in: ["held", "disputed", "payout_failed"] },
+      payoutStatus: { $in: claimable },
       status: { $ne: "cancelled" },
     },
     { $set: { payoutStatus: "releasing" }, $inc: { payoutAttempts: 1 } },

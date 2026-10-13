@@ -49,7 +49,9 @@ const checkoutLimiter = rateLimit({
 });
 
 const COMMISSION_RATE = 0.10;
-const AUTO_RELEASE_WINDOW_MS = 24 * 60 * 60 * 1000;
+const AUTO_RELEASE_WINDOW_MS = 45 * 60 * 1000;
+
+const WALL_CLOCK_OFFSET_MS = 60 * 60 * 1000;
 
 function generateTxRef() {
   return `GC-${Date.now()}-${crypto.randomBytes(6).toString("hex")}`;
@@ -494,7 +496,8 @@ async function finalizeSuccessfulPayment(payment, tx) {
       const autoReleaseAt = new Date(
         combineDateAndTime(appointmentDate, appointmentTime).getTime() +
           totalMinutes * 60 * 1000 +
-          AUTO_RELEASE_WINDOW_MS
+          AUTO_RELEASE_WINDOW_MS -
+          WALL_CLOCK_OFFSET_MS
       );
 
       const booking = await Booking.create({

@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { MdVolumeUp, MdVolumeOff } from "react-icons/md";
 import "./captionmodal.css";
 
 export default function CaptionModal({ previewUrl, isVideo, onCancel, onConfirm, posting }) {
   const [caption, setCaption] = useState("");
+  // true = the audio track is removed from the story before it is uploaded
+  const [muteAudio, setMuteAudio] = useState(false);
 
   return (
     <div className="CaptionModalOverlay" onClick={onCancel}>
@@ -14,6 +17,19 @@ export default function CaptionModal({ previewUrl, isVideo, onCancel, onConfirm,
             <img src={previewUrl} alt="" className="CaptionModalMedia" />
           )}
           <div className="CaptionModalScrim" />
+
+          {isVideo && (
+            <button
+              type="button"
+              className={`CaptionModalMute ${muteAudio ? "CaptionModalMute--on" : ""}`}
+              onClick={() => setMuteAudio((m) => !m)}
+              aria-pressed={muteAudio}
+              aria-label={muteAudio ? "Sound removed. Tap to keep sound" : "Sound on. Tap to remove sound"}
+            >
+              {muteAudio ? <MdVolumeOff /> : <MdVolumeUp />}
+              <span>{muteAudio ? "Sound removed" : "Sound on"}</span>
+            </button>
+          )}
 
           <textarea
                 className="CaptionModalInput"
@@ -32,7 +48,7 @@ export default function CaptionModal({ previewUrl, isVideo, onCancel, onConfirm,
           </button>
           <button
             className="CaptionModalPost"
-            onClick={() => onConfirm(caption.trim())}
+            onClick={() => onConfirm(caption.trim(), isVideo && muteAudio)}
             disabled={posting}
           >
             {posting ? "Posting…" : "Share to Story"}

@@ -36,7 +36,7 @@ const { initializeSocket } = require("./socket");
 
 const cron = require("node-cron");
 const { runAutoReleaseSweep } = require("./jobs/autoReleasePayouts");
-cron.schedule("*/15 * * * *", runAutoReleaseSweep);
+cron.schedule("*/5 * * * *", runAutoReleaseSweep);
 
 const app = express();
 

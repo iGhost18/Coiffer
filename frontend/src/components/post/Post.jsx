@@ -23,7 +23,7 @@ export default function Post({ post, onPostDeleted, onPostUpdated }) {
     const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
     const [saved, setSaved] = useState(false);
     const [activeSlide, setActiveSlide] = useState(0);
-    const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+    const PF = "/assets/";
     const { user } = useContext(AuthContext);
     const { staff: currentStaff } = useContext(StaffAuthContext);
 

@@ -33,7 +33,7 @@ export default function RatingsList({ staffId }) {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+  const PF = "/assets/";
 
   useEffect(() => {
     if (!staffId) return;

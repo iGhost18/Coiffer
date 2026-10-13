@@ -20,7 +20,7 @@ export default function Userprofile() {
   const routeUsername = useParams().username;
   const navigate = useNavigate();
 
-  const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+  const PF = "/assets/";
   
   const [saved, setSaved] = useState(false);
   const [isLike, setIsLike] = useState(false);

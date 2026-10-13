@@ -35,6 +35,8 @@ const escapeRegex = (value) =>
 const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const REFRESH_COOKIE_NAME = "refreshToken";
 
+const IS_PROD = process.env.NODE_ENV === "production";
+
 const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
 
@@ -48,23 +50,22 @@ const issueRefreshToken = async (ownerId, ownerType) => {
   return { rawToken, expiresAt };
 };
 
+const REFRESH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: IS_PROD,
+  sameSite: IS_PROD ? "none" : "lax",
+  path: "/api/auth", 
+};
+ 
 const setRefreshCookie = (res, rawToken, expiresAt) => {
   res.cookie(REFRESH_COOKIE_NAME, rawToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    ...REFRESH_COOKIE_OPTIONS,
     expires: expiresAt,
-    path: "/api/auth", // only ever sent to auth endpoints, nowhere else
   });
 };
-
+ 
 const clearRefreshCookie = (res) => {
-  res.clearCookie(REFRESH_COOKIE_NAME, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/api/auth",
-  });
+  res.clearCookie(REFRESH_COOKIE_NAME, REFRESH_COOKIE_OPTIONS);
 };
 
 const signAccessToken = (id, type) =>
@@ -699,38 +700,30 @@ router.put("/staff/:id/promote", authenticate, requireAdmin, async (req, res) =>
 router.post("/refresh", async (req, res) => {
   try {
     const rawToken = req.cookies?.[REFRESH_COOKIE_NAME];
-
+ 
     if (!rawToken) {
       return res.status(401).json({ message: "No refresh token provided." });
     }
-
-    const tokenHash = hashToken(rawToken);
-
+ 
     const stored = await RefreshToken.findOne({
-      tokenHash,
+      tokenHash: hashToken(rawToken),
       revoked: false,
       expiresAt: { $gt: new Date() },
     });
-
+ 
     if (!stored) {
       clearRefreshCookie(res);
       return res.status(401).json({ message: "Invalid or expired session." });
     }
-
-    // Rotate on every use: old token is dead, a new one takes its place.
-    // This means a stolen-and-reused refresh token gets invalidated the
-    // moment the real user's client refreshes next.
-    stored.revoked = true;
+ 
+    // Slide the expiry forward and keep the same token.
+    const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
+    stored.expiresAt = expiresAt;
     await stored.save();
-
-    const { rawToken: newRawToken, expiresAt } = await issueRefreshToken(
-      stored.ownerId,
-      stored.ownerType
-    );
-    setRefreshCookie(res, newRawToken, expiresAt);
-
+    setRefreshCookie(res, rawToken, expiresAt);
+ 
     const accessToken = signAccessToken(stored.ownerId.toString(), stored.ownerType);
-
+ 
     return res.status(200).json({ accessToken });
   } catch (err) {
     console.error("Refresh error:", err);

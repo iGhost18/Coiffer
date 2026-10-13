@@ -15,7 +15,7 @@ import { AuthContext } from "../../components/context/AuthContext";
 import { StaffAuthContext } from "../../components/context/StaffAuthContext";
 import { Link } from "react-router-dom";
 
-const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+const PF = "/assets/";
 
 
 function NotificationItem({

@@ -21,7 +21,7 @@ import IosShareIcon from "@mui/icons-material/IosShare";
 
 
 export default function StaffProfile() {
-  const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+  const PF = "/assets/";
   const { id } = useParams();
   const [isFollowing, setIsFollowing] = useState(false);
   const [staffData, setStaffData] = useState({});
@@ -274,9 +274,10 @@ export default function StaffProfile() {
     }
   };
 
-  const getImage = (img, fallback = "person/noAvatar.png") => {
-    if (!img) return PF + fallback;
-    return img.startsWith("http") ? img : PF + img;
+  const getImage = (img, fallback = "/assets/person/noAvatar.png") => {
+    if (!img) return fallback;
+    if (img.startsWith("http")) return img;
+    return img.startsWith("/") ? img : `/${img}`;
   };
 
   // Staff location can be returned as an object or a plain string.
@@ -316,7 +317,7 @@ export default function StaffProfile() {
     <div className="StaffProfile">
       <div className="StaffTopBar">
         <button
-          className="header-btn"
+          className="StaffHeaderBtn"
           onClick={() => navigate(-1)}
           aria-label="Go back"
         >
@@ -324,7 +325,7 @@ export default function StaffProfile() {
         </button>
 
         <button
-          className="header-btn"
+          className="StaffHeaderBtn"
           onClick={() => setShowShare(true)}
           aria-label="Share profile"
         >
@@ -334,9 +335,9 @@ export default function StaffProfile() {
 
       {/* ===== GALLERY ===== */}
       <div className="StaffGallery">
-        <img src={getImage(staffData?.coverPicture?.[0], "person/noCover.png")} alt="" />
-        <img src={getImage(staffData?.coverPicture?.[1], "person/noCover.png")} alt="" className="centerImg" />
-        <img src={getImage(staffData?.coverPicture?.[2], "person/noCover.png")} alt="" />
+        <img src={getImage(staffData?.coverPicture?.[0], "/assets/person/noCover.png")} alt="" />
+        <img src={getImage(staffData?.coverPicture?.[1], "/assets/person/noCover.png")} alt="" className="centerImg" />
+        <img src={getImage(staffData?.coverPicture?.[2], "/assets/person/noCover.png")} alt="" />
       </div>
 
       {/* ===== PROFILE INFO ===== */}
@@ -399,11 +400,11 @@ export default function StaffProfile() {
 
       {/* ===== LOCATION ===== */}
       <div className="LocationRow">
-        <p>
+        <p className="StaffCity">
           📍 {getLocationText(staffData?.location)}
         </p>
 
-        <p>📅 Joined: May 2026</p>
+        <p className="JoinDate" >📅 Joined: May 2026</p>
       </div>
 
       {/* ===== INFO CARDS ===== */}
@@ -520,7 +521,7 @@ export default function StaffProfile() {
       </div>
 
       {isOwnProfile && (
-        <Share onPostCreated={(newPost) => setPosts((prev) => [newPost, ...prev])} />
+        <Share className="Share" onPostCreated={(newPost) => setPosts((prev) => [newPost, ...prev])} />
       )}
 
       {/* ===== POSTS ===== */}
