@@ -78,7 +78,7 @@ function wrapEmail({ preheader = "", bodyHtml, footerNote = "" }) {
 
   <!-- Preheader: hidden preview text shown next to subject line in inbox -->
   <div style="display:none; max-height:0; overflow:hidden; opacity:0;">
-    ${preheader}
+    ${escapeHtml(preheader)}
   </div>
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f6f8; padding: 24px 12px;">
@@ -158,16 +158,6 @@ function receiptTable(items, total) {
   `;
 }
 
-function detailRow(label, value, { raw = false } = {}) {
-  if (!value) return "";
-  return `
-    <tr>
-      <td style="padding: 4px 0; font-size:13px; color:${TEXT_DIM}; width: 110px; vertical-align:top;">${label}</td>
-      <td style="padding: 4px 0; font-size:13px; color:${INK}; font-weight:600;">${raw ? value : esc(value)}</td>
-    </tr>
-  `;
-}
-
 /*
 ========================================================
 BOOKING CONFIRMATION — now a proper receipt
@@ -192,7 +182,7 @@ function bookingConfirmationEmail({
     </p>
     <h2 style="margin:0 0 16px 0; font-size:20px; color:${INK};">Hi ${esc(customerName) || "there"}, you've booked an appointment.</h2>
     <p style="margin:0 0 16px 0; font-size:13px; color:${TEXT_DIM};">
-      ${staffName || "Your professional"} will confirm your appointment shortly. We'll email you as soon as it's confirmed.
+      ${esc(staffName) || "Your professional"} will confirm your appointment shortly. We'll email you as soon as it's confirmed.
     </p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${BRAND_COLOR_SOFT}; border-radius:8px; padding: 16px 18px; margin-bottom: 8px;">
@@ -251,7 +241,7 @@ function bookingStatusEmail({ customerName, status, staffName }) {
     </p>
     <h2 style="margin:0 0 12px 0; font-size:20px; color:${INK};">Hi ${esc(customerName) || "there"},</h2>
     <p style="margin:0; font-size:14px; color:${INK};">
-      Your appointment${staffName ? ` with <strong>${staffName}</strong>` : ""} has been
+      Your appointment${staffName ? ` with <strong>${esc(staffName)}</strong>` : ""} has been
       <strong style="color:${statusMeta.color};">${statusMeta.text}</strong>.
     </p>
   `;
@@ -311,7 +301,7 @@ DELIVERY UPDATE
 function deliveryUpdateEmail({ customerName, message, orderItems }) {
   const rows = (orderItems || [])
     .map(
-      (i) => `<li style="margin-bottom:4px;">${i.name} <span style="color:${TEXT_DIM};">× ${i.quantity}</span></li>`
+      (i) => `<li style="margin-bottom:4px;">${esc(i.name)} <span style="color:${TEXT_DIM};">× ${i.quantity}</span></li>`
     )
     .join("");
 
@@ -320,7 +310,7 @@ function deliveryUpdateEmail({ customerName, message, orderItems }) {
       Delivery update
     </p>
     <h2 style="margin:0 0 12px 0; font-size:20px; color:${INK};">Hi ${esc(customerName) || "there"},</h2>
-    <p style="margin:0 0 12px 0; font-size:14px; color:${INK};">${message}</p>
+    <p style="margin:0 0 12px 0; font-size:14px; color:${INK};">${esc(message)}</p>
     ${rows ? `<ul style="margin:0; padding-left:18px; font-size:13px; color:${INK};">${rows}</ul>` : ""}
   `;
 
@@ -348,7 +338,7 @@ function newBookingNotificationEmail({ staffName, customerName, services, appoin
     <p style="margin:0 0 4px 0; font-size:12px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:${BRAND_COLOR};">
       New booking request
     </p>
-    <h2 style="margin:0 0 16px 0; font-size:20px; color:${INK};">Hi ${staffName || "there"}, you have a new appointment request.</h2>
+    <h2 style="margin:0 0 16px 0; font-size:20px; color:${INK};">Hi ${esc(staffName) || "there"}, you have a new appointment request.</h2>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${BRAND_COLOR_SOFT}; border-radius:8px; padding: 16px 18px; margin-bottom: 8px;">
       ${detailRow("Customer", customerName)}
@@ -358,7 +348,7 @@ function newBookingNotificationEmail({ staffName, customerName, services, appoin
     </table>
 
     <p style="margin: 20px 0 0 0; font-size:13px; color:${TEXT_DIM};">
-      Services: ${(services || []).map((s) => `${s.name} × ${s.quantity}`).join(", ")}
+      Services: ${(services || []).map((s) => `${esc(s.name)} × ${s.quantity}`).join(", ")}
     </p>
 
     <p style="margin: 24px 0 0 0; font-size:13px; color:${TEXT_DIM};">
@@ -398,9 +388,9 @@ function inviteRequestEmail({ name, email, service, message }) {
     <h2 style="margin:0 0 16px 0; font-size:20px; color:${INK};">Someone wants to join as staff.</h2>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${BRAND_COLOR_SOFT}; border-radius:8px; padding: 16px 18px; margin-bottom: 8px;">
-      ${detailRow("Name", escapeHtml(name) || "-")}
-      ${detailRow("Email", `<a href="mailto:${escapeHtml(email)}" style="color:${INK};">${escapeHtml(email)}</a>`)}
-      ${detailRow("Service", escapeHtml(service))}
+      ${detailRow("Name", name || "-")}
+      ${detailRow("Email", `<a href="mailto:${escapeHtml(email)}" style="color:${INK};">${escapeHtml(email)}</a>`, { raw: true })}
+      ${detailRow("Service", service)}
     </table>
 
     <p style="margin: 20px 0 8px 0; font-size:13px; font-weight:700; color:${INK}; text-transform:uppercase; letter-spacing:0.4px;">
@@ -485,10 +475,10 @@ function disputeAlertEmail({ reference, role, raisedBy, category, reason, custom
     <h2 style="margin:0 0 16px 0; font-size:20px; color:${INK};">Money is on hold for booking #${escapeHtml(reference)}.</h2>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${BRAND_COLOR_SOFT}; border-radius:8px; padding: 16px 18px; margin-bottom: 8px;">
-      ${detailRow("Raised by", `${escapeHtml(raisedBy)} (${escapeHtml(role)})`)}
-      ${detailRow("Customer", escapeHtml(customerName))}
-      ${detailRow("Expert", escapeHtml(staffName))}
-      ${detailRow("Type", escapeHtml(category))}
+      ${detailRow("Raised by", `${raisedBy} (${role})`)}
+      ${detailRow("Customer", customerName)}
+      ${detailRow("Expert", staffName)}
+      ${detailRow("Type", category)}
       ${detailRow("Amount", currency(total))}
     </table>
 

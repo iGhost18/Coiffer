@@ -74,15 +74,13 @@ const BookingSchema = new mongoose.Schema(
       index: true,
     },
     payoutAttempts: { type: Number, default: 0 },
-    raisedByModel: { type: String, enum: ["User", "Staff"], default: null },
-    category: { type: String, default: null },
-    reason: { type: String, default: null },
 
-    staffPayoutAmount: { type: Number, required: true }, 
+    staffPayoutAmount: { type: Number, required: true },
 
     dispute: {
       raisedBy: { type: mongoose.Schema.Types.ObjectId, default: null },
       raisedByModel: { type: String, enum: ["User", "Staff"], default: null },
+      category: { type: String, default: null },
       reason: { type: String, default: null },
       raisedAt: { type: Date, default: null },
       resolvedBy: { type: mongoose.Schema.Types.ObjectId, default: null }, // admin id
@@ -90,10 +88,10 @@ const BookingSchema = new mongoose.Schema(
       resolvedAt: { type: Date, default: null },
       adminNote: { type: String, default: null },
     },
-    
+
     autoReleaseAt: { type: Date, default: null, index: true },
 
-    transferReference: { type: String, default: null },
+    transferReference: { type: String, default: null, index: true },
   },
   { timestamps: true }
 );

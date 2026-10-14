@@ -298,6 +298,14 @@ label{ font-size:11.5px; font-weight:600; color:var(--text-dim); text-transform:
   font-weight: 700;
 }
 
+.pill.disputed,
+.pill.payout_failed,
+.pill.payout_uncertain,
+.pill.refund_uncertain {
+  background: rgba(255, 69, 58, 0.12);
+  color: #ff453a;
+}
+
 /* status pill */
 .pill{
   display:inline-flex; align-items:center; gap:5px;

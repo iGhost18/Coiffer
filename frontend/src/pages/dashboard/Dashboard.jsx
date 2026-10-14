@@ -551,6 +551,23 @@ export default function DispatchAdmin() {
   }
 
   async function updateBookingStatus(id, status) {
+    if (
+      status === "cancelled" &&
+      !window.confirm("Cancelling a paid booking refunds the customer. Continue?")
+    ) {
+      return;
+    }
+    try {
+      await api.put(`/api/booking/${id}/status`, { status });
+      setBookings((prev) => prev.map((b) => (b._id === id ? { ...b, status } : b)));
+      logActivity("Booking status updated", `${id.slice(-6).toUpperCase()} → ${status}`);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Couldn't update this booking.");
+    }
+  }
+
+  async function updateBookingStatus(id, status) {
     try {
       await api.put(`/api/booking/${id}/status`, { status });
       setBookings((prev) => prev.map((b) => (b._id === id ? { ...b, status } : b)));
@@ -1287,7 +1304,7 @@ export default function DispatchAdmin() {
                               </>
                             ) : (
                               <>
-                                <td data-label="Groomers" className="mono">{p.Groomers?.length ?? 0}</td>
+                                <td data-label="Groomers" className="mono">{p.groomers?.length ?? 0}</td>
                                 <td data-label="Appointments" className="mono">{p.cuts?.length ?? 0}</td>
                               </>
                             )}
