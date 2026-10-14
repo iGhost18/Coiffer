@@ -73,6 +73,7 @@ export default function Messenger() {
 
     if (belongsToCurrentChat) {
       setMessages((prev) => [...prev, arrivalMessages]);
+      bumpConversation(arrivalMessages.conversationId);
 
       // The chat is already open, so this new message has effectively
       // been "seen" the moment it arrives — mark it read on the backend
@@ -84,13 +85,7 @@ export default function Messenger() {
         api.put(`/api/message/conversation/${currentChat._id}/read`).catch(console.error);
       }
     } else if (arrivalMessages.conversationId) {
-      setConversation((prev) =>
-        prev.map((c) =>
-          c._id === arrivalMessages.conversationId
-            ? { ...c, unreadCount: (c.unreadCount || 0) + 1 }
-            : c
-        )
-      );
+      bumpConversation(arrivalMessages.conversationId, 1);
     }
   }, [arrivalMessages, currentChat]);
 
@@ -267,6 +262,7 @@ export default function Messenger() {
 
       const res = await api.post("/api/message", message);
       setMessages((prev) => [...prev, res.data]);
+      bumpConversation(currentChat._id);
       setNewMessages("");
       cancelPendingMedia();
     } catch (err) {
@@ -307,6 +303,15 @@ export default function Messenger() {
     setMessages((prev) =>
       prev.map((m) => (m._id === messageId ? { ...m, status: newStatus } : m))
     );
+  };
+
+  const bumpConversation = (conversationId, unreadDelta = 0) => {
+    setConversation((prev) => {
+      const target = prev.find((c) => c._id === conversationId);
+      if (!target) return prev;
+      const updated = { ...target, unreadCount: (target.unreadCount || 0) + unreadDelta };
+      return [updated, ...prev.filter((c) => c._id !== conversationId)];
+    });
   };
 
   useEffect(() => {

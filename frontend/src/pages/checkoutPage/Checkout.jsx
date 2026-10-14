@@ -56,7 +56,7 @@ export default function Checkout() {
     total,
   } = useCart();
 
-  const grandTotal = total;
+  const grandTotal = cartItems.length > 0 ? total + PLATFORM_FEE : 0;
 
   const deliveryWindow =
     getDeliveryWindow(formData.state);
@@ -67,6 +67,8 @@ export default function Checkout() {
       [e.target.name]: e.target.value,
     });
   };
+
+  const PLATFORM_FEE = 195; // display only; the server sets the real amount
 
   function toLocalDateString(date) {
     const year = date.getFullYear();
@@ -261,6 +263,9 @@ export default function Checkout() {
        * The customer has not paid yet.
        */
 
+
+      window.history.replaceState(null, "", "/");
+      
       window.location.href = response.data.checkoutUrl;
     } catch (err) {
       console.error(
@@ -646,6 +651,14 @@ export default function Checkout() {
                 <TbCurrencyNaira />
 
                 {total.toLocaleString()}
+              </span>
+            </div>
+
+            <div className="SummarySubRow">
+              <span>Service fee</span>
+              <span>
+                <TbCurrencyNaira />
+                {cartItems.length > 0 ? PLATFORM_FEE.toLocaleString() : 0}
               </span>
             </div>
 

@@ -14,6 +14,13 @@ export default function PaymentCallback() {
 
   useEffect(() => {
     const transactionId = searchParams.get("transaction_id");
+    const status = searchParams.get("status");
+
+    // Customer backed out of Flutterwave: nothing was paid, go home.
+    if (status === "cancelled") {
+      navigate("/", { replace: true });
+      return;
+    }
 
     if (!transactionId) {
       setState("failed");
@@ -61,7 +68,8 @@ export default function PaymentCallback() {
         address={receiptData.address}
         paymentMethod={receiptData.paymentMethod}
         total={receiptData.total}
-        onClose={() => navigate("/")}
+        platformFee={receiptData.platformFee || 0}
+        onClose={() => navigate("/", { replace: true })}
         onViewSchedule={() => navigate("/schedule", { replace: true })}
       />
     );
@@ -73,7 +81,7 @@ export default function PaymentCallback() {
       <h2 className="pc-title">We couldn't confirm this payment</h2>
       <p className="pc-message">If money was deducted, contact support with your reference below.</p>
       {txRef && <p className="pc-ref">Ref: {txRef}</p>}
-      <button className="pc-btn pc-btn--primary" onClick={() => navigate("/")}>
+      <button className="pc-btn pc-btn--primary" onClick={() => navigate("/", { replace: true })}>
         Go home
       </button>
     </div>

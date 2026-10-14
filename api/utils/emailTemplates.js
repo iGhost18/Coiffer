@@ -129,7 +129,7 @@ and payment receipt emails.
 ========================================================
 */
 
-function receiptTable(items, total) {
+function receiptTable(items, total, fee = 0) {
   const rows = (items || [])
     .map(
       (item) => `
@@ -145,9 +145,19 @@ function receiptTable(items, total) {
     )
     .join("");
 
+  const feeRow =
+    fee > 0
+      ? `
+      <tr>
+        <td style="padding: 10px 0; border-bottom: 1px solid ${LINE}; font-size:13px; color:${TEXT_DIM};">Service fee</td>
+        <td style="padding: 10px 0; border-bottom: 1px solid ${LINE}; font-size:13px; color:${INK}; text-align:right;">${currency(fee)}</td>
+      </tr>`
+      : "";
+
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 16px;">
       ${rows}
+      ${feeRow}
       <tr>
         <td style="padding: 14px 0 0 0; font-size:15px; font-weight:700; color:${INK};">Total</td>
         <td style="padding: 14px 0 0 0; font-size:15px; font-weight:700; color:${BRAND_COLOR}; text-align:right;">

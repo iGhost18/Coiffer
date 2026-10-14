@@ -74,6 +74,9 @@ async function notifyDispute(booking, role) {
         conversationId: conversation._id.toString(),
         text: messageText,
       });
+
+      await Conversation.updateOne({ _id: conversation._id }, { $set: { lastMessageAt: new Date() } });
+      
       sendMessage(adminId, message);
       await notify(adminId, "Staff", `Dispute raised on booking #${ref}.`, "/messenger");
     } catch (err) {

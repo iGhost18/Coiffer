@@ -10,6 +10,7 @@ export default function Receipt({
   address,
   paymentMethod,
   total,
+  platformFee = 0,
   onClose,
   onViewSchedule,
 }) {
@@ -122,6 +123,16 @@ export default function Receipt({
               <span>{paymentMethod}</span>
             </div>
           </div>
+
+          {platformFee > 0 && (
+            <div className="ReceiptRow">
+              <span>Service fee</span>
+              <span className="ReceiptItemPrice">
+                <TbCurrencyNaira />
+                {platformFee.toLocaleString()}
+              </span>
+            </div>
+          )}
 
           <div className="ReceiptTotalRow">
             <span>Total Paid</span>

@@ -487,7 +487,7 @@ export default function StaffProfile() {
 
      {/* ===== RATE THIS PROFESSIONAL ===== */}
       {!isOwnProfile && user && (
-        <div className="BioCard">
+        <div className="BioCard RateCard">
           <h4>Rate this professional</h4>
           <RatingWidget staffId={staffData._id} completedBookingId={completedBookingId} />
         </div>

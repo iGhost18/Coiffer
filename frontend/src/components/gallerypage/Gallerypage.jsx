@@ -36,7 +36,7 @@ export default function Gallerypage() {
             ? `/api/staff/${currentUser._id}`
             : `/api/user?username=${currentUser.username}`
         );
-        setPhotos(res.data?.Gallery || []);
+        setPhotos(res.data?.gallery || []);
         setFeatured(res.data?.featured || []);
       } catch (err) {
         console.log(err);

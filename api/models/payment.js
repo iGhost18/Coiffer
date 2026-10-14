@@ -27,6 +27,7 @@ const PaymentSchema = new mongoose.Schema(
       default: "none",
     },
     flutterwaveRefundId: { type: String, default: "" },
+    flutterwaveFee: { type: Number, default: 0 },
 
     amount: {
       type: Number,

@@ -90,9 +90,10 @@ router.get("/:userId", authenticate, async (req, res) => {
     const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 100);
     const page = Math.max(Number(req.query.page) || 1, 1);
 
-    const conversations = await Conversation.find({
-      members: { $in: [req.params.userId] },
-    }).sort({ updatedAt: -1 }).skip((page - 1) * limit).limit(limit);
+    const conversations = await Conversation.find({ members: { $in: [req.params.userId] } })
+      .sort({ lastMessageAt: -1, updatedAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     const conversationIds = conversations.map((c) => c._id.toString());
 

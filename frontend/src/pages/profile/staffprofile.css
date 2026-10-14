@@ -822,7 +822,153 @@
     object-fit: cover;
   }
 }
+/* =========================================================
+   MOBILE TWEAKS: schedule row, rate card, share box
+   ========================================================= */
+@media (max-width: 600px) {
 
+  /* ---- Schedule: "From 8:00 AM → To 11:00 AM" on one line ---- */
+  .StaffProfile .TimeSlotRow {
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 8px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .StaffProfile .SlotLabel {
+    width: auto;
+    font-size: 11px;
+  }
+
+  .StaffProfile .SlotTime {
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  .StaffProfile .SlotArrow {
+    font-size: 12px;
+  }
+
+  /* ---- Rate this professional: smaller, fits the screen ---- */
+  .StaffProfile .RateCard {
+    margin: 10px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .StaffProfile .RateCard h4 {
+    margin: 0 0 6px;
+    font-size: 14px;
+  }
+
+  .StaffProfile .RateCard * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .StaffProfile .RateCard p {
+    margin: 0 0 6px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .StaffProfile .RateCard svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .StaffProfile .RateCard textarea {
+    width: 100%;
+    min-height: 56px;
+    padding: 8px 10px;
+    font-size: 16px;      /* keep 16px so iOS doesn't zoom on focus */
+  }
+
+  .StaffProfile .RateCard button {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+
+  /* ---- Share box: shorter, icons on one straight line ---- */
+  .StaffProfile .Share {
+    width: 100%;          /* beats the old ".Share { width: 80% }" */
+    margin: 8px 0;
+    border-radius: 12px;
+  }
+
+  .StaffProfile .Share .ShareWrapper {
+    padding: 10px;
+  }
+
+  .StaffProfile .Share .ShareHeader {
+    margin-bottom: 8px;
+  }
+
+  .StaffProfile .Share .ShareHeaderTitle {
+    font-size: 14px;
+  }
+
+  .StaffProfile .Share .ShareHeaderButton {
+    padding: 6px 18px;
+    font-size: 13px;
+  }
+
+  .StaffProfile .Share .ShareTop {
+    padding: 6px 8px;
+    gap: 8px;
+  }
+
+  .StaffProfile .Share .ShareProfileImg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .StaffProfile .Share .ShareInput {
+    padding: 4px 0;
+  }
+
+  .StaffProfile .Share hr {
+    margin: 8px 0;
+  }
+
+  /* One row of four icons, labels hidden */
+  .StaffProfile .Share .ShareOptions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .StaffProfile .Share .shareOption {
+    flex: 1 1 0;
+    flex-direction: row;
+    min-height: 36px;
+    padding: 4px;
+    border-radius: 8px;
+  }
+
+  .StaffProfile .Share .ShareOptiontext {
+    display: none;
+  }
+
+  .StaffProfile .Share .ShareIcon {
+    font-size: 20px;
+  }
+
+  .StaffProfile .Share .SharePanel {
+    margin-top: 8px;
+    padding: 10px;
+  }
+
+  .StaffProfile .Share .SharePreviewItem {
+    width: 60px;
+    height: 60px;
+  }
+}
 /* ---------- 500px and below ---------- */
 @media (max-width: 500px) {
   .StaffProfile {

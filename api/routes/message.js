@@ -50,6 +50,10 @@ router.post("/", authenticate, async (req, res) => {
     });
     const savedMessage = await newMessage.save();
 
+    await Conversation.updateOne(
+      { _id: conversation._id },
+      { $set: { lastMessageAt: new Date() } }
+    );
     
     // Find the receiver from the already-authorized conversation.
     if (conversation) {

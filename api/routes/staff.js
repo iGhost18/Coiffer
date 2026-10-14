@@ -470,11 +470,6 @@ router.put("/:id/addClient", authenticate, async (req, res) => {
             await staff.save();
         }
 
-        if (!user.groomers.includes(staff._id)) {
-            user.groomers.push(staff._id);
-            await user.save();
-        }
-
         res.status(200).json("Client added");
     } catch (err) {
         console.error("PUT /staff/:id/addClient failed:", err);
@@ -505,11 +500,6 @@ router.put("/:id/removeClient", authenticate, async (req, res) => {
             (clientId) => String(clientId) !== String(user._id)
         );
         await staff.save();
-
-        user.groomers = user.groomers.filter(
-            (groomerId) => String(groomerId) !== String(staff._id)
-        );
-        await user.save();
 
         res.status(200).json("Client removed");
     } catch (err) {
@@ -545,11 +535,6 @@ router.put("/:id/addGroomer", authenticate, async (req, res) => {
         if (!alreadyAdded) {
             user.groomers.push(staff._id);
             await user.save();
-        }
-
-        if (!staff.clients.includes(user._id)) {
-            staff.clients.push(user._id);
-            await staff.save();
         }
 
         // Only notify on the first add — otherwise a customer can spam a
@@ -592,11 +577,6 @@ router.put("/:id/removeGroomer", authenticate, async (req, res) => {
         if (!staff || !user) {
             return res.status(404).json("User or Staff not found");
         }
-
-        staff.clients = staff.clients.filter(
-            (clientId) => String(clientId) !== String(user._id)
-        );
-        await staff.save();
 
         user.groomers = user.groomers.filter(
             (groomerId) => String(groomerId) !== String(staff._id)

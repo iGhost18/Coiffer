@@ -48,10 +48,16 @@ const checkoutLimiter = rateLimit({
   message: "Too many checkout attempts. Please wait a moment and try again.",
 });
 
-const COMMISSION_RATE = 0.10;
+const COMMISSION_RATE = 195;
+
 const AUTO_RELEASE_WINDOW_MS = 45 * 60 * 1000;
 
 const WALL_CLOCK_OFFSET_MS = 60 * 60 * 1000;
+
+function estimateFlutterwaveFee(amount) {
+  const fee = amount * 0.014 + (amount >= 2500 ? 100 : 0);
+  return roundMoney(Math.min(fee, 2000));
+}
 
 function generateTxRef() {
   return `GC-${Date.now()}-${crypto.randomBytes(6).toString("hex")}`;
@@ -187,32 +193,29 @@ router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), 
     finalizeSuccessfulPayment can snapshot it onto each Booking.
     */
 
-    const staffPayouts = {};
-    let platformCommission = 0;
+  const staffPayouts = {};
 
-    for (const item of serviceItems) {
-      const staffId = item.staffId;
+  for (const item of serviceItems) {
+    const staffId = item.staffId;
 
-      if (!mongoose.isValidObjectId(staffId)) return res.status(400).json({ message: "Invalid staff member." });
-
-      if (!staffId) {
-        return res.status(400).json({ message: `Service "${item.name}" has no staff member.` });
-      }
-
-      const amount = item.price * item.quantity;
-      const commission = roundMoney(amount * COMMISSION_RATE);
-      const payout = roundMoney(amount - commission);
-
-      if (!staffPayouts[staffId]) {
-        staffPayouts[staffId] = { gross: 0, commission: 0, payout: 0 };
-      }
-
-      staffPayouts[staffId].gross = roundMoney(staffPayouts[staffId].gross + amount);
-      staffPayouts[staffId].commission = roundMoney(staffPayouts[staffId].commission + commission);
-      staffPayouts[staffId].payout = roundMoney(staffPayouts[staffId].payout + payout);
-
-      platformCommission = roundMoney(platformCommission + commission);
+    if (!staffId) {
+      return res.status(400).json({ message: `Service "${item.name}" has no staff member.` });
     }
+    if (!mongoose.isValidObjectId(staffId)) {
+      return res.status(400).json({ message: "Invalid staff member." });
+    }
+
+    const amount = roundMoney(item.price * item.quantity);
+
+    if (!staffPayouts[staffId]) staffPayouts[staffId] = { gross: 0, payout: 0 };
+
+    staffPayouts[staffId].gross = roundMoney(staffPayouts[staffId].gross + amount);
+    // Provisional. The real payout is set after Flutterwave confirms its fee.
+    staffPayouts[staffId].payout = staffPayouts[staffId].gross;
+  }
+
+  const platformFee = PLATFORM_FEE;
+  const chargeAmount = roundMoney(total + platformFee);
 
     /*
     CHECK STAFF PAYOUT DETAILS — every staff member must have a verified
@@ -260,13 +263,13 @@ router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), 
     const payment = await Payment.create({
       customerId: req.auth.id,
       txRef,
-      amount: total,
+      amount: chargeAmount,
       currency: "NGN",
       status: "pending",
       paymentMethod: "flutterwave",
       serviceTotal,
       productTotal,
-      platformCommission,
+      platformCommission: platformFee,
       staffPayouts,
       checkoutData: {
         contact,
@@ -286,7 +289,7 @@ router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), 
       },
       body: JSON.stringify({
         tx_ref: txRef,
-        amount: total,
+        amount: chargeAmount,
         currency: "NGN",
         redirect_url: process.env.FLW_REDIRECT_URL,
         customer: {
@@ -468,6 +471,29 @@ async function finalizeSuccessfulPayment(payment, tx) {
 
   const { contact, address, cartItems, appointmentDate, appointmentTime } = claimed.checkoutData;
 
+  // Flutterwave's fee is charged to the experts, split in proportion to
+  // each expert's share of the services. The fee on any product portion
+  // of the cart stays with the app.
+  const flwFee = Number(tx.app_fee) > 0
+    ? roundMoney(Number(tx.app_fee))
+    : estimateFlutterwaveFee(claimed.amount);
+
+  const feeShareForExperts = claimed.amount > 0
+    ? (claimed.serviceTotal + claimed.platformCommission) / claimed.amount
+    : 1;
+  const expertFeePool = roundMoney(flwFee * feeShareForExperts);
+
+  const grossSum = Object.values(claimed.staffPayouts || {})
+    .reduce((sum, s) => sum + (s.gross || 0), 0);
+
+  const finalPayouts = {};
+  for (const [sid, s] of Object.entries(claimed.staffPayouts || {})) {
+    const share = grossSum > 0 ? (s.gross || 0) / grossSum : 0;
+    finalPayouts[sid] = Math.max(0, roundMoney((s.gross || 0) - expertFeePool * share));
+  }
+
+  await Payment.updateOne({ _id: claimed._id }, { $set: { flutterwaveFee: flwFee } });
+
   const createdBookings = [];
   const createdOrders = [];
 
@@ -488,7 +514,7 @@ async function finalizeSuccessfulPayment(payment, tx) {
         items.reduce((sum, i) => sum + Number(i.price || 0) * Number(i.quantity || 1), 0)
       );
 
-      // Auto-release window: appointment start + total service time + 24h.
+      // Auto-release window: appointment start + total service time + 45min.
       const totalMinutes = items.reduce(
         (sum, i) => sum + durationToMinutes(i.duration) * Math.max(1, Number(i.quantity) || 1),
         0
@@ -522,7 +548,7 @@ async function finalizeSuccessfulPayment(payment, tx) {
 
         // escrow
         payoutStatus: "held",
-        staffPayoutAmount: claimed.staffPayouts?.[staffId]?.payout || 0,
+        staffPayoutAmount: finalPayouts[staffId] || 0,
         autoReleaseAt,
       });
 
@@ -787,6 +813,7 @@ router.get("/verify/:transactionId", authenticate, async (req, res) => {
       address,
       paymentMethod: "Flutterwave",
       total: result.payment.amount,
+      platformFee: result.payment.platformCommission,
     });
   } catch (error) {
     console.error("GET /api/payment/verify failed:", error);

@@ -336,19 +336,20 @@ router.get("/following/:userId", authenticate, async (req, res) => {
         // Look in the right collection for whoever is logged in.
         const Model = req.auth.type === "Staff" ? Staff : User;
         const currentUser = await Model.findById(req.params.userId).select("followings");
+        if (!currentUser) return res.status(200).json([]);
 
-        if (!currentUser || !currentUser.followings?.length) {
-            return res.status(200).json([]);
-        }
+        const authorIds = [...(currentUser.followings || []).map(String)];
+        if (req.auth.type === "Staff") authorIds.push(req.auth.id); // staff see their own posts too
+
+        if (authorIds.length === 0) return res.status(200).json([]);
 
         const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
         const page = Math.max(Number(req.query.page) || 1, 1);
 
-        const merged = await Post.find({ staffId: { $in: currentUser.followings } })
+        const merged = await Post.find({ staffId: { $in: authorIds } })
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit);
-
         res.status(200).json(merged);
     } catch (err) {
         console.error("GET /post/following/:userId failed:", err);
