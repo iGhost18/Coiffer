@@ -854,13 +854,13 @@
   /* ---- Rate this professional: smaller, fits the screen ---- */
   .StaffProfile .RateCard {
     margin: 10px 0;
-    padding: 10px 12px;
+    padding: 8px 12px;
     border-radius: 10px;
     overflow: hidden;
   }
 
   .StaffProfile .RateCard h4 {
-    margin: 0 0 6px;
+    margin: 0 0 4px;
     font-size: 14px;
   }
 

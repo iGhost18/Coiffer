@@ -61,14 +61,15 @@ export default function Menu() {
             console.error("Logout request failed:", err);
             // proceed with client-side logout regardless — don't trap the user
         } finally {
+            userDispatch({ type: "LOGOUT" });
+            staffDispatch({ type: "LOGOUT" });
+            localStorage.removeItem("user");
+            localStorage.removeItem("staff");
             socket.disconnect();
-
-            if (user) userDispatch({ type: "LOGOUT" });
-            if (staff) staffDispatch({ type: "LOGOUT" });
 
             setShowSignOut(false);
             setIsOpen(false);
-            navigate("/login");
+            navigate("/login", { replace: true });
         }
     };
 

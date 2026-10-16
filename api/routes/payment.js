@@ -48,11 +48,11 @@ const checkoutLimiter = rateLimit({
   message: "Too many checkout attempts. Please wait a moment and try again.",
 });
 
-const COMMISSION_RATE = 195;
-
 const AUTO_RELEASE_WINDOW_MS = 45 * 60 * 1000;
 
 const WALL_CLOCK_OFFSET_MS = 60 * 60 * 1000;
+
+const PLATFORM_FEE = 195; // flat, charged once per payment
 
 function estimateFlutterwaveFee(amount) {
   const fee = amount * 0.014 + (amount >= 2500 ? 100 : 0);

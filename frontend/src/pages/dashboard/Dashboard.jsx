@@ -567,15 +567,6 @@ export default function DispatchAdmin() {
     }
   }
 
-  async function updateBookingStatus(id, status) {
-    try {
-      await api.put(`/api/booking/${id}/status`, { status });
-      setBookings((prev) => prev.map((b) => (b._id === id ? { ...b, status } : b)));
-      logActivity("Booking status updated", `${id.slice(-6).toUpperCase()} → ${status}`);
-    } catch (err) {
-      console.error(err);
-    }
-  }
 
   // ---------- PROFILE NAVIGATION ----------
   function viewProfile(person, type) {

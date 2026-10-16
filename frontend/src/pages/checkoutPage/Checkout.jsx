@@ -15,6 +15,9 @@ import { formatTo12Hour } from "../../utils/time";
 import Receipt from "../../components/receipt/Receipt";
 import api from "../../api";
 
+
+const PLATFORM_FEE = 195; // display only; the server sets the real amount
+
 export default function Checkout() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
@@ -68,7 +71,7 @@ export default function Checkout() {
     });
   };
 
-  const PLATFORM_FEE = 195; // display only; the server sets the real amount
+ 
 
   function toLocalDateString(date) {
     const year = date.getFullYear();
@@ -662,13 +665,6 @@ export default function Checkout() {
               </span>
             </div>
 
-            <div className="SummarySubRow">
-              <span>Transport</span>
-
-              <span>
-                Negotiate with Expert
-              </span>
-            </div>
 
             <div className="SummaryTotalRow">
               <span>Total</span>

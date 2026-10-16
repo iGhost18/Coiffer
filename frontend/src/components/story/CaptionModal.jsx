@@ -12,7 +12,7 @@ export default function CaptionModal({ previewUrl, isVideo, onCancel, onConfirm,
       <div className="CaptionModalCard" onClick={(e) => e.stopPropagation()}>
         <div className="CaptionModalPreview">
           {isVideo ? (
-            <video src={previewUrl} className="CaptionModalMedia" muted autoPlay loop playsInline />
+            <video src={previewUrl} className="CaptionModalMedia" muted={muteAudio} autoPlay loop playsInline onClick={(e) => (e.target.paused ? e.target.play() : e.target.pause())} />
           ) : (
             <img src={previewUrl} alt="" className="CaptionModalMedia" />
           )}

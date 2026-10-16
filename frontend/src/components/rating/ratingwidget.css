@@ -159,6 +159,61 @@
   color: #697180;
 }
 
+@media (max-width: 600px) {
+  .RatingWidget {
+    gap: 8px;
+    padding: 8px 10px;
+    border: none;          /* the outer BioCard already has the box */
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .RatingStarsRow {
+    gap: 8px;
+  }
+
+  .RatingStars {
+    gap: 4px;
+  }
+
+  .RatingStar {
+    font-size: 22px;
+  }
+
+  .RatingScoreLabel {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+
+  .RatingReviewInput {
+    min-height: 30px;
+    padding: 8px 10px;
+    font-size: 16px;       /* keeps iOS from zooming on focus */
+  }
+
+  .RatingCharCount {
+    bottom: 4px;
+    right: 8px;
+  }
+
+  .RatingFooterRow {
+    gap: 6px;
+  }
+
+  .RatingSavedBadge {
+    font-size: 11.5px;
+    padding: 3px 10px;
+  }
+
+  .RatingUnsavedHint {
+    font-size: 11px;
+  }
+
+  .RatingHint {
+    font-size: 12px;
+  }
+}
+
 @media (max-width: 480px) {
   .RatingWidget {
     padding: 16px;
