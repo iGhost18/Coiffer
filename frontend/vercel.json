@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/staffprofile/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|Slackbot|LinkedInBot|Discordbot|Instagram).*"
+        }
+      ],
+      "destination": "/api/og?id=:id"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

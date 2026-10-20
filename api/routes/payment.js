@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const crypto = require("crypto");
+const Sentry = require("@sentry/node");
 
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt"); // needed for fix 5

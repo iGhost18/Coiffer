@@ -1,5 +1,6 @@
 require("dotenv").config();
-
+require("./instrument");
+const Sentry = require("@sentry/node");
 const express = require("express");
 const mongoose = require("mongoose");
 const helmet = require("helmet");
@@ -264,6 +265,8 @@ CENTRAL ERROR HANDLER
 ========================================
 */
 
+Sentry.setupExpressErrorHandler(app);
+
 app.use((err, req, res, next) => {
 
     if (res.headersSent) {
@@ -284,6 +287,8 @@ app.use((err, req, res, next) => {
                 : err.message || "Internal server error",
     });
 });
+
+
 
 /*
 ========================================
@@ -307,8 +312,10 @@ mongoose
     .then(() => {
         console.log("Connected to MongoDB");
     })
-    .catch((err) => {
+    .catch(async (err) => {
+        Sentry.captureException(err);
         console.error("Error connecting to MongoDB:", err);
+        await Sentry.flush(2000);
         process.exit(1);
     });
 

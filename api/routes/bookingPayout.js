@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const Sentry = require("@sentry/node");
 
 const Booking = require("../models/booking");
 const { authenticate, requireAdmin } = require("../middleware/auth");
@@ -309,6 +310,7 @@ router.post("/admin/:id/retry-payout", authenticate, requireAdmin, async (req, r
     const released = await releaseBookingPayout(booking);
     return res.status(200).json({ success: true, booking: released });
   } catch (error) {
+    Sentry.captureException(err);
     console.error("retry-payout failed:", error);
     return res.status(502).json({ message: `Retry failed: ${error.message}` });
   }
