@@ -82,7 +82,7 @@ router.post("/", authenticate, async (req, res) => {
   }
 });
 
-// Get conversations of a user
+// Get conversations of a user 
 router.get("/:userId", authenticate, async (req, res) => {
   try {
     if (req.auth.id !== String(req.params.userId)) return res.status(403).json({ message: "Access denied." });

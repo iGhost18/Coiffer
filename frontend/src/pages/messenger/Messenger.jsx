@@ -73,7 +73,7 @@ export default function Messenger() {
 
     if (belongsToCurrentChat) {
       setMessages((prev) => [...prev, arrivalMessages]);
-      bumpConversation(arrivalMessages.conversationId);
+      bumpConversation(arrivalMessages.conversationId || currentChat._id);
 
       // The chat is already open, so this new message has effectively
       // been "seen" the moment it arrives — mark it read on the backend
@@ -305,12 +305,30 @@ export default function Messenger() {
     );
   };
 
-  const bumpConversation = (conversationId, unreadDelta = 0) => {
+  const refreshConversations = async () => {
+    if (!currentUser?._id) return;
+    try {
+      const res = await api.get(`/api/conversation/${currentUser._id}`);
+      setConversation(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error refreshing conversations:", err);
+    }
+  };
+
+  const bumpConversation = (id, unreadDelta = 0) => {
+    if (!id) return;
+
+    // New conversation that isn't in the list yet: fetch it from the server
+    if (!conversation.some((c) => c._id === id)) {
+      refreshConversations();
+      return;
+    }
+
     setConversation((prev) => {
-      const target = prev.find((c) => c._id === conversationId);
+      const target = prev.find((c) => c._id === id);
       if (!target) return prev;
       const updated = { ...target, unreadCount: (target.unreadCount || 0) + unreadDelta };
-      return [updated, ...prev.filter((c) => c._id !== conversationId)];
+      return [updated, ...prev.filter((c) => c._id !== id)];
     });
   };
 
