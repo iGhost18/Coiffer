@@ -16,6 +16,7 @@ export default function Invite() {
   const [requestError, setRequestError] = useState("");
   const [service, setService] = useState("");
   const [serviceOptions, setServiceOptions] = useState([]);
+  const [otherService, setOtherService] = useState(false);
 
   // Token form
   const [token, setToken] = useState("");
@@ -113,21 +114,39 @@ export default function Invite() {
               required
               maxLength={254}
             />
-            <input
-              type="text"
-              list="invite-services"
-              placeholder="Service you offer (e.g. Barber)"
-              value={service}
-              onChange={(e) => setService(e.target.value)}
-              required
-              minLength={2}
-              maxLength={100}
-            />
-            <datalist id="invite-services">
-              {serviceOptions.map((name) => (
-                <option key={name} value={name} />
-              ))}
-            </datalist>
+            {serviceOptions.length > 0 && (
+              <select
+                value={otherService ? "__other__" : service}
+                onChange={(e) => {
+                  if (e.target.value === "__other__") {
+                    setOtherService(true);
+                    setService("");
+                  } else {
+                    setOtherService(false);
+                    setService(e.target.value);
+                  }
+                }}
+                required={!otherService}
+              >
+                <option value="" disabled>Select the service you offer</option>
+                {serviceOptions.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+                <option value="__other__">Other</option>
+              </select>
+            )}
+
+            {(serviceOptions.length === 0 || otherService) && (
+              <input
+                type="text"
+                placeholder="Service you offer (e.g. Barber)"
+                value={service}
+                onChange={(e) => setService(e.target.value)}
+                required
+                minLength={2}
+                maxLength={100}
+              />
+            )}
             <textarea
               placeholder="Anything we should know? (optional)"
               value={message}

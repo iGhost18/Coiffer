@@ -240,7 +240,7 @@ export default function LoginReg() {
                 <div className="field">
                   <label>Country</label>
                   <select ref={country} defaultValue="">
-                    <option value="">Select country</option>
+                    <option value="" className="placeholder">Select country</option>
                     {COUNTRIES.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
