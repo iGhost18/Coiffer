@@ -78,10 +78,7 @@ if (process.env.NODE_ENV === "production") {
 }
 
 
-fetch("https://api.ipify.org")
-  .then((r) => r.text())
-  .then((ip) => console.log("Outbound IP:", ip))
-  .catch(console.error);
+
 /*
 ========================================
 SOCKET.IO
