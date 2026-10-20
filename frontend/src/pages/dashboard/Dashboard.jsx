@@ -467,7 +467,7 @@ export default function DispatchAdmin() {
   }, []);
 
   async function generateInvite() {
-    const email = invEmail.trim();
+    const email = invEmail.trim().replace(/^mailto:/i, "");
     if (!email) {
       alert("Enter an email address.");
       return;

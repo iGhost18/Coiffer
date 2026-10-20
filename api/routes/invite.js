@@ -10,19 +10,20 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 router.post("/create", authenticate, requireAdmin, async (req, res) => {
     try {
-        const { email, role } = req.body;
+        const { role } = req.body;
+        const cleanEmail = String(req.body.email || "").trim().replace(/^mailto:/i, "").toLowerCase();
 
-        if (!email || typeof email !== "string" || !EMAIL_REGEX.test(email.trim())) {
-            return res.status(400).json({ message: "A valid email is required." });
+        if (!EMAIL_REGEX.test(cleanEmail)) {
+        return res.status(400).json({ message: "A valid email is required." });
         }
 
         const token = crypto.randomBytes(32).toString("hex");
 
         const invite = new Invite({
-            email: email.trim().toLowerCase(),
-            role: role || "staff",
-            token,
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        email: cleanEmail,
+        role: role || "staff",
+        token,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         });
 
         await invite.save();
