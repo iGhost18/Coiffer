@@ -310,7 +310,7 @@ router.post("/admin/:id/retry-payout", authenticate, requireAdmin, async (req, r
     const released = await releaseBookingPayout(booking);
     return res.status(200).json({ success: true, booking: released });
   } catch (error) {
-    Sentry.captureException(err);
+    Sentry.captureException(error);
     console.error("retry-payout failed:", error);
     return res.status(502).json({ message: `Retry failed: ${error.message}` });
   }
