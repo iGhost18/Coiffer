@@ -658,12 +658,17 @@ export default function Checkout() {
             </div>
 
             <div className="SummarySubRow">
-              <span>Service fee</span>
+              <span>Platform fee</span>
               <span>
                 <TbCurrencyNaira />
                 {cartItems.length > 0 ? PLATFORM_FEE.toLocaleString() : 0}
               </span>
             </div>
+            {cartItems.length > 0 && (
+              <p className="SummaryFeeNote">
+                Charged by Coiffer to run the platform and protect your payment.
+              </p>
+            )}
 
 
             <div className="SummaryTotalRow">

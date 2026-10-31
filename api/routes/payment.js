@@ -53,7 +53,9 @@ const AUTO_RELEASE_WINDOW_MS = 45 * 60 * 1000;
 
 const WALL_CLOCK_OFFSET_MS = 60 * 60 * 1000;
 
-const PLATFORM_FEE = 195; // flat, charged once per payment
+const PLATFORM_FEE = 189;        // flat fee added to the customer's total, once per payment
+const EXPERT_COMMISSION = 299;   // flat amount Coiffer keeps from each expert's booking
+const MIN_SERVICE_AMOUNT = 500;  // smallest service amount allowed per expert
 
 function estimateFlutterwaveFee(amount) {
   const fee = amount * 0.014 + (amount >= 2500 ? 100 : 0);
@@ -211,8 +213,16 @@ router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), 
     if (!staffPayouts[staffId]) staffPayouts[staffId] = { gross: 0, payout: 0 };
 
     staffPayouts[staffId].gross = roundMoney(staffPayouts[staffId].gross + amount);
-    // Provisional. The real payout is set after Flutterwave confirms its fee.
-    staffPayouts[staffId].payout = staffPayouts[staffId].gross;
+  }
+
+  // Each expert's payout is fixed here: their service total minus Coiffer's flat commission.
+  for (const s of Object.values(staffPayouts)) {
+    if (s.gross < MIN_SERVICE_AMOUNT) {
+      return res.status(400).json({
+        message: `The minimum amount per Expert is ₦${MIN_SERVICE_AMOUNT.toLocaleString()}.`,
+      });
+    }
+    s.payout = roundMoney(s.gross - EXPERT_COMMISSION);
   }
 
   const platformFee = PLATFORM_FEE;
@@ -472,25 +482,15 @@ async function finalizeSuccessfulPayment(payment, tx) {
 
   const { contact, address, cartItems, appointmentDate, appointmentTime } = claimed.checkoutData;
 
-  // Flutterwave's fee is charged to the experts, split in proportion to
-  // each expert's share of the services. The fee on any product portion
-  // of the cart stays with the app.
   const flwFee = Number(tx.app_fee) > 0
     ? roundMoney(Number(tx.app_fee))
     : estimateFlutterwaveFee(claimed.amount);
 
-  const feeShareForExperts = claimed.amount > 0
-    ? (claimed.serviceTotal + claimed.platformCommission) / claimed.amount
-    : 1;
-  const expertFeePool = roundMoney(flwFee * feeShareForExperts);
-
-  const grossSum = Object.values(claimed.staffPayouts || {})
-    .reduce((sum, s) => sum + (s.gross || 0), 0);
-
+  // The payout was fixed at checkout: service total minus the flat commission.
+  // Flutterwave's fee now comes out of Coiffer's own earnings, not the expert's.
   const finalPayouts = {};
   for (const [sid, s] of Object.entries(claimed.staffPayouts || {})) {
-    const share = grossSum > 0 ? (s.gross || 0) / grossSum : 0;
-    finalPayouts[sid] = Math.max(0, roundMoney((s.gross || 0) - expertFeePool * share));
+    finalPayouts[sid] = Math.max(0, roundMoney(s.payout ?? (s.gross || 0) - EXPERT_COMMISSION));
   }
 
   await Payment.updateOne({ _id: claimed._id }, { $set: { flutterwaveFee: flwFee } });

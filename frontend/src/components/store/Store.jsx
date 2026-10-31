@@ -6,6 +6,72 @@ import { useCart } from "../context/CartContext";
 import { useProducts } from "../context/ProductsContext";
 
 const formatPrice = (amount) => `₦${Number(amount || 0).toLocaleString()}`;
+const hasDiscountPrice = (p) => p.discountPrice != null && p.discountPrice < p.price;
+
+function ProductModal({ product, onClose, onAdd, justAdded }) {
+  const hasDiscount = hasDiscountPrice(product);
+
+  return (
+    <div className="ProductModalOverlay" onClick={onClose}>
+      <div
+        className="ProductModal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={product.name}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="ProductModalClose" onClick={onClose} aria-label="Close">
+          ✕
+        </button>
+
+        <div className="ProductModalImage">
+          {hasDiscount && <span className="DiscountBadge">Sale</span>}
+          {product.image ? (
+            <img src={product.image} alt={product.name} />
+          ) : (
+            <span className="StoreImagePlaceholder">🛍️</span>
+          )}
+        </div>
+
+        <div className="ProductModalBody">
+          {product.category && <span className="ProductCategory">{product.category}</span>}
+          <h2 className="ProductModalName">{product.name}</h2>
+
+          <div className="PriceRow">
+            {hasDiscount ? (
+              <>
+                <span className="PriceOriginal">{formatPrice(product.price)}</span>
+                <span className="PriceTag PriceTag--discount">
+                  {formatPrice(product.discountPrice)}
+                </span>
+              </>
+            ) : (
+              <span className="PriceTag">{formatPrice(product.price)}</span>
+            )}
+          </div>
+
+          <span className={`Availability ${product.available ? "available" : "unavailable"}`}>
+            {product.available ? "Available" : "Out of Stock"}
+          </span>
+
+          <p className="ProductModalDesc">
+            {product.description || "No description provided."}
+          </p>
+        </div>
+
+        <div className="ProductModalFooter">
+          <button
+            className={`BuyBtn ${justAdded ? "added" : ""}`}
+            disabled={!product.available}
+            onClick={() => onAdd(product)}
+          >
+            {!product.available ? "Out of Stock" : justAdded ? "Added ✓" : "Add to Cart"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Store() {
   const { cartItems, addToCart } = useCart();
@@ -13,13 +79,42 @@ export default function Store() {
   const [justAddedId, setJustAddedId] = useState(null);
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
   const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
   const navigate = useNavigate();
   const addedTimeoutRef = useRef(null);
 
+  const selectedProduct = products.find((p) => p._id === selectedId) || null;
+
   useEffect(() => {
     return () => clearTimeout(addedTimeoutRef.current);
   }, []);
+
+  // Close on Escape and stop the page behind from scrolling while the modal is open
+  useEffect(() => {
+    if (!selectedProduct) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setSelectedId(null);
+    };
+    document.addEventListener("keydown", onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [selectedProduct]);
+
+  const handleAddToCart = (product) => {
+    addToCart({
+      ...product,
+      price: hasDiscountPrice(product) ? product.discountPrice : product.price,
+      itemType: "product",
+    });
+    setJustAddedId(product._id);
+    clearTimeout(addedTimeoutRef.current);
+    addedTimeoutRef.current = setTimeout(() => setJustAddedId(null), 1200);
+  };
 
   const categories = useMemo(() => {
     const set = new Set();
@@ -50,15 +145,9 @@ export default function Store() {
     <div className="store">
       <div className="StoreHeader">
         <div className="storeHeaderLeft">
-          <button
-            className="storeBackbtn"
-            onClick={() =>
-              navigate(-1)
-            }
-          >
+          <button className="storeBackbtn" onClick={() => navigate(-1)}>
             <ChevronLeftIcon />
           </button>
-
         </div>
         <h1 className="Header">Hair Products & Tools</h1>
 
@@ -97,36 +186,25 @@ export default function Store() {
 
       <div className="StoreGrid">
         {products.length === 0 ? (
-          <p className="EmptyStoreMsg">
-            No products available yet — check back soon.
-          </p>
+          <p className="EmptyStoreMsg">No products available yet — check back soon.</p>
         ) : filteredProducts.length === 0 ? (
-          <p className="EmptyStoreMsg">
-            No products match your search.
-          </p>
+          <p className="EmptyStoreMsg">No products match your search.</p>
         ) : (
           filteredProducts.map((product) => {
-            const hasDiscount =
-              product.discountPrice != null && product.discountPrice < product.price;
+            const hasDiscount = hasDiscountPrice(product);
+            const open = () => setSelectedId(product._id);
 
             return (
               <div
                 key={product._id}
-                className={`StoreCard ${
-                  !product.available ? "outOfStock" : ""
-                }`}
+                className={`StoreCard ${!product.available ? "outOfStock" : ""}`}
               >
-                <div className="StoreImage">
+                <div className="StoreImage clickable" onClick={open}>
                   {hasDiscount && <span className="DiscountBadge">Sale</span>}
                   {product.image ? (
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                    />
+                    <img src={product.image} alt={product.name} />
                   ) : (
-                    <span className="StoreImagePlaceholder">
-                      🛍️
-                    </span>
+                    <span className="StoreImagePlaceholder">🛍️</span>
                   )}
                 </div>
 
@@ -134,13 +212,17 @@ export default function Store() {
                   <span className="ProductCategory">{product.category}</span>
                 )}
 
-                <h3 className="ProductName">
+                <h3 className="ProductName clickable" onClick={open}>
                   {product.name}
                 </h3>
 
-                <p className="ProductDesc">
+                <p className="ProductDesc clickable" onClick={open}>
                   {product.description}
                 </p>
+
+                <button type="button" className="ViewDetailsLink" onClick={open}>
+                  View details
+                </button>
 
                 <div className="StoreCardFooter">
                   <div className="PriceSection">
@@ -153,42 +235,23 @@ export default function Store() {
                           </span>
                         </>
                       ) : (
-                        <span className="PriceTag">
-                          {formatPrice(product.price)}
-                        </span>
+                        <span className="PriceTag">{formatPrice(product.price)}</span>
                       )}
                     </div>
 
                     <span
                       className={`Availability ${
-                        product.available
-                          ? "available"
-                          : "unavailable"
+                        product.available ? "available" : "unavailable"
                       }`}
                     >
-                      {product.available
-                        ? "Available"
-                        : "Out of Stock"}
+                      {product.available ? "Available" : "Out of Stock"}
                     </span>
                   </div>
 
                   <button
-                    className={`BuyBtn ${
-                      justAddedId === product._id
-                        ? "added"
-                        : ""
-                    }`}
+                    className={`BuyBtn ${justAddedId === product._id ? "added" : ""}`}
                     disabled={!product.available}
-                    onClick={() => {
-                      addToCart({
-                        ...product,
-                        price: hasDiscount ? product.discountPrice : product.price,
-                        itemType: "product",
-                      });
-                      setJustAddedId(product._id);
-                      clearTimeout(addedTimeoutRef.current);
-                      addedTimeoutRef.current = setTimeout(() => setJustAddedId(null), 1200);
-                    }}
+                    onClick={() => handleAddToCart(product)}
                   >
                     {!product.available
                       ? "Out of Stock"
@@ -202,6 +265,15 @@ export default function Store() {
           })
         )}
       </div>
+
+      {selectedProduct && (
+        <ProductModal
+          product={selectedProduct}
+          onClose={() => setSelectedId(null)}
+          onAdd={handleAddToCart}
+          justAdded={justAddedId === selectedProduct._id}
+        />
+      )}
     </div>
   );
 }
