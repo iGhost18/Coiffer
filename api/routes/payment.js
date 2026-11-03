@@ -4,13 +4,11 @@ const crypto = require("crypto");
 const Sentry = require("@sentry/node");
 
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt"); // needed for fix 5
 const { checkSlot } = require("../utils/availability");
 
 const Payment = require("../models/payment");
 const Staff = require("../models/staff");
 const Servicedetail = require("../models/servicedetail");
-// ASSUMPTION: adjust this path/filename to match your actual Product model.
 const Product = require("../models/product");
 const { authenticate } = require("../middleware/auth");
 
@@ -34,6 +32,7 @@ const {
 const { sendNotification, sendMessage } = require("../socket/index");
 const sendPushToOwner = require("../utils/sendPush");
 const { durationToMinutes } = require("../utils/duration");
+const { refundWholePayment } = require("../utils/payoutRelease");
 
 const { computeDeliveryWindow } = require("../utils/delivery");
 
@@ -54,8 +53,8 @@ const AUTO_RELEASE_WINDOW_MS = 45 * 60 * 1000;
 const WALL_CLOCK_OFFSET_MS = 60 * 60 * 1000;
 
 const PLATFORM_FEE = 189;        // flat fee added to the customer's total, once per payment
-const EXPERT_COMMISSION = 299;   // flat amount Coiffer keeps from each expert's booking
-const MIN_SERVICE_AMOUNT = 500;  // smallest service amount allowed per expert
+const EXPERT_COMMISSION = 299;   // flat amount Coiffer keeps from each service the expert performs
+const MIN_SERVICE_AMOUNT = 500;  // smallest price allowed for a single service
 
 function estimateFlutterwaveFee(amount) {
   const fee = amount * 0.014 + (amount >= 2500 ? 100 : 0);
@@ -86,6 +85,32 @@ function timingSafeEqualStrings(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
+// The customer paid but no booking could be made (for example the time slot
+// was taken in the meantime). Refund the whole payment, platform fee included.
+async function refundUnfulfilledPayment(payment) {
+  const [bookingCount, orderCount] = await Promise.all([
+    Booking.countDocuments({ paymentId: payment._id }),
+    Order.countDocuments({ paymentId: payment._id }),
+  ]);
+
+  if (bookingCount + orderCount > 0) {
+    // Part of the cart was already created, so refunding the whole payment would be wrong.
+    console.error("Slot taken after partial fulfilment; handle manually:", String(payment._id));
+    Sentry.captureMessage(`Partial fulfilment for payment ${payment._id}; handle manually`);
+    return false;
+  }
+
+  try {
+    await refundWholePayment(payment._id);
+    return true;
+  } catch (err) {
+    if (err.message === "REFUND_ALREADY_STARTED") return true;
+    Sentry.captureException(err);
+    console.error("Auto-refund failed for payment", String(payment._id), err.message);
+    return false;
+  }
+}
+
 /*
 ========================================
 CREATE FLUTTERWAVE PAYMENT
@@ -95,6 +120,12 @@ POST /api/payment/create
 
 Money is collected into YOUR Flutterwave balance (no subaccount split).
 Staff are paid later via the Transfers API once the job is confirmed.
+
+Pricing model:
+  - Customer pays: services + products + ONE flat platform fee (PLATFORM_FEE).
+  - Each expert receives: their service total minus EXPERT_COMMISSION for
+    EVERY service they perform (a service with quantity 2 counts as two).
+  - Flutterwave's fee comes out of Coiffer's earnings, not the expert's.
 */
 
 router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), async (req, res) => {
@@ -192,41 +223,44 @@ router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), 
     }
 
     /*
-    COMMISSION — computed per staff member, stored on the Payment so
-    finalizeSuccessfulPayment can snapshot it onto each Booking.
+    EXPERT PAYOUTS — fixed here, stored on the Payment, and snapshotted onto
+    each Booking by finalizeSuccessfulPayment.
     */
 
-  const staffPayouts = {};
+    const staffPayouts = {};
+    const serviceCounts = {};
 
-  for (const item of serviceItems) {
-    const staffId = item.staffId;
+    for (const item of serviceItems) {
+      const staffId = item.staffId;
 
-    if (!staffId) {
-      return res.status(400).json({ message: `Service "${item.name}" has no staff member.` });
+      if (!staffId) {
+        return res.status(400).json({ message: `Service "${item.name}" has no staff member.` });
+      }
+      if (!mongoose.isValidObjectId(staffId)) {
+        return res.status(400).json({ message: "Invalid staff member." });
+      }
+
+      // Every service has to cover Coiffer's commission with something left over.
+      if (item.price < MIN_SERVICE_AMOUNT) {
+        return res.status(400).json({
+          message: `"${item.name}" is below the minimum service price of ₦${MIN_SERVICE_AMOUNT.toLocaleString()}.`,
+        });
+      }
+
+      const amount = roundMoney(item.price * item.quantity);
+
+      if (!staffPayouts[staffId]) staffPayouts[staffId] = { gross: 0, payout: 0 };
+
+      staffPayouts[staffId].gross = roundMoney(staffPayouts[staffId].gross + amount);
+      serviceCounts[staffId] = (serviceCounts[staffId] || 0) + item.quantity;
     }
-    if (!mongoose.isValidObjectId(staffId)) {
-      return res.status(400).json({ message: "Invalid staff member." });
+
+    for (const [sid, s] of Object.entries(staffPayouts)) {
+      s.payout = roundMoney(s.gross - serviceCounts[sid] * EXPERT_COMMISSION);
     }
 
-    const amount = roundMoney(item.price * item.quantity);
-
-    if (!staffPayouts[staffId]) staffPayouts[staffId] = { gross: 0, payout: 0 };
-
-    staffPayouts[staffId].gross = roundMoney(staffPayouts[staffId].gross + amount);
-  }
-
-  // Each expert's payout is fixed here: their service total minus Coiffer's flat commission.
-  for (const s of Object.values(staffPayouts)) {
-    if (s.gross < MIN_SERVICE_AMOUNT) {
-      return res.status(400).json({
-        message: `The minimum amount per Expert is ₦${MIN_SERVICE_AMOUNT.toLocaleString()}.`,
-      });
-    }
-    s.payout = roundMoney(s.gross - EXPERT_COMMISSION);
-  }
-
-  const platformFee = PLATFORM_FEE;
-  const chargeAmount = roundMoney(total + platformFee);
+    const platformFee = PLATFORM_FEE;
+    const chargeAmount = roundMoney(total + platformFee);
 
     /*
     CHECK STAFF PAYOUT DETAILS — every staff member must have a verified
@@ -291,7 +325,6 @@ router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), 
       },
     });
 
-
     const flutterwaveResponse = await fetch("https://api.flutterwave.com/v3/payments", {
       method: "POST",
       headers: {
@@ -316,7 +349,7 @@ router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), 
           paymentId: String(payment._id),
           customerId: String(req.auth.id),
         },
-        configuration: { session_duration: 30, max_retry_attempt: 5, },
+        configuration: { session_duration: 30, max_retry_attempt: 5 },
       }),
     });
 
@@ -338,6 +371,7 @@ router.post("/create", checkoutLimiter, authenticate, validate(checkoutSchema), 
       checkoutUrl: data.data.link,
     });
   } catch (error) {
+    Sentry.captureException(error);
     console.error("POST /api/payment/create failed:", error);
     return res.status(500).json({ message: "Payment initiation failed." });
   }
@@ -362,6 +396,7 @@ router.get("/banks", authenticate, async (req, res) => {
 
     return res.status(200).json({ banks: data.data });
   } catch (error) {
+    Sentry.captureException(error);
     console.error("GET /api/payment/banks failed:", error);
     return res.status(500).json({ message: "Unable to load bank list." });
   }
@@ -392,6 +427,7 @@ router.get("/staff/bank-account", authenticate, async (req, res) => {
       },
     });
   } catch (error) {
+    Sentry.captureException(error);
     console.error("GET /api/payment/staff/bank-account failed:", error);
     return res.status(500).json({ message: "Unable to load payout details." });
   }
@@ -399,8 +435,8 @@ router.get("/staff/bank-account", authenticate, async (req, res) => {
 
 /*
 POST /api/payment/staff/bank-account
-Replaces the old create-subaccount route. Verifies the account with
-Flutterwave first so staff can't be paid to a mistyped account.
+Verifies the account with Flutterwave first so staff can't be paid to a
+mistyped account.
 */
 router.post("/staff/bank-account", authenticate, async (req, res) => {
   try {
@@ -442,6 +478,7 @@ router.post("/staff/bank-account", authenticate, async (req, res) => {
       account_name: resolved.data.account_name,
     });
   } catch (error) {
+    Sentry.captureException(error);
     console.error("POST /api/payment/staff/bank-account failed:", error);
     return res.status(500).json({ message: "Payout setup failed." });
   }
@@ -482,15 +519,16 @@ async function finalizeSuccessfulPayment(payment, tx) {
 
   const { contact, address, cartItems, appointmentDate, appointmentTime } = claimed.checkoutData;
 
+  // Recorded for the books. It comes out of Coiffer's earnings, not the expert's.
   const flwFee = Number(tx.app_fee) > 0
     ? roundMoney(Number(tx.app_fee))
     : estimateFlutterwaveFee(claimed.amount);
 
-  // The payout was fixed at checkout: service total minus the flat commission.
-  // Flutterwave's fee now comes out of Coiffer's own earnings, not the expert's.
+  // Each expert's payout was fixed at checkout (service total minus the
+  // commission on every service), so just read it back.
   const finalPayouts = {};
   for (const [sid, s] of Object.entries(claimed.staffPayouts || {})) {
-    finalPayouts[sid] = Math.max(0, roundMoney(s.payout ?? (s.gross || 0) - EXPERT_COMMISSION));
+    finalPayouts[sid] = Math.max(0, roundMoney(s.payout || 0));
   }
 
   await Payment.updateOne({ _id: claimed._id }, { $set: { flutterwaveFee: flwFee } });
@@ -794,9 +832,12 @@ router.get("/verify/:transactionId", authenticate, async (req, res) => {
       result = await finalizeSuccessfulPayment(payment, tx);
     } catch (err) {
       if (err.isSlotTaken) {
+        const refunded = await refundUnfulfilledPayment(payment);
         return res.status(409).json({
           success: false,
-          message: "That appointment slot was just taken. Please choose a different time.",
+          message: refunded
+            ? "That appointment slot was just taken. Your payment has been refunded in full."
+            : "That appointment slot was just taken. We will contact you about your payment shortly.",
         });
       }
       throw err;
@@ -817,6 +858,7 @@ router.get("/verify/:transactionId", authenticate, async (req, res) => {
       platformFee: result.payment.platformCommission,
     });
   } catch (error) {
+    Sentry.captureException(error);
     console.error("GET /api/payment/verify failed:", error);
     return res.status(500).json({ message: "Verification failed." });
   }
@@ -857,7 +899,8 @@ router.post("/webhook", async (req, res) => {
           { $set: { payoutStatus: "payout_failed" } }
         );
         console.error("Payout transfer FAILED for reference", reference);
-        // TODO: alert admin — this booking needs a retry via /admin/:id/retry-payout
+        // Alerts you through Sentry; the booking can then be retried from the admin dashboard.
+        Sentry.captureMessage(`Payout transfer FAILED for reference ${reference}`);
       }
 
       return res.status(200).end();
@@ -905,15 +948,18 @@ router.post("/webhook", async (req, res) => {
       await finalizeSuccessfulPayment(payment, tx);
     } catch (err) {
       if (!err.isSlotTaken) {
+        Sentry.captureException(err);
         console.error("Webhook: finalize failed:", err);
         return res.status(500).end(); // let Flutterwave retry
       }
-      // Slot taken between payment and processing: needs a manual refund/reschedule.
+      // Slot taken between payment and processing: refund the whole payment.
       console.error("Webhook: slot taken for payment", payment._id);
+      await refundUnfulfilledPayment(payment);
     }
 
     return res.status(200).end();
   } catch (error) {
+    Sentry.captureException(error);
     console.error("Flutterwave webhook error:", error);
     return res.status(500).end();
   }
