@@ -32,6 +32,9 @@ import RequireAuth from "./components/auth/RequireAuth";
 import { useEffect } from "react"; // add useEffect to your existing React import
 import socket from "./socket"; // adjust path to match where your socket.js actually lives
 import { getAuthToken } from "./socket";
+import InstallPrompt from "./components/install/InstallPrompt";
+
+     
 
 
 
@@ -105,6 +108,7 @@ function App() {
           <Route path="/staffsettings/:id" element={<RequireAuth><StaffSettings /></RequireAuth>} />
           <Route path="/payment/flutterwave/callback" element={<RequireAuth><PaymentCallback /></RequireAuth>} />
         </Routes>
+        <InstallPrompt />
       </CartProvider>
     </ProductsProvider>
 
