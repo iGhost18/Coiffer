@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
   const origin = `https://${req.headers.host}`;
   const pageUrl = `${origin}/staffprofile/${encodeURIComponent(id)}`;
 
-  let title = "Coiffer – Book trusted barbers near you";
+  let title = "Coiffer";
   let description = "Find and book barbers and stylists near you on Coiffer.";
   let image = `${origin}/assets/og-default.png`;
 
